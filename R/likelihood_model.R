@@ -11,6 +11,7 @@
 #' @field obs_type function that determines observation type
 #' @field assumptions list of assumptions made by the model
 #' @importFrom R6 R6Class
+#' @importFrom magrittr %>%
 #' @export likelihood_model
 likelihood_model <- R6::R6Class(
     "likelihood_model",
@@ -50,34 +51,17 @@ likelihood_model <- R6::R6Class(
         },
 
         #' @description
-        #' Generic dispatcher for calculating total log-likelihood, score,
-        #' and Hessian.
-        #' 
-        #' @param df dataframe for computation
-        #' @param par parameters for computation
-        #' @param methods methods to be dispatched
-        #' @param ... additional arguments
-        #' @return The sum of the dispatched methods
-        #' @importFrom magrittr %>%
-        dispatch = function(df, par, methods, ...) {
-            if (is.null(methods)) {
-                return(NULL)
-            }
-            sapply(1:nrow(df), function(i) {
-                otype <- self$obs_type(df[i, ])
-                methods[[otype]](df[i, ], par, ...)
-            }) %>% sum()
-        },
-
-        #' @description
         #' Computes the log-likelihood of the model.
         #' 
         #' @param df dataframe for computation
         #' @param par parameters for computation
         #' @param ... additional arguments
+        #' @importFrom magrittr %>%
         #' @return The total log-likelihood
         loglik = function(df, par, ...) {
-            self$dispatch(df, par, self$logliks, ...)
+            sapply(seq_len(nrow(df)), function(i) {
+                self$logliks[[self$obs_type(df[i, ])]](df[i, ], par, ...)
+            }) |> sum()
         },
 
         #' @description
@@ -86,9 +70,12 @@ likelihood_model <- R6::R6Class(
         #' @param df dataframe for computation
         #' @param par parameters for computation
         #' @param ... additional arguments
+        #' @importFrom magrittr %>%
         #' @return The total score
         score = function(df, par, ...) {
-            self$dispatch(df, par, self$scores, ...)
+            sapply(seq_len(nrow(df)), function(i) {
+                self$scores[[self$obs_type(df[i, ])]](df[i, ], par, ...)
+            }) |> rowSums()
         },
 
         #' @description
@@ -99,7 +86,20 @@ likelihood_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The Hessian of the log-likelihood
         hess_loglik = function(df, par, ...) {
-            self$dispatch(df, par, self$hess_logliks, ...)
+            res <- lapply(seq_len(nrow(df)), function(i) {
+                H <- self$hess_logliks[[self$obs_type(df[i, ])]]
+                H(row = df[i, ], par = par, ...)
+            })
+            return(Reduce("+", res))
+
+            #p <- length(par)
+            #H <- matrix(rep(0, p*p), nrow=p, ncol=p)
+            #for (i in seq_len(nrow(df))) {
+            #    Hi <- self$hess_logliks[[self$obs_type(df[i, ])]]
+            #    res <- Hi(row = df[i, ], par = par, ...)
+            #    H <- H + res
+            #}
+            #H
         }
     )
 )

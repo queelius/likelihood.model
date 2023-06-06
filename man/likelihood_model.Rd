@@ -33,7 +33,6 @@ observation type.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-likelihood_model-new}{\code{likelihood_model$new()}}
-\item \href{#method-likelihood_model-dispatch}{\code{likelihood_model$dispatch()}}
 \item \href{#method-likelihood_model-loglik}{\code{likelihood_model$loglik()}}
 \item \href{#method-likelihood_model-score}{\code{likelihood_model$score()}}
 \item \href{#method-likelihood_model-hess_loglik}{\code{likelihood_model$hess_loglik()}}
@@ -77,33 +76,6 @@ contributions)}
 }
 \subsection{Returns}{
 A new \code{likelihood_model} object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-likelihood_model-dispatch"></a>}}
-\if{latex}{\out{\hypertarget{method-likelihood_model-dispatch}{}}}
-\subsection{Method \code{dispatch()}}{
-Generic dispatcher for calculating total log-likelihood, score,
-and Hessian.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{likelihood_model$dispatch(df, par, methods, ...)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{df}}{dataframe for computation}
-
-\item{\code{par}}{parameters for computation}
-
-\item{\code{methods}}{methods to be dispatched}
-
-\item{\code{...}}{additional arguments}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-The sum of the dispatched methods
 }
 }
 \if{html}{\out{<hr>}}
