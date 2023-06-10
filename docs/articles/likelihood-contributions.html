@@ -323,15 +323,10 @@
 </h3>
 <p>Finally, we consider the case where we have <em>masked</em> component cause of failures. In this example, we consider a particular model in which the component that caused the system failure is in an observable candidate set that may include other components too. For instance, if we have a system with 3 components, and we observe that the system failed at time <span class="math inline">\(t\)</span>, then we may know that the component that caused the system failure is in the set <span class="math inline">\(\{1, 3\}\)</span>, but we don’t know which.</p>
 <div class="section level4">
-<h4 id="candidate-set-models">Candidate set models<a class="anchor" aria-label="anchor" href="#candidate-set-models"></a>
+<h4 id="assumptions-about-the-masked-component-cause-model">Assumptions about the masked component cause model<a class="anchor" aria-label="anchor" href="#assumptions-about-the-masked-component-cause-model"></a>
 </h4>
 <p>In every model we consider, we assume that the candidate set <span class="math inline">\(\mathcal{C}_i\)</span> is only a function of the component lifetimes <span class="math inline">\(T_{i 1},\ldots,T_{i m}\)</span>, <span class="math inline">\(\theta\)</span>, and the right-censoring time <span class="math inline">\(\tau_i\)</span>. That is, the candidate set <span class="math inline">\(\mathcal{C}_i\)</span> is independent of any other factors (or held constant for the duration of the experiment), like ambient temperature, and these factors also have a neglible effect on the series system lifetime and thus we can ignore them.</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="reduced-likelihood-model">Reduced likelihood model<a class="anchor" aria-label="anchor" href="#reduced-likelihood-model"></a>
-</h3>
-<p>In the Bernoulli candidate set model, we make the following assumptions about how candidate sets are generated:</p>
+<p>In the candidate set model, we make the following assumptions about how candidate sets are generated:</p>
 <ul>
 <li><p><span class="math inline">\(C_1\)</span>: The index of the failed component is in the candidate set, i.e., <span class="math inline">\(\Pr\{K_i \in \mathcal{C}_i\} = 1\)</span>, where <span class="math inline">\(K_i = \arg\min_j \{ T_{i j} : j = 1,\ldots,m\}\)</span>.</p></li>
 <li><p><span class="math inline">\(C_2\)</span>: The probability of <span class="math inline">\(C_i\)</span> given <span class="math inline">\(K_i\)</span> and <span class="math inline">\(T_i\)</span> is equally probable when the failed component varies over the components in the candidate set, i.e., <span class="math inline">\(\Pr\{\mathcal{C}_i=c_i|K_i=j,T_i=t_i,\theta\} = \Pr\{C_i=c_i|K_i=j',T_i=t_i\}\)</span> for any <span class="math inline">\(j,j' \in c_i\)</span>.</p></li>
@@ -347,6 +342,29 @@
     g(c_i,t_i) \propto \sum_{j \in c_i} f_j(t_i|\theta_j) \prod_{l=j,l \neq j}^m R_l(t_i|\theta_l),
 \]</span> and thus</p>
 <p>Note, however, that different ways in which the conditions are met will yield MLEs with different sampling distributions, e.g., more or less efficient estimators.</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loglik.exp_exact_masked_component</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rates</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"x"</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span> <span class="op">*</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">[</span><span class="va">X</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">score.exp_exact_masked_component</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rates</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"x"</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">X</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">[</span><span class="va">X</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level3">
+<h3 id="right-censoring">Right-censoring<a class="anchor" aria-label="anchor" href="#right-censoring"></a>
+</h3>
+<p>Finally, we can add right-censoring to the model, so that now we have not only masked data in the form of candidate sets but also right-censored data. We assume that the right-censoring time is independent of the component lifetimes and the candidate set.</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loglik.exp_right_censored</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rates</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span> <span class="op">*</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">score.exp_right_censored</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rates</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="va">row</span><span class="op">$</span><span class="va">t</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 </div>
 </div>
   </div>

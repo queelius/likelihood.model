@@ -291,7 +291,7 @@ if we have a system with 3 components, and we observe that the system
 failed at time $t$, then we may know that the component that caused the
 system failure is in the set $\{1, 3\}$, but we don't know which.
 
-#### Candidate set models
+#### Assumptions about the masked component cause model
 In every model we consider, we assume that the candidate set $\mathcal{C}_i$
 is only a function of the component lifetimes $T_{i 1},\ldots,T_{i m}$, $\theta$,
 and the right-censoring time $\tau_i$. That is, the candidate set $\mathcal{C}_i$
@@ -299,8 +299,7 @@ is independent of any other factors (or held constant for the duration of the
 experiment), like ambient temperature, and these factors also have a neglible
 effect on the series system lifetime and thus we can ignore them.
 
-### Reduced likelihood model
-In the Bernoulli candidate set model, we make the following assumptions about
+In the candidate set model, we make the following assumptions about
 how candidate sets are generated:
 
   - $C_1$: The index of the failed component is in the candidate set,
@@ -340,3 +339,30 @@ and thus
 Note, however, that different ways in which the conditions are met will yield
 MLEs with different sampling distributions, e.g., more or less efficient estimators.
 
+```{r}
+loglik.exp_exact_masked_component <- function(row, rates) {
+    X <- select(row, starts_with("x"))
+    -sum(rates) * row$t + log(sum(rates[X]))
+}
+
+score.exp_exact_masked_component <- function(row, rates) {
+    X <- select(row, starts_with("x"))
+    X / sum(rates[X]) - row$t
+}
+```
+
+
+### Right-censoring
+Finally, we can add right-censoring to the model, so that now we
+have not only masked data in the form of candidate sets but also
+right-censored data. We assume that the right-censoring time is
+independent of the component lifetimes and the candidate set.
+
+```{r}
+loglik.exp_right_censored <- function(row, rates) {
+    -sum(rates) * row$t
+}
+score.exp_right_censored <- function(row, rates) {
+    rep(-row$t, length(rates))
+}
+```
