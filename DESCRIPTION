@@ -1,12 +1,35 @@
 Package: likelihood.model
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Type: Package
+Title: Likelihood model
+Version: 0.1.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Alexander", "Towell", , "lex@metafunctor.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6443-9897"))
+Maintainer: Alexander Towell <lex@metafunctor.com>
+Description: Facilitates building likelihood models. It defines a number of generic methods for working with likelihoods, and a few functions that are strictly functions of these generic methods. It is designed to interoperate well with the algebraic.mle R package. It also comes with a likelihood contributions model, a likelihood model that is composed of multiple likelihood contributions assuming i.i.d. data. 
+License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
+ByteCompile: true
+LazyData: true
+Imports:
+    CDFt,
+    zoo,
+    mvtnorm,
+    MASS,
+    stats,
+    numDeriv,
+    boot,
+    dplyr
+URL: https://github.com/queelius/likelihood.model,
+    https://queelius.github.io/likelihood.model/
+BugReports: https://github.com/queelius/likelihood.model/issues
+Suggests: 
+    rmarkdown,
+    dplyr,
+    knitr,
+    ggplot2,
+    tibble,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
 RoxygenNote: 7.2.3
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)

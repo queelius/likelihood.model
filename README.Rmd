@@ -5,296 +5,175 @@ output: github_document
 
 # `likelihood.model`
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
 `likelihood.model` is an R package that allows you to...
 
 ## Installation
 
-You can install the development version of `likelihood.model` from [GitHub](https://github.com/queelius/likelihood.model) with:
+You can install the development version of `likelihood.model` from
+[GitHub](https://github.com/queelius/likelihood.model) with:
 
-```{r}
-#if (!require(devtools)) {
-#    install.packages("devtools")
-#}
-#devtools::install_github("queelius/likelihood.model")
+```{r install, eval=FALSE}
+if (!require(devtools)) {
+    install.packages("devtools")
+}
+devtools::install_github("queelius/likelihood.model")
+```
 
+
+Now, we load the requisite libraries:
+```{r load-libraries}
+library(dplyr)
 library(algebraic.mle)
 library(likelihood.model)
 ```
 
+## Exponentially distributed system lifetime
 
-## Example: Exponential series system
+Suppose we have a population of systems which have exponentially distributed
+lifetimes, in particular, the `i`-th system has lifetime
+`T[i] ~ EXP(1)`. We are interested in the failure rate `1` of the systems.
 
-Consider a series system with $m$ components, where the $p$th component in the $i$-th system has lifetime $T_{i p}$ with rate $\lambda_p$, and $T_{i j}$
-for all $i,j$ are independent. The system lifetime is the minimum of the component lifetimes, i.e., $T_i = \min\{T_{i 1}, \ldots, T_{i m}\}$.
-
-Let's draw a sample for this model for $m=3$ and $\lambda = (1, 1.25, 1.5)$
-for a sample size of $n=75$.
+Let's draw a sample of size $n=25$.
 ```{r data-gen-exp-series}
-n <- 70
-rates <- c(1.1, 1.25, 1.5)
+n <- 100
+rate <- 1
 set.seed(123)
+library(tibble)
 
-df <- data.frame(t1 = rexp(n, rates[1]),
-                 t2 = rexp(n, rates[2]),
-                 t3 = rexp(n, rates[3]))
-df$t <- apply(df, 1, min)
-
-# map each observation to the corresponding index (component) that was minimum
-df$k <- apply(df, 1, which.min)
-
+df <- tibble(t = rexp(n, rate))
 head(df)
 ```
 
-Column $t_p$ is the failure time of the $p$-th component, column $t$ is the 
-column for the series system lifetime, and column $k$ is the component that 
-causes the system failure.
 
-Of course, normally we don't know the component lifetimes, but only the
-series system lifetime (or a censored version of it). However, sometimes,
-we may know more or less. We will consider three cases:
-
-1. We know the component lifetimes exactly. (Columns $t_1, \ldots, t_m$ are 
-observed.)
-2. We know the system lifetime and the component cause of failure. (Columns $t$
-and $k$ are observed.)
-3. We know the system lifetime, and some subset of the components that contains
-the component that caused the system failure. (New columns will be introduced
-to indicate which components are observed.)
-
-### Case 1: Complete knowledge of component lifetimes
-Suppose we have a series system, but we have complete knowledge of the component lifetimes. The component lifetimes are exponentially distributed with rate $\lambda_k$ for component $k$.
-
-The system lifetime is the minimum of the component lifetimes, but we actually know the component lifetimes somehow, so we just estimate each $\lambda_k$ separately ($m$ independent MLE problems), which we know to have the MLE
-$\hat{\lambda}_p = 1/{\bar{t}_p}$ where $\bar{t}_p$ is the sample mean of the component lifetimes for component $p$.
+Analytically, we know that the MLE of the population failure rate is given by
+`rate.hat = mean(df$t)`, and that the sampling distribution of the MLE is given
+by `rate.hat ~ Normal(rate, rate^2 / n)`.
 
 ```{r case-1-mle}
-(lambda.hat <- c(1/mean(df$t1), 1/mean(df$t2), 1/mean(df$t3)))
+(rate.hat <- 1/mean(df$t))
 ```
 
 
-#### Likelihood model
+### Likelihood model
 
-Let's derive the full likelihood model for this problem anyway.
-The likelihood function is given by
-so we use those instead. The likelihood function is given by
-$L(\lambda_1, \dots, \lambda_p) = \prod_{i=1}^n \prod_{j=1}^m \lambda_j \exp(-\lambda_j t_{i j})$, whose log-likelihood function is given by $\ell
-(\lambda_1, \dots, \lambda_p) = \sum_{i=1}^n \sum_{j=1}^m \log \lambda_p - 
-\lambda_p t_{i j}$, whose score function is given by $s(\lambda_1, \dots, 
-\lambda_p) = (\partial \ell / \partial \lambda_1 \cdots
-    \partial \ell / \partial \lambda_m)^T$ where $\partial \ell / \partial 
-    \lambda_p = n/\lambda_p - \sum_{i=1}^n t_{i p}$,
-and whose Hessian matrix is a diagonal matrix whose $(p,p)$-th element is given 
-by $\partial^2 \ell / \partial \lambda_p^2 = -\frac{n}{\lambda_p^2}$.
-
-To solve the MLE, we just solve the score equations $s(\lambda_1, \dots,
-\lambda_p) = 0$, which has the unique solution
-$\hat{\lambda}_p = 1/{\bar{t}_p}$.
-
-So, the sampling distribution of $\hat\lambda_p$ is given by
-$$
-\hat\lambda_p \sim \text{Gamma}(n, 1  / \lambda_p),
-$$
-and asymptotically, by the CLT, it is given by
-$$
-\hat\lambda_p \sim \text{Normal}(\lambda_p, \lambda_p^2 / n),
-$$
-which we may in either case replace $\lambda_p$ with $\hat\lambda_p$ to get
-respectively the approximate sampling and approximate asymptotic sampling distribution of $\hat\lambda_p$.
+Let's derive the likelihood model for this problem anyway.
 
 ```{r case-1-likelihood-model}
-model.exp.complete <- likelihood_model$new(
-    logliks = list(
-        observed = function(row, par) {
-            dexp(row$t1, par[1], log = TRUE) +
-            dexp(row$t2, par[2], log = TRUE) +
-            dexp(row$t3, par[3], log = TRUE)
-        }
-    ),
-    scores = list(
-        observed = function(row, par) {
-            c(1/par[1] - row$t1,
-              1/par[2] - row$t2,
-              1/par[3] - row$t3)
-        }
-    ),
-    hess_logliks = list(
-        observed = function(row, par) {
-            -matrix(c(1/par[1]^2, 0         , 0,
-                      0         , 1/par[2]^2, 0,
-                      0         , 0         , 1/par[3]^2),
-                nrow=length(par))
-        }
-    ),
+loglik.exp <- function(row, par) {
+    dexp(row$t, par, log = TRUE)
+}
+
+score.exp <- function(row, par) {
+    1/par - row$t
+}
+
+hess_loglik.exp <- function(row, par) {
+    -1/par^2
+}
+
+model.exp <- likelihood_contr_model$new(
     obs_type = function(row) {
-        "observed"
+        "exp"
     }
 )
-ll.exp.complete <- loglik(model.exp.complete)
-s.exp.complete <- score(model.exp.complete)
-H.exp.complete <- hess_loglik(model.exp.complete)
 ```
+
+We can retrieve the total log-likelihood and score functions with:
+```{r case-1-likelihood-model-ll-s}
+ll.exp <- loglik(model.exp)
+s.exp <- score(model.exp)
+```
+
 
 The MLE is just:
 ```{r case-1-mle-likelihood}
-res.exp.complete <- optim(rates, fn = ll.exp.complete, gr = s.exp.complete,
-    df = df, hessian = TRUE, control = list(fnscale = -1))
-print(res.exp.complete$par)
-print(lambda.hat)
-ll.exp.complete(df, res.exp.complete$par)
-print(res.exp.complete$value)
-print(res.exp.complete$hessian)
-print(H.exp.complete(df, res.exp.complete$par))
+exp.mle <- mle_numerical(optim(rate, fn = ll.exp, gr = s.exp,
+    df = df, hessian = TRUE,
+    lower = 0, upper = 5, method = "Brent", control = list(fnscale = -1)))
+summary(exp.mle)
 ```
 
-We see that the two MLEs, the analytical one and the numerical one, are the same.
-
-The sampling distribution of the MLE is given by:
-```{r case-1-mle-sampling}
-mle.samp <- mle_numerical(res.exp.complete)
-summary(mle.samp)
-```
+We see that the two MLEs, the analytical one and the numerical one, are the
+same.
 
 
-### Case 2: Known component cause, but masked component lifetimes
+### Right-censoring
+Suppose that we only observe the systems in the sample for $1$ unit of time.
+Any system that fails before time $1$ is observed, but any system that fails
+after time $1$ is not observed. We say that the system is *right-censored*
+because we only know that it survived at least until time $1$.
 
-In this case, we assume we can only observe the system lifetime and the component that caused the system failure.
-
-We might be tempted to think that we can just consider each observation, where
-we know the system lifetime and the componente cause, and then just estimate
-the component lifetime for that component based on its failure time. We have
-less information about the parameters, because each observation only gives us
-information about one component, but that's okay.
-
-However, this is incorrect, because when we condition on the component that
-caused the system failure, we are not observing a random sample of that
-component's lifetime, but a conditional sample. For instance, if $k = 1$,
-then we are observing
-$T_{i 1} | T_{i 1} < T_{i 2} \text{ and } T_{i 1} < T_{i 3}$.
-
-What is this distribution? We can derive it as:
-
-$$
-    f_{T_i|K_i}(t_i | k_i) = f_{T_i,K_i}(t_i,k_i) / f_{K_i}(k_i) =
-        f_{K_i|T_i}(k_i|t_i) f_{T_i}(t_i) / f_{K_i}(k_i).
-$$
-By the memoryless property of the exponential distribution, we have
-$$
-    f_{K_i|T_i}(k_i|t_i) = f_{K_i}(k_i),
-$$
-since the failure rates are constant (and thus independent of the time), and
-thus the probability that a componet is the cause of a system failure is
-independent of the time of the system failure.
-
-That means that 
-$$
-    f_{T_i|K_i}(t_i | k_i) = f_{T_i}(t_i),
-$$
-which is the density of the series system. Since the minimum of exponentially
-distributed random variables is exponentially distributed with a falure rate
-equal to the sum of the failure rates of the components, this estimator
-is an estimator of the sum of the failure rates (or the failure rate of the
-series system). Let's do this computation:
-
-```{r series-likelihood, cache=TRUE}
-model.exp.series <- likelihood_model$new(
-    logliks = list(
-        observed = function(row, rate) {
-            dexp(row$t, rate[row$k], log = TRUE)
-        }
-    ),
+We could have also specified the likelihood model by explicitly specifying the
+log-likelihood, score, and Hessian functions:
+```{r case-1-likelihood-model-explicit}
+model.exp.rt_censored <- likelihood_contr_model$new(
     obs_type = function(row) {
-        "observed"
-    }
-)
-ll.exp.series <- loglik(model.exp.series)
-res.exp.series <- optim(rates, fn = ll.exp.series, df = df, hessian = TRUE,
-    control = list(fnscale = -1))
-
-print(res.exp.series$par)
-```
-
-
-Each of these are more or less reasonable estimates of the true failure rate
-of the system, which is $(1.1 + 1.25 + 1.5) = 3.85$.
-
-However, we can combine each of these estimates into a weighted mean to get
-a better estimate. The weights are the number of observations for each
-component. We actually went ahead and analytically computed the MLE for
-this, also:
-
-```{r data-exp-series-stats}
-# print some summary statistics
-# first, show how many rows have k = j
-N <- rep(0, 3)
-for (j in 1:3) {
-    N[j] <- sum(df$k == j)
-    cat("counts(", j, ") = ", N[j], "\n")
-}
-
-t.sum <- sum(df$t)
-cat("total system lifetimes = ", t.sum, "\n")
-
-# sum of system lifetimes for k = j 
-t.sum.k <- rep(0, 3)
-for (j in 1:3) {
-    t.sum.k[j] <- sum(df$t[df$k == j])
-    cat("sum of system lifetimes for k = ", j, " = ", t.sum.k[j], "\n")
-}
-
-# MLE (analytical solution)
-# lambda_j = N_j / t_j
-(lambda.hat2 <- N / t.sum.k)
-res.exp.series$par
-
-res.exp.series$par[1] * N[1] / nrow(df) +
-    res.exp.series$par[2] * N[2] / nrow(df) +
-    res.exp.series$par[3] * N[3] / nrow(df)
-print(sum(rates))
-```
-
-We see that this is a pretty good estimator of the true failure rate of the
-system, but it tells us nothing about the failure rate of the components.
-
-#### Joint distribution of $T_i$ and $K_i$
-
-Instead of maximizing the conditional likelihood based on $T_i | K_i$,
-we should be maximizing the joint likelihood of $T_i$ and $K_i$:
-
-```{r loglik-exp-series-known}
-model.exp.known <- likelihood_model$new(
+        row$obs_type
+    },
     logliks = list(
-        observed = function(row, rate) {
-            log(rate[row$k]) - sum(rate) * row$t
+        exact = loglik.exp,
+        right_censored = function(row, par) {
+            pexp(1, par, lower.tail = FALSE, log.p = TRUE)
         }
-    ),
-    scores = list(
-        observed = function(row, rate) {
-            v <- rep(-row$t, length(rate))
-            v[row$k] <- v[row$k] + 1 / rate[row$k]
-            v
-        }
-    ),
-    hess_logliks = list(
-        observed = function(row, rate) {
-            p <- length(rate)
-            H <- matrix(0, p, p)
-            H[row$k, row$k] <- -1 / rate[row$k]^2
-        }
-    ),
-    obs_type = function(row) {
-        "observed"
-    }
+    )
 )
-ll.exp.known <- loglik(model.exp.known)
-s.exp.known <- score(model.exp.known)
-H.exp.known <- hess_loglik(model.exp.known)
+
+df.rt_censored <- df %>% mutate(
+    obs_type = if_else(t <= 1, "exact", "right_censored"))
+
+ll.exp.rt_censored <- loglik(model.exp.rt_censored)
+exp.mle.rt_censored <- algebraic.mle::mle_numerical(
+    optim(rate, fn = ll.exp.rt_censored, df = df.rt_censored,
+    hessian = TRUE, lower = 0, upper = 5,
+    method = "Brent", control = list(fnscale = -1)))
+summary(exp.mle.rt_censored)
 ```
 
+We can add more types of observations to the model, for example, we can add
+left-censored observations, where we only know that the system failed before
+time $.1$, interval censoring, where we only know that the system failed
+between times $.1$ and $.9$, exact times when the system failed between
+$.9$ and $1.25$, and right-censored observations, where we only know that the
+system survived at least until time $1.25$.
 
+```{r case-1-likelihood-model-explicit-left-censored, eval=F}
+model.exp.censored <- likelihood_contr_model$new(
+    obs_type = function(row) {
+        row$obs_type
+    },
+    logliks = list(
+        exact = loglik.exp,
+        right_censored = function(row, par) {
+            pexp(1.25, par, lower.tail = FALSE, log.p = TRUE)
+        },
+        left_censored = function(row, par) {
+            pexp(.1, par, log.p = TRUE)
+        },
+        interval_censored = function(row, par) {
+            pexp(.9, par, log.p = TRUE) - pexp(.1, par, log.p = TRUE)
+        }
+    )
+)
 
-```{r mle-exp-series-known}
-rate.known <- optim(rates, fn = ll.exp.known, df = df,
-    hessian = TRUE, control = list(fnscale = -1))
+df.censored <- df %>% mutate(
+    obs_type = case_when(
+        t <= .1 ~ "left_censored",
+        t > .1 & t <= .9 ~ "interval_censored",
+        t > .9 & t <= 1.25 ~ "exact",
+        t > 1.25 ~ "right_censored"
+    )
+)
 
-summary(mle_numerical(rate.known))
+ll.exp.censored <- loglik(model.exp.censored)
+s.exp.censored <- score(model.exp.censored)
+exp.mle.censored <- algebraic.mle::mle_numerical(
+    optim(rate, fn = ll.exp.censored, df = df.censored,
+    hessian = TRUE, method="L-BFGS-B", lower = 0, control = list(fnscale = -1, trace = 1, REPORT = 1)))
+summary(exp.mle.censored)
+s.exp.censored(df.censored, rate)
 ```

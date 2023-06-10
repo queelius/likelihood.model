@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>What the Package Does (One Line, Title Case) • likelihood.model</title>
+<title>Likelihood model • likelihood.model</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="What the Package Does (One Line, Title Case)">
-<meta property="og:description" content="What the package does (one paragraph).">
+<script src="pkgdown.js"></script><meta property="og:title" content="Likelihood model">
+<meta property="og:description" content="Facilitates building likelihood models. It defines a number of generic methods for working with likelihoods, and a few functions that are strictly functions of these generic methods. It is designed to interoperate well with the algebraic.mle R package. It also comes with a likelihood contributions model, a likelihood model that is composed of multiple likelihood contributions assuming i.i.d. data. ">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
@@ -42,8 +42,27 @@
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="articles/likelihood-contributions.html">Likelihood contributions model</a>
+    </li>
+  </ul>
+</li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/queelius/likelihood.model/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -55,305 +74,24 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-
-<div class="section level1"><div class="page-header"><h1 id="likelihood-contribution-model">Likelihood contribution model<a class="anchor" aria-label="anchor" href="#likelihood-contribution-model"></a>
-</h1></div></div>
-<div class="section level1">
-<h1 id="likelihoodmodel">
-<code>likelihood.model</code><a class="anchor" aria-label="anchor" href="#likelihoodmodel"></a>
-</h1>
-<p><code>likelihood.model</code> is an R package that allows you to…</p>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<p>You can install the development version of <code>likelihood.model</code> from <a href="https://github.com/queelius/likelihood.model" class="external-link">GitHub</a> with:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#if (!require(devtools)) {</span></span>
-<span><span class="co">#    install.packages("devtools")</span></span>
-<span><span class="co">#}</span></span>
-<span><span class="co">#devtools::install_github("queelius/likelihood.model")</span></span>
-<span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/algebraic.mle" class="external-link">algebraic.mle</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">likelihood.model</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">## </span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">## Attaching package: 'likelihood.model'</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="co">## The following objects are masked from 'package:algebraic.mle':</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="co">## </span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="co">##     fim, score</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="example-exponential-series-system">Example: Exponential series system<a class="anchor" aria-label="anchor" href="#example-exponential-series-system"></a>
-</h2>
-<p>Consider a series system with <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;m%20%22m%22" alt="m"> components, where the <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;p%20%22p%22" alt="p">th component in the <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;i%20%22i%22" alt="i">-th system has lifetime <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_%7Bi%20p%7D%20%22T_%7Bi%20p%7D%22" alt="T_{i p}"> with rate <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Clambda_p%20%22%5Clambda_p%22" alt="\lambda_p">, and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_%7Bi%20j%7D%20%22T_%7Bi%20j%7D%22" alt="T_{i j}"> for all <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;i%2Cj%20%22i,j%22" alt="i,j"> are independent. The system lifetime is the minimum of the component lifetimes, i.e., <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_i%20%3D%20%5Cmin%5C%7BT_%7Bi%201%7D%2C%20%5Cldots%2C%20T_%7Bi%20m%7D%5C%7D%20%22T_i%20=%20%5Cmin%5C%7BT_%7Bi%201%7D,%20%5Cldots,%20T_%7Bi%20m%7D%5C%7D%22" alt="T_i = \min\{T_{i 1}, \ldots, T_{i m}\}">.</p>
-<p>Let’s draw a sample for this model for <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;m%3D3%20%22m=3%22" alt="m=3"> and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Clambda%20%3D%20%281%2C%201.25%2C%201.5%29%20%22%5Clambda%20=%20(1,%201.25,%201.5)%22" alt="\lambda = (1, 1.25, 1.5)"> for a sample size of <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;n%3D75%20%22n=75%22" alt="n=75">.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">70</span></span>
-<span><span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.1</span>, <span class="fl">1.25</span>, <span class="fl">1.5</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">rates</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>                 t2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">rates</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>                 t3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">rates</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">df</span>, <span class="fl">1</span>, <span class="va">min</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># map each observation to the corresponding index (component) that was minimum</span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">df</span>, <span class="fl">1</span>, <span class="va">which.min</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="co">##           t1        t2         t3          t k</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="co">## 1 0.76677933 1.3139236 0.44257008 0.44257008 3</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="co">## 2 0.52419116 1.2959302 1.07292810 0.52419116 1</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co">## 3 1.20823170 2.0289164 0.40455806 0.40455806 3</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="co">## 4 0.02870669 1.2172397 0.06243488 0.02870669 1</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a><span class="co">## 5 0.05110089 0.3040114 0.21642352 0.05110089 1</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a><span class="co">## 6 0.28772838 0.1908104 1.17325487 0.19081037 2</span></span></code></pre></div>
-<p>Column <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;t_p%20%22t_p%22" alt="t_p"> is the failure time of the <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;p%20%22p%22" alt="p">-th component, column <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;t%20%22t%22" alt="t"> is the column for the series system lifetime, and column <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;k%20%22k%22" alt="k"> is the component that causes the system failure.</p>
-<p>Of course, normally we don’t know the component lifetimes, but only the series system lifetime (or a censored version of it). However, sometimes, we may know more or less. We will consider three cases:</p>
-<ol style="list-style-type: decimal">
-<li>We know the component lifetimes exactly. (Columns <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;t_1%2C%20%5Cldots%2C%20t_m%20%22t_1,%20%5Cldots,%20t_m%22" alt="t_1, \ldots, t_m"> are observed.)</li>
-<li>We know the system lifetime and the component cause of failure. (Columns <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;t%20%22t%22" alt="t"> and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;k%20%22k%22" alt="k"> are observed.)</li>
-<li>We know the system lifetime, and some subset of the components that contains the component that caused the system failure. (New columns will be introduced to indicate which components are observed.)</li>
-</ol>
-<div class="section level3">
-<h3 id="case-1-complete-knowledge-of-component-lifetimes">Case 1: Complete knowledge of component lifetimes<a class="anchor" aria-label="anchor" href="#case-1-complete-knowledge-of-component-lifetimes"></a>
-</h3>
-<p>Suppose we have a series system, but we have complete knowledge of the component lifetimes. The component lifetimes are exponentially distributed with rate <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Clambda_k%20%22%5Clambda_k%22" alt="\lambda_k"> for component <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;k%20%22k%22" alt="k">.</p>
-<p>The system lifetime is the minimum of the component lifetimes, but we actually know the component lifetimes somehow, so we just estimate each <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Clambda_k%20%22%5Clambda_k%22" alt="\lambda_k"> separately (<img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;m%20%22m%22" alt="m"> independent MLE problems), which we know to have the MLE <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Chat%7B%5Clambda%7D_p%20%3D%201%2F%7B%5Cbar%7Bt%7D_p%7D%20%22%5Chat%7B%5Clambda%7D_p%20=%201/%7B%5Cbar%7Bt%7D_p%7D%22" alt="\hat{\lambda}_p = 1/{\bar{t}_p}"> where <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Cbar%7Bt%7D_p%20%22%5Cbar%7Bt%7D_p%22" alt="\bar{t}_p"> is the sample mean of the component lifetimes for component <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;p%20%22p%22" alt="p">.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">lambda.hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t1</span><span class="op">)</span>, <span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t2</span><span class="op">)</span>, <span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="co">## [1] 1.070043 1.250383 1.533236</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="likelihood-model">Likelihood model<a class="anchor" aria-label="anchor" href="#likelihood-model"></a>
-</h4>
-<p>Let’s derive the full likelihood model for this problem anyway. The likelihood function is given by so we use those instead. The likelihood function is given by <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;L%28%5Clambda_1%2C%20%5Cdots%2C%20%5Clambda_p%29%20%3D%20%5Cprod_%7Bi%3D1%7D%5En%20%5Cprod_%7Bj%3D1%7D%5Em%20%5Clambda_j%20%5Cexp%28-%5Clambda_j%20t_%7Bi%20j%7D%29%20%22L(%5Clambda_1,%20%5Cdots,%20%5Clambda_p)%20=%20%5Cprod_%7Bi=1%7D%5En%20%5Cprod_%7Bj=1%7D%5Em%20%5Clambda_j%20%5Cexp(-%5Clambda_j%20t_%7Bi%20j%7D)%22" alt="L(\lambda_1, \dots, \lambda_p) = \prod_{i=1}^n \prod_{j=1}^m \lambda_j \exp(-\lambda_j t_{i j})">, whose log-likelihood function is given by <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Cell%20%28%5Clambda_1%2C%20%5Cdots%2C%20%5Clambda_p%29%20%3D%20%5Csum_%7Bi%3D1%7D%5En%20%5Csum_%7Bj%3D1%7D%5Em%20%5Clog%20%5Clambda_p%20-%20%5Clambda_p%20t_%7Bi%20j%7D%20%22%5Cell%20(%5Clambda_1,%20%5Cdots,%20%5Clambda_p)%20=%20%5Csum_%7Bi=1%7D%5En%20%5Csum_%7Bj=1%7D%5Em%20%5Clog%20%5Clambda_p%20-%20%5Clambda_p%20t_%7Bi%20j%7D%22" alt="\ell (\lambda_1, \dots, \lambda_p) = \sum_{i=1}^n \sum_{j=1}^m \log \lambda_p - \lambda_p t_{i j}">, whose score function is given by <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;s%28%5Clambda_1%2C%20%5Cdots%2C%20%5Clambda_p%29%20%3D%20%28%5Cpartial%20%5Cell%20%2F%20%5Cpartial%20%5Clambda_1%20%5Ccdots%20%20%5Cpartial%20%5Cell%20%2F%20%5Cpartial%20%5Clambda_m%29%5ET%20%22s(%5Clambda_1,%20%5Cdots,%20%5Clambda_p)%20=%20(%5Cpartial%20%5Cell%20/%20%5Cpartial%20%5Clambda_1%20%5Ccdots%20%5Cpartial%20%5Cell%20/%20%5Cpartial%20%5Clambda_m)%5ET%22" alt="s(\lambda_1, \dots, \lambda_p) = (\partial \ell / \partial \lambda_1 \cdots \partial \ell / \partial \lambda_m)^T"> where <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Cpartial%20%5Cell%20%2F%20%5Cpartial%20%20%5Clambda_p%20%3D%20n%2F%5Clambda_p%20-%20%5Csum_%7Bi%3D1%7D%5En%20t_%7Bi%20p%7D%20%22%5Cpartial%20%5Cell%20/%20%5Cpartial%20%5Clambda_p%20=%20n/%5Clambda_p%20-%20%5Csum_%7Bi=1%7D%5En%20t_%7Bi%20p%7D%22" alt="\partial \ell / \partial \lambda_p = n/\lambda_p - \sum_{i=1}^n t_{i p}">, and whose Hessian matrix is a diagonal matrix whose <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%28p%2Cp%29%20%22(p,p)%22" alt="(p,p)">-th element is given by <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Cpartial%5E2%20%5Cell%20%2F%20%5Cpartial%20%5Clambda_p%5E2%20%3D%20-%5Cfrac%7Bn%7D%7B%5Clambda_p%5E2%7D%20%22%5Cpartial%5E2%20%5Cell%20/%20%5Cpartial%20%5Clambda_p%5E2%20=%20-%5Cfrac%7Bn%7D%7B%5Clambda_p%5E2%7D%22" alt="\partial^2 \ell / \partial \lambda_p^2 = -\frac{n}{\lambda_p^2}">.</p>
-<p>To solve the MLE, we just solve the score equations <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;s%28%5Clambda_1%2C%20%5Cdots%2C%20%5Clambda_p%29%20%3D%200%20%22s(%5Clambda_1,%20%5Cdots,%20%5Clambda_p)%20=%200%22" alt="s(\lambda_1, \dots, \lambda_p) = 0">, which has the unique solution <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Chat%7B%5Clambda%7D_p%20%3D%201%2F%7B%5Cbar%7Bt%7D_p%7D%20%22%5Chat%7B%5Clambda%7D_p%20=%201/%7B%5Cbar%7Bt%7D_p%7D%22" alt="\hat{\lambda}_p = 1/{\bar{t}_p}">.</p>
-<p>So, the sampling distribution of <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Chat%5Clambda_p%20%22%5Chat%5Clambda_p%22" alt="\hat\lambda_p"> is given by<br><img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%0A%5Chat%5Clambda_p%20%5Csim%20%5Ctext%7BGamma%7D%28n%2C%201%20%20%2F%20%5Clambda_p%29%2C%0A%20%22%20%5Chat%5Clambda_p%20%5Csim%20%5Ctext%7BGamma%7D(n,%201%20/%20%5Clambda_p),%20%22" alt="
-\hat\lambda_p \sim \text{Gamma}(n, 1 / \lambda_p),
-"><br>
-and asymptotically, by the CLT, it is given by<br><img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%0A%5Chat%5Clambda_p%20%5Csim%20%5Ctext%7BNormal%7D%28%5Clambda_p%2C%20%5Clambda_p%5E2%20%2F%20n%29%2C%0A%20%22%20%5Chat%5Clambda_p%20%5Csim%20%5Ctext%7BNormal%7D(%5Clambda_p,%20%5Clambda_p%5E2%20/%20n),%20%22" alt="
-\hat\lambda_p \sim \text{Normal}(\lambda_p, \lambda_p^2 / n),
-"><br>
-which we may in either case replace <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Clambda_p%20%22%5Clambda_p%22" alt="\lambda_p"> with <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Chat%5Clambda_p%20%22%5Chat%5Clambda_p%22" alt="\hat\lambda_p"> to get respectively the approximate sampling and approximate asymptotic sampling distribution of <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%5Chat%5Clambda_p%20%22%5Chat%5Clambda_p%22" alt="\hat\lambda_p">.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model.exp.complete</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_model.html">likelihood_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>    logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">dexp</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">t1</span>, <span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">dexp</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">t2</span>, <span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">dexp</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">t3</span>, <span class="va">par</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    scores <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">row</span><span class="op">$</span><span class="va">t1</span>,</span>
-<span>              <span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">-</span> <span class="va">row</span><span class="op">$</span><span class="va">t2</span>,</span>
-<span>              <span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">-</span> <span class="va">row</span><span class="op">$</span><span class="va">t3</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    hess_logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span>, <span class="fl">0</span>         , <span class="fl">0</span>,</span>
-<span>                      <span class="fl">0</span>         , <span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span>, <span class="fl">0</span>,</span>
-<span>                      <span class="fl">0</span>         , <span class="fl">0</span>         , <span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,</span>
-<span>                nrow<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">par</span><span class="op">)</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="st">"observed"</span></span>
-<span>    <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">ll.exp.complete</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.complete</span><span class="op">)</span></span>
-<span><span class="va">s.exp.complete</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp.complete</span><span class="op">)</span></span>
-<span><span class="va">H.exp.complete</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.exp.complete</span><span class="op">)</span></span></code></pre></div>
-<p>The MLE is just:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res.exp.complete</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rates</span>, fn <span class="op">=</span> <span class="va">ll.exp.complete</span>, gr <span class="op">=</span> <span class="va">s.exp.complete</span>,</span>
-<span>    df <span class="op">=</span> <span class="va">df</span>, hessian <span class="op">=</span> <span class="cn">TRUE</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res.exp.complete</span><span class="op">$</span><span class="va">par</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co">## [1] 1.070296 1.250357 1.533323</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">lambda.hat</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="co">## [1] 1.070043 1.250383 1.533236</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ll.exp.complete</span><span class="op">(</span><span class="va">df</span>, <span class="va">res.exp.complete</span><span class="op">$</span><span class="va">par</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="co">## [1] -159.703</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res.exp.complete</span><span class="op">$</span><span class="va">value</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="co">## [1] -159.703</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res.exp.complete</span><span class="op">$</span><span class="va">hessian</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="co">##           [,1]      [,2]      [,3]</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a><span class="co">## [1,] -61.10696   0.00000   0.00000</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a><span class="co">## [2,]   0.00000 -44.77448   0.00000</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a><span class="co">## [3,]   0.00000   0.00000 -29.77357</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">H.exp.complete</span><span class="op">(</span><span class="va">df</span>, <span class="va">res.exp.complete</span><span class="op">$</span><span class="va">par</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="co">##          [,1]      [,2]      [,3]</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a><span class="co">## [1,] -61.1069   0.00000   0.00000</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a><span class="co">## [2,]   0.0000 -44.77445   0.00000</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a><span class="co">## [3,]   0.0000   0.00000 -29.77356</span></span></code></pre></div>
-<p>We see that the two MLEs, the analytical one and the numerical one, are the same.</p>
-<p>The sampling distribution of the MLE is given by:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mle.samp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span><span class="va">res.exp.complete</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mle.samp</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb21"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="co">## Maximum likelihood estimator of type mle_numerical is normally distributed.</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a><span class="co">## The estimates of the parameters are given by:</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a><span class="co">## [1] 1.070296 1.250357 1.533323</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a><span class="co">## The standard error is  0.1279248 0.1494461 0.1832671 .</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a><span class="co">## The asymptotic 95% confidence interval of the parameters are given by:</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a><span class="co">##             2.5%    97.5%</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a><span class="co">## param1 0.8598784 1.280713</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true"></a><span class="co">## param2 1.0045396 1.496174</span></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true"></a><span class="co">## param3 1.2318754 1.834771</span></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true"></a><span class="co">## The MSE of the estimator is  0.07228573 .</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true"></a><span class="co">## The log-likelihood is  -159.703 .</span></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true"></a><span class="co">## The AIC is  325.406 .</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level3">
-<h3 id="case-2-known-component-cause-but-masked-component-lifetimes">Case 2: Known component cause, but masked component lifetimes<a class="anchor" aria-label="anchor" href="#case-2-known-component-cause-but-masked-component-lifetimes"></a>
-</h3>
-<p>In this case, we assume we can only observe the system lifetime and the component that caused the system failure.</p>
-<p>We might be tempted to think that we can just consider each observation, where we know the system lifetime and the componente cause, and then just estimate the component lifetime for that component based on its failure time. We have less information about the parameters, because each observation only gives us information about one component, but that’s okay.</p>
-<p>However, this is incorrect, because when we condition on the component that caused the system failure, we are not observing a random sample of that component’s lifetime, but a conditional sample. For instance, if <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;k%20%3D%201%20%22k%20=%201%22" alt="k = 1">, then we are observing <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_%7Bi%201%7D%20%7C%20T_%7Bi%201%7D%20%3C%20T_%7Bi%202%7D%20%5Ctext%7B%20and%20%7D%20T_%7Bi%201%7D%20%3C%20T_%7Bi%203%7D%20%22T_%7Bi%201%7D%20%7C%20T_%7Bi%201%7D%20%3C%20T_%7Bi%202%7D%20%5Ctext%7B%20and%20%7D%20T_%7Bi%201%7D%20%3C%20T_%7Bi%203%7D%22" alt="T_{i 1} | T_{i 1} &lt; T_{i 2} \text{ and } T_{i 1} &lt; T_{i 3}">.</p>
-<p>What is this distribution? We can derive it as:</p>
-<p><img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%0A%20%20%20%20f_%7BT_i%7CK_i%7D%28t_i%20%7C%20k_i%29%20%3D%20f_%7BT_i%2CK_i%7D%28t_i%2Ck_i%29%20%2F%20f_%7BK_i%7D%28k_i%29%20%3D%0A%20%20%20%20%20%20%20%20f_%7BK_i%7CT_i%7D%28k_i%7Ct_i%29%20f_%7BT_i%7D%28t_i%29%20%2F%20f_%7BK_i%7D%28k_i%29.%0A%20%22%20f_%7BT_i%7CK_i%7D(t_i%20%7C%20k_i)%20=%20f_%7BT_i,K_i%7D(t_i,k_i)%20/%20f_%7BK_i%7D(k_i)%20=%20f_%7BK_i%7CT_i%7D(k_i%7Ct_i)%20f_%7BT_i%7D(t_i)%20/%20f_%7BK_i%7D(k_i).%20%22" alt="
- f_{T_i|K_i}(t_i | k_i) = f_{T_i,K_i}(t_i,k_i) / f_{K_i}(k_i) =
- f_{K_i|T_i}(k_i|t_i) f_{T_i}(t_i) / f_{K_i}(k_i).
-"><br>
-By the memoryless property of the exponential distribution, we have<br><img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%0A%20%20%20%20f_%7BK_i%7CT_i%7D%28k_i%7Ct_i%29%20%3D%20f_%7BK_i%7D%28k_i%29%2C%0A%20%22%20f_%7BK_i%7CT_i%7D(k_i%7Ct_i)%20=%20f_%7BK_i%7D(k_i),%20%22" alt="
- f_{K_i|T_i}(k_i|t_i) = f_{K_i}(k_i),
-"><br>
-since the failure rates are constant (and thus independent of the time), and thus the probability that a componet is the cause of a system failure is independent of the time of the system failure.</p>
-<p>That means that<br><img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%0A%20%20%20%20f_%7BT_i%7CK_i%7D%28t_i%20%7C%20k_i%29%20%3D%20f_%7BT_i%7D%28t_i%29%2C%0A%20%22%20f_%7BT_i%7CK_i%7D(t_i%20%7C%20k_i)%20=%20f_%7BT_i%7D(t_i),%20%22" alt="
- f_{T_i|K_i}(t_i | k_i) = f_{T_i}(t_i),
-"><br>
-which is the density of the series system. Since the minimum of exponentially distributed random variables is exponentially distributed with a falure rate equal to the sum of the failure rates of the components, this estimator is an estimator of the sum of the failure rates (or the failure rate of the series system). Let’s do this computation:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model.exp.series</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_model.html">likelihood_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>    logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">dexp</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">t</span>, <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="st">"observed"</span></span>
-<span>    <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">ll.exp.series</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.series</span><span class="op">)</span></span>
-<span><span class="va">res.exp.series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rates</span>, fn <span class="op">=</span> <span class="va">ll.exp.series</span>, df <span class="op">=</span> <span class="va">df</span>, hessian <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>    control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb23"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="co">## [1] 2.691628 4.273178 3.720431</span></span></code></pre></div>
-<p>Each of these are more or less reasonable estimates of the true failure rate of the system, which is <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;%281.1%20%2B%201.25%20%2B%201.5%29%20%3D%203.85%20%22(1.1%20+%201.25%20+%201.5)%20=%203.85%22" alt="(1.1 + 1.25 + 1.5) = 3.85">.</p>
-<p>However, we can combine each of these estimates into a weighted mean to get a better estimate. The weights are the number of observations for each component. We actually went ahead and analytically computed the MLE for this, also:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># print some summary statistics</span></span>
-<span><span class="co"># first, show how many rows have k = j</span></span>
-<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">N</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">k</span> <span class="op">==</span> <span class="va">j</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"counts("</span>, <span class="va">j</span>, <span class="st">") = "</span>, <span class="va">N</span><span class="op">[</span><span class="va">j</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<div class="sourceCode" id="cb25"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="co">## counts( 1 ) =  17 </span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a><span class="co">## counts( 2 ) =  24 </span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a><span class="co">## counts( 3 ) =  29</span></span></code></pre></div>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">t.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"total system lifetimes = "</span>, <span class="va">t.sum</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb27"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="co">## total system lifetimes =  19.72759</span></span></code></pre></div>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># sum of system lifetimes for k = j </span></span>
-<span><span class="va">t.sum.k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">t.sum.k</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">k</span> <span class="op">==</span> <span class="va">j</span><span class="op">]</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"sum of system lifetimes for k = "</span>, <span class="va">j</span>, <span class="st">" = "</span>, <span class="va">t.sum.k</span><span class="op">[</span><span class="va">j</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<div class="sourceCode" id="cb29"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a><span class="co">## sum of system lifetimes for k =  1  =  6.31582 </span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a><span class="co">## sum of system lifetimes for k =  2  =  5.616639 </span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a><span class="co">## sum of system lifetimes for k =  3  =  7.795127</span></span></code></pre></div>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># MLE (analytical solution)</span></span>
-<span><span class="co"># lambda_j = N_j / t_j</span></span>
-<span><span class="op">(</span><span class="va">lambda.hat2</span> <span class="op">&lt;-</span> <span class="va">N</span> <span class="op">/</span> <span class="va">t.sum.k</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb31"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a><span class="co">## [1] 2.691654 4.273018 3.720273</span></span></code></pre></div>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span></span></code></pre></div>
-<div class="sourceCode" id="cb33"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true"></a><span class="co">## [1] 2.691628 4.273178 3.720431</span></span></code></pre></div>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">N</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">N</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">*</span> <span class="va">N</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb35"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true"></a><span class="co">## [1] 3.660092</span></span></code></pre></div>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb37"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true"></a><span class="co">## [1] 3.85</span></span></code></pre></div>
-<p>We see that this is a pretty good estimator of the true failure rate of the system, but it tells us nothing about the failure rate of the components.</p>
-<div class="section level4">
-<h4 id="joint-distribution-of-t_i-and-k_i">Joint distribution of <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_i" title="T_i" alt="T_i"> and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;K_i" title="K_i" alt="K_i"><a class="anchor" aria-label="anchor" href="#joint-distribution-of-t_i-and-k_i"></a>
-</h4>
-<p>Instead of maximizing the conditional likelihood based on <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_i%20%7C%20K_i%20%22T_i%20%7C%20K_i%22" alt="T_i | K_i">, we should be maximizing the joint likelihood of <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;T_i%20%22T_i%22" alt="T_i"> and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;K_i%20%22K_i%22" alt="K_i">:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model.exp.known</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_model.html">likelihood_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>    logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span> <span class="op">*</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    scores <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="va">row</span><span class="op">$</span><span class="va">t</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span><span class="op">)</span></span>
-<span>            <span class="va">v</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">v</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span> <span class="op">/</span> <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span></span>
-<span>            <span class="va">v</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    hess_logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span></span>
-<span>            <span class="va">H</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p</span>, <span class="va">p</span><span class="op">)</span></span>
-<span>            <span class="va">H</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span>, <span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">1</span> <span class="op">/</span> <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="st">"observed"</span></span>
-<span>    <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">ll.exp.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span></span>
-<span><span class="va">s.exp.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span></span>
-<span><span class="va">H.exp.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rate.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rates</span>, fn <span class="op">=</span> <span class="va">ll.exp.known</span>, df <span class="op">=</span> <span class="va">df</span>,</span>
-<span>    hessian <span class="op">=</span> <span class="cn">TRUE</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span><span class="va">rate.known</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb40"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true"></a><span class="co">## Maximum likelihood estimator of type mle_numerical is normally distributed.</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true"></a><span class="co">## The estimates of the parameters are given by:</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true"></a><span class="co">## [1] 0.8619292 1.2164711 1.4701796</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true"></a><span class="co">## The standard error is  0.2090483 0.248311 0.2730054 .</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true"></a><span class="co">## The asymptotic 95% confidence interval of the parameters are given by:</span></span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true"></a><span class="co">##             2.5%    97.5%</span></span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true"></a><span class="co">## param1 0.5180754 1.205783</span></span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true"></a><span class="co">## param2 0.8080359 1.624906</span></span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true"></a><span class="co">## param3 1.0211257 1.919233</span></span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true"></a><span class="co">## The MSE of the estimator is  0.1798914 .</span></span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true"></a><span class="co">## The log-likelihood is  -56.65176 .</span></span>
-<span id="cb40-12"><a href="#cb40-12" aria-hidden="true"></a><span class="co">## The AIC is  119.3035 .</span></span></code></pre></div>
-</div>
-</div>
-</div>
-</div>
-
+Facilitates building likelihood models. It defines a number of generic methods for working with likelihoods, and a few functions that are strictly functions of these generic methods. It is designed to interoperate well with the algebraic.mle R package. It also comes with a likelihood contributions model, a likelihood model that is composed of multiple likelihood contributions assuming i.i.d. data. 
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-    <div class="license">
+    <div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/queelius/likelihood.model/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/queelius/likelihood.model/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>`use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license</li>
+<li>
+<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+</li>
 </ul>
 </div>
 
@@ -368,7 +106,7 @@ which is the density of the series system. Since the minimum of exponentially di
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>First Last <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/YOUR-ORCID-ID" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Alexander Towell <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0001-6443-9897" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
 
@@ -380,7 +118,7 @@ which is the density of the series system. Since the minimum of exponentially di
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by First Last.</p>
+<p>Developed by Alexander Towell.</p>
 </div>
 
 <div class="pkgdown">
