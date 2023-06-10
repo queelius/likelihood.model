@@ -220,104 +220,32 @@ res.exp.series <- optim(rates, fn = ll.exp.series, df = df, hessian = TRUE,
 print(res.exp.series$par)
 ```
 
-
 Each of these are more or less reasonable estimates of the true failure rate
 of the system, which is $(1.1 + 1.25 + 1.5) = 3.85$.
 
-However, we can combine each of these estimates into a weighted mean to get
-a better estimate. The weights are the number of observations for each
-component. We actually went ahead and analytically computed the MLE for
-this, also:
-
-```{r data-exp-series-stats}
-# print some summary statistics
-# first, show how many rows have k = j
-N <- rep(0, 3)
-for (j in 1:3) {
-    N[j] <- sum(df$k == j)
-    cat("counts(", j, ") = ", N[j], "\n")
-}
-
-t.sum <- sum(df$t)
-cat("total system lifetimes = ", t.sum, "\n")
-
-# sum of system lifetimes for k = j 
-t.sum.k <- rep(0, 3)
-for (j in 1:3) {
-    t.sum.k[j] <- sum(df$t[df$k == j])
-    cat("sum of system lifetimes for k = ", j, " = ", t.sum.k[j], "\n")
-}
-
-# MLE (analytical solution)
-# lambda_j = N_j / t_j
-(lambda.hat2 <- N / t.sum.k)
-res.exp.series$par
-
-res.exp.series$par[1] * N[1] / nrow(df) +
-    res.exp.series$par[2] * N[2] / nrow(df) +
-    res.exp.series$par[3] * N[3] / nrow(df)
-print(sum(rates))
-```
-
-We see that this is a pretty good estimator of the true failure rate of the
-system, but it tells us nothing about the failure rate of the components.
+We can combine each of these estimates into a weighted mean to get
+a better estimate (weighted by $n_j/n$ where $n_j$ is the number of
+observations of type $j$ and $n$ is the total number of observations),
+but this is not a likelihood-based estimator.
 
 #### Joint distribution of $T_i$ and $K_i$
 
 Instead of maximizing the conditional likelihood based on $T_i | K_i$,
-we should be maximizing the joint likelihood of $T_i$ and $K_i$:
+we should be maximizing the joint likelihood of $T_i$ and $K_i$.
 
-```{r loglik-exp-series-known}
-model.exp.known <- likelihood_contr_model$new(
-    obs_type = function(row) {
-        "observed"
-    },
-    logliks = list(
-        observed = function(row, rate) {
-            log(rate[row$k]) - sum(rate) * row$t
-        }
-    ),
-    scores = list(
-        observed = function(row, rate) {
-            v <- rep(-row$t, length(rate))
-            v[row$k] <- v[row$k] + 1 / rate[row$k]
-            v
-        }
-    ),
-    hess_logliks = list(
-        observed = function(row, rate) {
-            p <- length(rate)
-            H <- matrix(0, p, p)
-            H[row$k, row$k] <- -1 / rate[row$k]^2
-            H
-        }
-    )
-)
-ll.exp.known <- loglik(model.exp.known)
-s.exp.known <- score(model.exp.known)
-H.exp.known <- hess_loglik(model.exp.known)
-```
-
-
-
-```{r mle-exp-series-known}
-rate.known <- optim(rates, fn = ll.exp.known, gr = s.exp.known, df = df,
-    hessian = TRUE, control = list(fnscale = -1))
-
-summary(mle_numerical(rate.known))
-```
-
+We can also use method dispatching, so that when we create a
+likelihood contribution model, we only need to specify the
+observation types, and it can dispatch to log-likelihood
+function based on the observation type.
 
 ```{r}
 score.observed <- function(row, rate, ...) {
-    print("score.observed")
     v <- rep(-row$t, length(rate))
     v[row$k] <- v[row$k] + 1 / rate[row$k]
     v
 }
 
 hess_loglik.observed <- function(row, rate, ...) {
-    print("hess_loglik.observed")
     p <- length(rate)
     H <- matrix(0, p, p)
     H[row$k, row$k] <- -1 / rate[row$k]^2
@@ -327,32 +255,88 @@ hess_loglik.observed <- function(row, rate, ...) {
 loglik.observed <- function(row, rate, ...) {
     log(rate[row$k]) - sum(rate) * row$t
 }
-
 ```
 
-```{r}
-model.exp.known2 <- likelihood_contr_model$new(
-    obs_type = function(row) {
-        "observed"
-    }
+We see that we're just defining functions normally, which is nice
+for re-use, and it is common to have a large set of these kinds of
+functions. Now, to make use of them, you only need to define the
+`ob_type` function to correctly dispatch.
+
+```{r loglik-exp-series-known}
+model.exp.known <- likelihood_contr_model$new(
+    obs_type = function(row) "observed"
 )
-ll.exp.known2 <- loglik(model.exp.known2)
-s.exp.known2 <- score(model.exp.known2)
-H.exp.known2 <- hess_loglik(model.exp.known2)
-rate.known2 <- optim(rates, fn = ll.exp.known2, gr = s.exp.known2,
-    df = df, hessian = TRUE, control = list(fnscale = -1))
-
-sum((rate.known2$hessian-H.exp.known2(df, rate.known2$par))^2)
-
-H.exp.known2(df, rate.known2$par)
-
-summary(mle_numerical(rate.known2))
-
-rate.known2$hessian
-
 ```
 
+And now we can find the MLE as before:
+```{r mle-exp-series-known}
+rate.comp_cause_known.mle <- mle_numerical(
+    optim(
+        rates,
+        fn = loglik(model.exp.known),
+        gr = score(model.exp.known),
+        df = df,
+    hessian = TRUE, control = list(fnscale = -1)))
 
+summary(rate.comp_cause_known.mle)
+```
 
+### Case 3: Masked component cause
 
+Finally, we consider the case where we have *masked* component cause
+of failures. In this example, we consider a particular model in which
+the component that caused the system failure is in an observable
+candidate set that may include other components too. For instance,
+if we have a system with 3 components, and we observe that the system
+failed at time $t$, then we may know that the component that caused the
+system failure is in the set $\{1, 3\}$, but we don't know which.
+
+#### Candidate set models
+In every model we consider, we assume that the candidate set $\mathcal{C}_i$
+is only a function of the component lifetimes $T_{i 1},\ldots,T_{i m}$, $\theta$,
+and the right-censoring time $\tau_i$. That is, the candidate set $\mathcal{C}_i$
+is independent of any other factors (or held constant for the duration of the
+experiment), like ambient temperature, and these factors also have a neglible
+effect on the series system lifetime and thus we can ignore them.
+
+### Reduced likelihood model
+In the Bernoulli candidate set model, we make the following assumptions about
+how candidate sets are generated:
+
+  - $C_1$: The index of the failed component is in the candidate set,
+  i.e., $\Pr\{K_i \in \mathcal{C}_i\} = 1$, where
+  $K_i = \arg\min_j \{ T_{i j} : j = 1,\ldots,m\}$.
+
+  - $C_2$: The probability of $C_i$ given $K_i$ and $T_i$ is equally
+  probable when the failed component varies over the components in the candidate
+  set, i.e., $\Pr\{\mathcal{C}_i=c_i|K_i=j,T_i=t_i,\theta\} = \Pr\{C_i=c_i|K_i=j',T_i=t_i\}$ for
+  any $j,j' \in c_i$.
+    
+  - $C_3$: The masking probabilities are conditionally independent of $\theta$
+  given $K_i$ and $T_i$, i.e., $\Pr\{\mathcal{C}_i=c_i|K_i=j,T_i=t_i\}$ is not a
+  function of $\theta$.
+
+Using these simplifying assumptions, we can arrive at a reduced likelihood
+function that only depends on $\theta$ and the observed data and as long as our
+candidate set satisfies conditions $C_1$, $C_2$, and $C_3$, our reduced
+likelihood function obtains the same MLEs as the full likelihood function.
+
+We see that
+$$
+    \Pr\{\mathcal{C}_i=c_i,|K_i=j,T_i=t_i\} = g(c_i,t_i),
+$$
+since the probability cannot depend on $j$ by condition $C_2$ and cannot depend
+on $\theta$ by condition $C_3$. Thus, we can write the likelihood function as
+$$
+    L(\theta) = \prod_{i=1}^n f_{T_i}(t_i|\theta) g(c_i,t_i).
+$$
+
+We show that $g(c_i,t_i)$ is proportional to
+$$
+    g(c_i,t_i) \propto \sum_{j \in c_i} f_j(t_i|\theta_j) \prod_{l=j,l \neq j}^m R_l(t_i|\theta_l),
+$$
+and thus 
+
+Note, however, that different ways in which the conditions are met will yield
+MLEs with different sampling distributions, e.g., more or less efficient estimators.
 

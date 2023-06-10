@@ -265,109 +265,20 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 2.691628 4.273178 3.720431</span></span></code></pre>
 <p>Each of these are more or less reasonable estimates of the true failure rate of the system, which is <span class="math inline">\((1.1 + 1.25 + 1.5) = 3.85\)</span>.</p>
-<p>However, we can combine each of these estimates into a weighted mean to get a better estimate. The weights are the number of observations for each component. We actually went ahead and analytically computed the MLE for this, also:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># print some summary statistics</span></span>
-<span><span class="co"># first, show how many rows have k = j</span></span>
-<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">N</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">k</span> <span class="op">==</span> <span class="va">j</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"counts("</span>, <span class="va">j</span>, <span class="st">") = "</span>, <span class="va">N</span><span class="op">[</span><span class="va">j</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<pre><code><span><span class="co">## counts( 1 ) =  17 </span></span>
-<span><span class="co">## counts( 2 ) =  24 </span></span>
-<span><span class="co">## counts( 3 ) =  29</span></span></code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">t.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"total system lifetimes = "</span>, <span class="va">t.sum</span>, <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## total system lifetimes =  19.72759</span></span></code></pre>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># sum of system lifetimes for k = j </span></span>
-<span><span class="va">t.sum.k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">t.sum.k</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">k</span> <span class="op">==</span> <span class="va">j</span><span class="op">]</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"sum of system lifetimes for k = "</span>, <span class="va">j</span>, <span class="st">" = "</span>, <span class="va">t.sum.k</span><span class="op">[</span><span class="va">j</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<pre><code><span><span class="co">## sum of system lifetimes for k =  1  =  6.31582 </span></span>
-<span><span class="co">## sum of system lifetimes for k =  2  =  5.616639 </span></span>
-<span><span class="co">## sum of system lifetimes for k =  3  =  7.795127</span></span></code></pre>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># MLE (analytical solution)</span></span>
-<span><span class="co"># lambda_j = N_j / t_j</span></span>
-<span><span class="op">(</span><span class="va">lambda.hat2</span> <span class="op">&lt;-</span> <span class="va">N</span> <span class="op">/</span> <span class="va">t.sum.k</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 2.691654 4.273018 3.720273</span></span></code></pre>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 2.691628 4.273178 3.720431</span></span></code></pre>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">N</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">N</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="va">res.exp.series</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">*</span> <span class="va">N</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 3.660092</span></span></code></pre>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 3.85</span></span></code></pre>
-<p>We see that this is a pretty good estimator of the true failure rate of the system, but it tells us nothing about the failure rate of the components.</p>
+<p>We can combine each of these estimates into a weighted mean to get a better estimate (weighted by <span class="math inline">\(n_j/n\)</span> where <span class="math inline">\(n_j\)</span> is the number of observations of type <span class="math inline">\(j\)</span> and <span class="math inline">\(n\)</span> is the total number of observations), but this is not a likelihood-based estimator.</p>
 <div class="section level4">
 <h4 id="joint-distribution-of-t_i-and-k_i">Joint distribution of <span class="math inline">\(T_i\)</span> and <span class="math inline">\(K_i\)</span><a class="anchor" aria-label="anchor" href="#joint-distribution-of-t_i-and-k_i"></a>
 </h4>
-<p>Instead of maximizing the conditional likelihood based on <span class="math inline">\(T_i | K_i\)</span>, we should be maximizing the joint likelihood of <span class="math inline">\(T_i\)</span> and <span class="math inline">\(K_i\)</span>:</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model.exp.known</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="st">"observed"</span></span>
-<span>    <span class="op">}</span>,</span>
-<span>    logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span> <span class="op">*</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    scores <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="va">row</span><span class="op">$</span><span class="va">t</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span><span class="op">)</span></span>
-<span>            <span class="va">v</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">v</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span> <span class="op">/</span> <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span></span>
-<span>            <span class="va">v</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    hess_logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        observed <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
-<span>            <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span></span>
-<span>            <span class="va">H</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p</span>, <span class="va">p</span><span class="op">)</span></span>
-<span>            <span class="va">H</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span>, <span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">1</span> <span class="op">/</span> <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span></span>
-<span>            <span class="va">H</span></span>
-<span>        <span class="op">}</span></span>
-<span>    <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">ll.exp.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span></span>
-<span><span class="va">s.exp.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span></span>
-<span><span class="va">H.exp.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rate.known</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rates</span>, fn <span class="op">=</span> <span class="va">ll.exp.known</span>, gr <span class="op">=</span> <span class="va">s.exp.known</span>, df <span class="op">=</span> <span class="va">df</span>,</span>
-<span>    hessian <span class="op">=</span> <span class="cn">TRUE</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span><span class="va">rate.known</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Maximum likelihood estimator of type mle_numerical is normally distributed.</span></span>
-<span><span class="co">## The estimates of the parameters are given by:</span></span>
-<span><span class="co">## [1] 0.8619292 1.2164711 1.4701796</span></span>
-<span><span class="co">## The standard error is  0.2090484 0.248311 0.2730054 .</span></span>
-<span><span class="co">## The asymptotic 95% confidence interval of the parameters are given by:</span></span>
-<span><span class="co">##             2.5%    97.5%</span></span>
-<span><span class="co">## param1 0.5180752 1.205783</span></span>
-<span><span class="co">## param2 0.8080358 1.624906</span></span>
-<span><span class="co">## param3 1.0211256 1.919234</span></span>
-<span><span class="co">## The MSE of the estimator is  0.1798916 .</span></span>
-<span><span class="co">## The log-likelihood is  -56.65176 .</span></span>
-<span><span class="co">## The AIC is  119.3035 .</span></span></code></pre>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<p>Instead of maximizing the conditional likelihood based on <span class="math inline">\(T_i | K_i\)</span>, we should be maximizing the joint likelihood of <span class="math inline">\(T_i\)</span> and <span class="math inline">\(K_i\)</span>.</p>
+<p>We can also use method dispatching, so that when we create a likelihood contribution model, we only need to specify the observation types, and it can dispatch to log-likelihood function based on the observation type.</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">score.observed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"score.observed"</span><span class="op">)</span></span>
 <span>    <span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="va">row</span><span class="op">$</span><span class="va">t</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="va">v</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">v</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1</span> <span class="op">/</span> <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span></span>
 <span>    <span class="va">v</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">hess_loglik.observed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"hess_loglik.observed"</span><span class="op">)</span></span>
 <span>    <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span></span>
 <span>    <span class="va">H</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p</span>, <span class="va">p</span><span class="op">)</span></span>
 <span>    <span class="va">H</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span>, <span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">1</span> <span class="op">/</span> <span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span></span>
@@ -377,588 +288,22 @@
 <span><span class="va">loglik.observed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">rate</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">rate</span><span class="op">[</span><span class="va">row</span><span class="op">$</span><span class="va">k</span><span class="op">]</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rate</span><span class="op">)</span> <span class="op">*</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model.exp.known2</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="st">"observed"</span></span>
-<span>    <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">ll.exp.known2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.known2</span><span class="op">)</span></span>
-<span><span class="va">s.exp.known2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp.known2</span><span class="op">)</span></span>
-<span><span class="va">H.exp.known2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.exp.known2</span><span class="op">)</span></span>
-<span><span class="va">rate.known2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rates</span>, fn <span class="op">=</span> <span class="va">ll.exp.known2</span>, gr <span class="op">=</span> <span class="va">s.exp.known2</span>,</span>
-<span>    df <span class="op">=</span> <span class="va">df</span>, hessian <span class="op">=</span> <span class="cn">TRUE</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span>
-<span><span class="co">## [1] "score.observed"</span></span></code></pre>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">rate.known2</span><span class="op">$</span><span class="va">hessian</span><span class="op">-</span><span class="fu">H.exp.known2</span><span class="op">(</span><span class="va">df</span>, <span class="va">rate.known2</span><span class="op">$</span><span class="va">par</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span></code></pre>
-<pre><code><span><span class="co">## [1] 1.107345e-09</span></span></code></pre>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">H.exp.known2</span><span class="op">(</span><span class="va">df</span>, <span class="va">rate.known2</span><span class="op">$</span><span class="va">par</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span>
-<span><span class="co">## [1] "hess_loglik.observed"</span></span></code></pre>
-<pre><code><span><span class="co">##           [,1]      [,2]      [,3]</span></span>
-<span><span class="co">## [1,] -22.88262   0.00000   0.00000</span></span>
-<span><span class="co">## [2,]   0.00000 -16.21839   0.00000</span></span>
-<span><span class="co">## [3,]   0.00000   0.00000 -13.41706</span></span></code></pre>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span><span class="va">rate.known2</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>We see that we’re just defining functions normally, which is nice for re-use, and it is common to have a large set of these kinds of functions. Now, to make use of them, you only need to define the <code>ob_type</code> function to correctly dispatch.</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model.exp.known</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="st">"observed"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>And now we can find the MLE as before:</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rate.comp_cause_known.mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span></span>
+<span>        <span class="va">rates</span>,</span>
+<span>        fn <span class="op">=</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span>,</span>
+<span>        gr <span class="op">=</span> <span class="fu"><a href="../reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp.known</span><span class="op">)</span>,</span>
+<span>        df <span class="op">=</span> <span class="va">df</span>,</span>
+<span>    hessian <span class="op">=</span> <span class="cn">TRUE</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">rate.comp_cause_known.mle</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Maximum likelihood estimator of type mle_numerical is normally distributed.</span></span>
 <span><span class="co">## The estimates of the parameters are given by:</span></span>
 <span><span class="co">## [1] 0.8619292 1.2164711 1.4701796</span></span>
@@ -971,13 +316,37 @@
 <span><span class="co">## The MSE of the estimator is  0.1798916 .</span></span>
 <span><span class="co">## The log-likelihood is  -56.65176 .</span></span>
 <span><span class="co">## The AIC is  119.3035 .</span></span></code></pre>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rate.known2</span><span class="op">$</span><span class="va">hessian</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]     [,2]      [,3]</span></span>
-<span><span class="co">## [1,] -22.88265   0.0000   0.00000</span></span>
-<span><span class="co">## [2,]   0.00000 -16.2184   0.00000</span></span>
-<span><span class="co">## [3,]   0.00000   0.0000 -13.41706</span></span></code></pre>
 </div>
+</div>
+<div class="section level3">
+<h3 id="case-3-masked-component-cause">Case 3: Masked component cause<a class="anchor" aria-label="anchor" href="#case-3-masked-component-cause"></a>
+</h3>
+<p>Finally, we consider the case where we have <em>masked</em> component cause of failures. In this example, we consider a particular model in which the component that caused the system failure is in an observable candidate set that may include other components too. For instance, if we have a system with 3 components, and we observe that the system failed at time <span class="math inline">\(t\)</span>, then we may know that the component that caused the system failure is in the set <span class="math inline">\(\{1, 3\}\)</span>, but we don’t know which.</p>
+<div class="section level4">
+<h4 id="candidate-set-models">Candidate set models<a class="anchor" aria-label="anchor" href="#candidate-set-models"></a>
+</h4>
+<p>In every model we consider, we assume that the candidate set <span class="math inline">\(\mathcal{C}_i\)</span> is only a function of the component lifetimes <span class="math inline">\(T_{i 1},\ldots,T_{i m}\)</span>, <span class="math inline">\(\theta\)</span>, and the right-censoring time <span class="math inline">\(\tau_i\)</span>. That is, the candidate set <span class="math inline">\(\mathcal{C}_i\)</span> is independent of any other factors (or held constant for the duration of the experiment), like ambient temperature, and these factors also have a neglible effect on the series system lifetime and thus we can ignore them.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="reduced-likelihood-model">Reduced likelihood model<a class="anchor" aria-label="anchor" href="#reduced-likelihood-model"></a>
+</h3>
+<p>In the Bernoulli candidate set model, we make the following assumptions about how candidate sets are generated:</p>
+<ul>
+<li><p><span class="math inline">\(C_1\)</span>: The index of the failed component is in the candidate set, i.e., <span class="math inline">\(\Pr\{K_i \in \mathcal{C}_i\} = 1\)</span>, where <span class="math inline">\(K_i = \arg\min_j \{ T_{i j} : j = 1,\ldots,m\}\)</span>.</p></li>
+<li><p><span class="math inline">\(C_2\)</span>: The probability of <span class="math inline">\(C_i\)</span> given <span class="math inline">\(K_i\)</span> and <span class="math inline">\(T_i\)</span> is equally probable when the failed component varies over the components in the candidate set, i.e., <span class="math inline">\(\Pr\{\mathcal{C}_i=c_i|K_i=j,T_i=t_i,\theta\} = \Pr\{C_i=c_i|K_i=j',T_i=t_i\}\)</span> for any <span class="math inline">\(j,j' \in c_i\)</span>.</p></li>
+<li><p><span class="math inline">\(C_3\)</span>: The masking probabilities are conditionally independent of <span class="math inline">\(\theta\)</span> given <span class="math inline">\(K_i\)</span> and <span class="math inline">\(T_i\)</span>, i.e., <span class="math inline">\(\Pr\{\mathcal{C}_i=c_i|K_i=j,T_i=t_i\}\)</span> is not a function of <span class="math inline">\(\theta\)</span>.</p></li>
+</ul>
+<p>Using these simplifying assumptions, we can arrive at a reduced likelihood function that only depends on <span class="math inline">\(\theta\)</span> and the observed data and as long as our candidate set satisfies conditions <span class="math inline">\(C_1\)</span>, <span class="math inline">\(C_2\)</span>, and <span class="math inline">\(C_3\)</span>, our reduced likelihood function obtains the same MLEs as the full likelihood function.</p>
+<p>We see that <span class="math display">\[
+    \Pr\{\mathcal{C}_i=c_i,|K_i=j,T_i=t_i\} = g(c_i,t_i),
+\]</span> since the probability cannot depend on <span class="math inline">\(j\)</span> by condition <span class="math inline">\(C_2\)</span> and cannot depend on <span class="math inline">\(\theta\)</span> by condition <span class="math inline">\(C_3\)</span>. Thus, we can write the likelihood function as <span class="math display">\[
+    L(\theta) = \prod_{i=1}^n f_{T_i}(t_i|\theta) g(c_i,t_i).
+\]</span></p>
+<p>We show that <span class="math inline">\(g(c_i,t_i)\)</span> is proportional to <span class="math display">\[
+    g(c_i,t_i) \propto \sum_{j \in c_i} f_j(t_i|\theta_j) \prod_{l=j,l \neq j}^m R_l(t_i|\theta_l),
+\]</span> and thus</p>
+<p>Note, however, that different ways in which the conditions are met will yield MLEs with different sampling distributions, e.g., more or less efficient estimators.</p>
 </div>
 </div>
   </div>

@@ -74,7 +74,171 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-Facilitates building likelihood models. It defines a number of generic methods for working with likelihoods, and a few functions that are strictly functions of these generic methods. It is designed to interoperate well with the algebraic.mle R package. It also comes with a likelihood contributions model, a likelihood model that is composed of multiple likelihood contributions assuming i.i.d. data. 
+
+<div class="section level1"><div class="page-header"><h1 id="likelihood-contribution-model">Likelihood contribution model<a class="anchor" aria-label="anchor" href="#likelihood-contribution-model"></a>
+</h1></div></div>
+<div class="section level1">
+<h1 id="likelihoodmodel">
+<code>likelihood.model</code><a class="anchor" aria-label="anchor" href="#likelihoodmodel"></a>
+</h1>
+<p><code>likelihood.model</code> is an R package that allows you to…</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>You can install the development version of <code>likelihood.model</code> from <a href="https://github.com/queelius/likelihood.model" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"queelius/likelihood.model"</span><span class="op">)</span></span></code></pre></div>
+<p>Now, we load the requisite libraries:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">## </span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="co">## Attaching package: 'dplyr'</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="co">## The following objects are masked from 'package:stats':</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="co">## </span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="co">##     filter, lag</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a><span class="co">## The following objects are masked from 'package:base':</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a><span class="co">## </span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a><span class="co">##     intersect, setdiff, setequal, union</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/algebraic.mle" class="external-link">algebraic.mle</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/likelihood.model" class="external-link">likelihood.model</a></span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">## </span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="co">## Attaching package: 'likelihood.model'</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="co">## The following objects are masked from 'package:algebraic.mle':</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="co">## </span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="co">##     fim, score</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="exponentially-distributed-system-lifetime">Exponentially distributed system lifetime<a class="anchor" aria-label="anchor" href="#exponentially-distributed-system-lifetime"></a>
+</h2>
+<p>Suppose we have a population of systems which have exponentially distributed lifetimes, in particular, the <code>i</code>-th system has lifetime <code>T[i] ~ EXP(1)</code>. We are interested in the failure rate <code>1</code> of the systems.</p>
+<p>Let’s draw a sample of size <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;n%3D25%20%22n=25%22" alt="n=25">.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tibble.tidyverse.org/" class="external-link">tibble</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">rate</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="co">## # A tibble: 6 × 1</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="co">##        t</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="co">##    &lt;dbl&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a><span class="co">## 1 0.843 </span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="co">## 2 0.577 </span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="co">## 3 1.33  </span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a><span class="co">## 4 0.0316</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="co">## 5 0.0562</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a><span class="co">## 6 0.317</span></span></code></pre></div>
+<p>Analytically, we know that the MLE of the population failure rate is given by <code>rate.hat = mean(df$t)</code>, and that the sampling distribution of the MLE is given by <code>rate.hat ~ Normal(rate, rate^2 / n)</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">rate.hat</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co">## [1] 0.9562801</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="likelihood-model">Likelihood model<a class="anchor" aria-label="anchor" href="#likelihood-model"></a>
+</h3>
+<p>Let’s derive the likelihood model for this problem anyway.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loglik.exp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">dexp</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">t</span>, <span class="va">par</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">score.exp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fl">1</span><span class="op">/</span><span class="va">par</span> <span class="op">-</span> <span class="va">row</span><span class="op">$</span><span class="va">t</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">hess_loglik.exp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="op">-</span><span class="fl">1</span><span class="op">/</span><span class="va">par</span><span class="op">^</span><span class="fl">2</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">model.exp</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="st">"exp"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The MLE may be found with:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">exp.mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span></span>
+<span>        <span class="va">rate</span>,</span>
+<span>        fn <span class="op">=</span> <span class="fu"><a href="reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp</span><span class="op">)</span>,</span>
+<span>        gr <span class="op">=</span> <span class="fu"><a href="reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp</span><span class="op">)</span>,</span>
+<span>        df <span class="op">=</span> <span class="va">df</span>, hessian <span class="op">=</span> <span class="cn">TRUE</span>, lower <span class="op">=</span> <span class="fl">0</span>, upper <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>        method <span class="op">=</span> <span class="st">"Brent"</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">exp.mle</span><span class="op">)</span></span></code></pre></div>
+<p>We see that the two MLEs, the analytical one and the numerical one, are the same.</p>
+</div>
+<div class="section level3">
+<h3 id="right-censoring">Right-censoring<a class="anchor" aria-label="anchor" href="#right-censoring"></a>
+</h3>
+<p>Suppose that we only observe the systems in the sample for <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;1%20%221%22" alt="1"> unit of time. Any system that fails before time <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;1%20%221%22" alt="1"> is observed, but any system that fails after time <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;1%20%221%22" alt="1"> is not observed. We say that the system is <em>right-censored</em> because we only know that it survived at least until time <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;1%20%221%22" alt="1">.</p>
+<p>We could have also specified the likelihood model by explicitly specifying the log-likelihood, score, and Hessian functions:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model.exp.rt_censored</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">row</span><span class="op">$</span><span class="va">obs_type</span></span>
+<span>    <span class="op">}</span>,</span>
+<span>    logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        exact <span class="op">=</span> <span class="va">loglik.exp</span>,</span>
+<span>        right_censored <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">pexp</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">par</span>, lower.tail <span class="op">=</span> <span class="cn">FALSE</span>, log.p <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>        <span class="op">}</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df.rt_censored</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    obs_type <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/if_else.html" class="external-link">if_else</a></span><span class="op">(</span><span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">1</span>, <span class="st">"exact"</span>, <span class="st">"right_censored"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ll.exp.rt_censored</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.rt_censored</span><span class="op">)</span></span>
+<span><span class="va">exp.mle.rt_censored</span> <span class="op">&lt;-</span> <span class="fu">algebraic.mle</span><span class="fu">::</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rate</span>, fn <span class="op">=</span> <span class="va">ll.exp.rt_censored</span>, df <span class="op">=</span> <span class="va">df.rt_censored</span>,</span>
+<span>    hessian <span class="op">=</span> <span class="cn">TRUE</span>, lower <span class="op">=</span> <span class="fl">0</span>, upper <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    method <span class="op">=</span> <span class="st">"Brent"</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">exp.mle.rt_censored</span><span class="op">)</span></span></code></pre></div>
+<p>We can add more types of observations to the model, for example, we can add left-censored observations, where we only know that the system failed before time <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;.1%20%22.1%22" alt=".1">, interval censoring, where we only know that the system failed between times <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;.1%20%22.1%22" alt=".1"> and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;.9%20%22.9%22" alt=".9">, exact times when the system failed between <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;.9%20%22.9%22" alt=".9"> and <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;1.25%20%221.25%22" alt="1.25">, and right-censored observations, where we only know that the system survived at least until time <img src="https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&amp;space;%5Cbg_white&amp;space;1.25%20%221.25%22" alt="1.25">.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model.exp.censored</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>    obs_type <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">row</span><span class="op">$</span><span class="va">obs_type</span></span>
+<span>    <span class="op">}</span>,</span>
+<span>    logliks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        exact <span class="op">=</span> <span class="va">loglik.exp</span>,</span>
+<span>        right_censored <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">pexp</a></span><span class="op">(</span><span class="fl">1.25</span>, <span class="va">par</span>, lower.tail <span class="op">=</span> <span class="cn">FALSE</span>, log.p <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>        <span class="op">}</span>,</span>
+<span>        left_censored <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">pexp</a></span><span class="op">(</span><span class="fl">.1</span>, <span class="va">par</span>, log.p <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>        <span class="op">}</span>,</span>
+<span>        interval_censored <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">row</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">pexp</a></span><span class="op">(</span><span class="fl">.9</span>, <span class="va">par</span>, log.p <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">pexp</a></span><span class="op">(</span><span class="fl">.1</span>, <span class="va">par</span>, log.p <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>        <span class="op">}</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df.censored</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    obs_type <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>        <span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">.1</span> <span class="op">~</span> <span class="st">"left_censored"</span>,</span>
+<span>        <span class="va">t</span> <span class="op">&gt;</span> <span class="fl">.1</span> <span class="op">&amp;</span> <span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">.9</span> <span class="op">~</span> <span class="st">"interval_censored"</span>,</span>
+<span>        <span class="va">t</span> <span class="op">&gt;</span> <span class="fl">.9</span> <span class="op">&amp;</span> <span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">1.25</span> <span class="op">~</span> <span class="st">"exact"</span>,</span>
+<span>        <span class="va">t</span> <span class="op">&gt;</span> <span class="fl">1.25</span> <span class="op">~</span> <span class="st">"right_censored"</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ll.exp.censored</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.exp.censored</span><span class="op">)</span></span>
+<span><span class="va">s.exp.censored</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/score.html">score</a></span><span class="op">(</span><span class="va">model.exp.censored</span><span class="op">)</span></span>
+<span><span class="va">exp.mle.censored</span> <span class="op">&lt;-</span> <span class="fu">algebraic.mle</span><span class="fu">::</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/mle_numerical.html" class="external-link">mle_numerical</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rate</span>, fn <span class="op">=</span> <span class="va">ll.exp.censored</span>, df <span class="op">=</span> <span class="va">df.censored</span>,</span>
+<span>    hessian <span class="op">=</span> <span class="cn">TRUE</span>, method<span class="op">=</span><span class="st">"L-BFGS-B"</span>, lower <span class="op">=</span> <span class="fl">0</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, trace <span class="op">=</span> <span class="fl">1</span>, REPORT <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">exp.mle.censored</span><span class="op">)</span></span>
+<span><span class="fu">s.exp.censored</span><span class="op">(</span><span class="va">df.censored</span>, <span class="va">rate</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+</div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

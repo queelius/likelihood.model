@@ -77,24 +77,19 @@ hess_loglik.exp <- function(row, par) {
 }
 
 model.exp <- likelihood_contr_model$new(
-    obs_type = function(row) {
-        "exp"
-    }
+    obs_type = function(row) "exp"
 )
 ```
 
-We can retrieve the total log-likelihood and score functions with:
-```{r case-1-likelihood-model-ll-s}
-ll.exp <- loglik(model.exp)
-s.exp <- score(model.exp)
-```
-
-
-The MLE is just:
-```{r case-1-mle-likelihood}
-exp.mle <- mle_numerical(optim(rate, fn = ll.exp, gr = s.exp,
-    df = df, hessian = TRUE,
-    lower = 0, upper = 5, method = "Brent", control = list(fnscale = -1)))
+The MLE may be found with:
+```{r case-1-mle-likelihood, eval=F}
+exp.mle <- mle_numerical(
+    optim(
+        rate,
+        fn = loglik(model.exp),
+        gr = score(model.exp),
+        df = df, hessian = TRUE, lower = 0, upper = 5,
+        method = "Brent", control = list(fnscale = -1)))
 summary(exp.mle)
 ```
 
@@ -110,7 +105,7 @@ because we only know that it survived at least until time $1$.
 
 We could have also specified the likelihood model by explicitly specifying the
 log-likelihood, score, and Hessian functions:
-```{r case-1-likelihood-model-explicit}
+```{r case-1-likelihood-model-rt-censored, eval=F}
 model.exp.rt_censored <- likelihood_contr_model$new(
     obs_type = function(row) {
         row$obs_type
@@ -141,7 +136,7 @@ between times $.1$ and $.9$, exact times when the system failed between
 $.9$ and $1.25$, and right-censored observations, where we only know that the
 system survived at least until time $1.25$.
 
-```{r case-1-likelihood-model-explicit-left-censored, eval=F}
+```{r case-1-likelihood-model-censored, eval=F}
 model.exp.censored <- likelihood_contr_model$new(
     obs_type = function(row) {
         row$obs_type
