@@ -29,6 +29,7 @@
 #' @export likelihood_contr_model
 likelihood_contr_model <- R6::R6Class(
     "likelihood_contr_model",
+    
     public = list(
         obs_type = NULL,
         logliks = NULL,
@@ -74,6 +75,9 @@ likelihood_contr_model <- R6::R6Class(
                               hess_logliks = NULL,
                               assumptions = c("iid")) {
 
+            if(is.null(obs_type) | !is.function(obs_type)) {
+                stop("obs_type must be a function")
+            }
             self$obs_type <- obs_type
             self$logliks <- logliks
             self$scores <- scores
@@ -91,6 +95,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The total log-likelihood
         loglik = function(df, par, ...) {
+            self$validate(df, par)
             sapply(seq_len(nrow(df)), function(i) {
                 self$get_loglik(self$obs_type(df[i, ]))(df[i, ], par, ...)
             }) |> sum()
@@ -104,6 +109,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The total score
         score = function(df, par, ...) {
+            self$validate(df, par)
             res <- sapply(seq_len(nrow(df)), function(i) {
                 self$get_score(self$obs_type(df[i, ]))(df[i, ], par, ...)
             })
@@ -122,6 +128,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The Hessian of the log-likelihood
         hess_loglik = function(df, par, ...) {
+            self$validate(df, par)
             res <- lapply(seq_len(nrow(df)), function(i) {
                 self$get_hess_loglik(self$obs_type(df[i, ]))(df[i, ], par, ...)
             })
@@ -140,7 +147,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @return The loglikelihood contribution for an observation
         get_loglik = function(type) {
             if (!(type %in% names(self$logliks))) {
-                if (method_exists('loglik', type)) {
+                if (self$check_method('loglik', type)) {
                     self$logliks[[type]] <- get(paste0('loglik.', type))
                 } else {
                     stop(paste0("No `loglik` dispatcher for type: ", type))
@@ -166,7 +173,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @export
         get_score = function(type) {
             if (!(type %in% names(self$scores))) {
-                if (method_exists('score', type)) {
+                if (self$check_method('score', type)) {
                     self$scores[[type]] <- get(paste0('score.', type))
                 } else {
                     ll <- self$get_loglik(type)
@@ -198,7 +205,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @export
         get_hess_loglik = function(type) {
             if (!(type %in% names(self$hess_logliks))) {
-                if (method_exists('hess_loglik', type)) {
+                if (self$check_method('hess_loglik', type)) {
                     self$hess_logliks[[type]] <-
                         get(paste0('hess_loglik.', type))
                 } else {
@@ -212,6 +219,20 @@ likelihood_contr_model <- R6::R6Class(
                 }
             }
             self$hess_logliks[[type]]
+        }
+    ),
+
+    private = list(
+        validate = function(df, par) {
+            if(is.null(df) | !is.data.frame(df) | is.null(par)) {
+                stop("df and par must be provided")
+            }
+        },
+
+        check_method = function(method, type) {
+            if (!exists(paste0(method, '.', type))) {
+                stop(paste0("No `", method, "` dispatcher for type: ", type))
+            }
         }
     )
 )
@@ -308,4 +329,13 @@ fim.likelihood_contr_model <- function(model, par, data, ...) {
     fim_mc / R
 }
 
-
+#' Retrieve the assumptions in the likelihood contributions model.
+#'
+#' @param model The likelihood contribution model
+#' @param ... Additional arguments
+#'
+#' @return A list of assumptions
+#' @export
+assumptions.likelihood_contr_model <- function(model, ...) {
+    model$assumptions
+}

@@ -101,3 +101,15 @@ hess_loglik <- function(model, ...) {
 fim <- function(model, par, ...) {
     UseMethod("fim")
 }
+
+
+#' Retrieve the assumptions the likelihood model makes about the data.
+#'
+#' @param model The likelihood model
+#' @param ... Additional arguments
+#'
+#' @return A list of assumptions
+#' @export
+assumptions <- function(model, ...) {
+    UseMethod("assumptions")
+}
