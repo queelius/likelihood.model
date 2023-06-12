@@ -75,7 +75,7 @@ likelihood_contr_model <- R6::R6Class(
                               hess_logliks = NULL,
                               assumptions = c("iid")) {
 
-            if(is.null(obs_type) | !is.function(obs_type)) {
+            if (is.null(obs_type) | !is.function(obs_type)) {
                 stop("obs_type must be a function")
             }
             self$obs_type <- obs_type
@@ -85,6 +85,10 @@ likelihood_contr_model <- R6::R6Class(
 
             # iid assumption is always made
             self$assumptions <- unique(c("iid", assumptions))
+            class(self) <- c(
+                "likelihood_contr_model",
+                "likelihood_model",
+                class(self))
         },
 
         #' @description
@@ -95,10 +99,12 @@ likelihood_contr_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The total log-likelihood
         loglik = function(df, par, ...) {
-            self$validate(df, par)
-            sapply(seq_len(nrow(df)), function(i) {
-                self$get_loglik(self$obs_type(df[i, ]))(df[i, ], par, ...)
-            }) |> sum()
+            private$validate(df, par)
+            dfs <- split(df, self$obs_type(df))
+            # Compute log-likelihood for each type and sum results
+            sum(sapply(names(dfs), function(type) {
+                self$get_loglik(type)(dfs[[type]], par, ...)
+            }))
         },
 
         #' @description
@@ -109,15 +115,14 @@ likelihood_contr_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The total score
         score = function(df, par, ...) {
-            self$validate(df, par)
-            res <- sapply(seq_len(nrow(df)), function(i) {
-                self$get_score(self$obs_type(df[i, ]))(df[i, ], par, ...)
+            private$validate(df, par)
+            # Split data frame by observation type
+            dfs <- split(df, self$obs_type(df))
+            # Compute score for each type and sum results
+            res <- sapply(names(dfs), function(type) {
+                self$get_score(type)(dfs[[type]], par, ...)
             })
-            if (ncol(df) == 1) {
-                return(res |> sum())
-            } else {
-                return(res |> rowSums())
-            }
+            res |> rowSums()
         },
 
         #' @description
@@ -128,11 +133,14 @@ likelihood_contr_model <- R6::R6Class(
         #' @param ... additional arguments
         #' @return The Hessian of the log-likelihood
         hess_loglik = function(df, par, ...) {
-            self$validate(df, par)
-            res <- lapply(seq_len(nrow(df)), function(i) {
-                self$get_hess_loglik(self$obs_type(df[i, ]))(df[i, ], par, ...)
-            })
-            return(Reduce("+", res))
+            private$validate(df, par)
+            # Find unique observation types
+            types <- unique(self$obs_type(df))
+            # Compute and sum Hessians for each type
+            Reduce("+", lapply(types, function(type) {
+                obs_df <- df[self$obs_type(df) == type, ]
+                self$get_hess_loglik(type)(obs_df, par, ...)
+            }))
         },
 
         #' @description
@@ -147,7 +155,7 @@ likelihood_contr_model <- R6::R6Class(
         #' @return The loglikelihood contribution for an observation
         get_loglik = function(type) {
             if (!(type %in% names(self$logliks))) {
-                if (self$check_method('loglik', type)) {
+                if (private$check_method('loglik', type)) {
                     self$logliks[[type]] <- get(paste0('loglik.', type))
                 } else {
                     stop(paste0("No `loglik` dispatcher for type: ", type))
@@ -173,12 +181,15 @@ likelihood_contr_model <- R6::R6Class(
         #' @export
         get_score = function(type) {
             if (!(type %in% names(self$scores))) {
-                if (self$check_method('score', type)) {
+                if (private$check_method('score', type)) {
                     self$scores[[type]] <- get(paste0('score.', type))
                 } else {
                     ll <- self$get_loglik(type)
-                    s <- function(row, par) {
-                        numDeriv::grad(func = function(par) { ll(row, par) },
+                    s <- function(df, par) {
+                        numDeriv::grad(
+                            func = function(par) {
+                                ll(df, par)
+                            },
                             x = par,
                             method.args = list(r = 6))
                     }
@@ -205,13 +216,13 @@ likelihood_contr_model <- R6::R6Class(
         #' @export
         get_hess_loglik = function(type) {
             if (!(type %in% names(self$hess_logliks))) {
-                if (self$check_method('hess_loglik', type)) {
+                if (private$check_method('hess_loglik', type)) {
                     self$hess_logliks[[type]] <-
                         get(paste0('hess_loglik.', type))
                 } else {
                     ll <- self$get_loglik(type)
-                    J <- function(row, par) {
-                        numDeriv::hessian(func = function(par) { ll(row, par) },
+                    J <- function(df, par) {
+                        numDeriv::hessian(func = function(par) { ll(df, par) },
                             x = par,
                             method.args = list(r = 6))
                     }
@@ -224,15 +235,13 @@ likelihood_contr_model <- R6::R6Class(
 
     private = list(
         validate = function(df, par) {
-            if(is.null(df) | !is.data.frame(df) | is.null(par)) {
+            if (is.null(df) || !is.data.frame(df) || is.null(par)) {
                 stop("df and par must be provided")
             }
         },
 
         check_method = function(method, type) {
-            if (!exists(paste0(method, '.', type))) {
-                stop(paste0("No `", method, "` dispatcher for type: ", type))
-            }
+            exists(paste0(method, '.', type))
         }
     )
 )
@@ -279,56 +288,6 @@ hess_loglik.likelihood_contr_model <- function(model, ...) {
     function(df, par) model$hess_loglik(df, par, ...)
 }
 
-#' Compute an estimate of the Fisher information matrix (FIM) using MC
-#' simulation.
-#' 
-#' This is per-observation. If you want the total FIM, multiply by the
-#' number of observations in a sample from the DGP.
-#' 
-#' @param model likelihood model
-#' @param par true parameters
-#' @param data a sample from the assumed DGP (larger sample size is better)
-#' @param ... additional arguments
-#' @return MC estimate of the FIM
-#' @export
-#' @examples
-#' # generate data
-#' df <- data.frame(x = rnorm(10000, 0, 1))
-#' 
-#' # define likelihood model
-#' model <- likelihood_contr_model$new(
-#'   logliks = list(
-#'     normal = function(row, par) dnorm(row$x, par[1], par[2], log = TRUE)
-#'   ),
-#'   obs_type = function(row) "normal"
-#' )
-#' 
-#' # compute FIM
-#' fim(model, c(0, 1), df)
-fim.likelihood_contr_model <- function(model, par, data, ...) {
-
-    # compute scores
-    #scores <- apply(data, 1, function(row) model$score(row, par, ...))
-
-    # compute FIM
-    #tcrossprod(scores) / nrow(data)
-
-
-    # compute score. we only get a row of data at a time and apply
-    # the score function to it
-    fim_mc <- matrix(0, nrow = length(par), ncol = length(par))
-    R <- nrow(data)
-    for (i in 1:R) {
-        # compute score
-        s <- model$score(data[i, ], par, ...)
-
-        # compute FIM
-        fim_mc <- fim_mc + s %*% t(s)
-    }
-
-    fim_mc / R
-}
-
 #' Retrieve the assumptions in the likelihood contributions model.
 #'
 #' @param model The likelihood contribution model
@@ -339,3 +298,5 @@ fim.likelihood_contr_model <- function(model, par, data, ...) {
 assumptions.likelihood_contr_model <- function(model, ...) {
     model$assumptions
 }
+
+

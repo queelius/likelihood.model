@@ -16,10 +16,19 @@
     <loc>/index.html</loc>
   </url>
   <url>
+    <loc>/reference/assumptions.html</loc>
+  </url>
+  <url>
+    <loc>/reference/assumptions.likelihood_contr_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/fim.html</loc>
   </url>
   <url>
     <loc>/reference/fim.likelihood_contr_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/fim.likelihood_model.html</loc>
   </url>
   <url>
     <loc>/reference/hess_loglik.html</loc>
@@ -34,6 +43,9 @@
     <loc>/reference/likelihood.html</loc>
   </url>
   <url>
+    <loc>/reference/likelihood.likelihood_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/likelihood_contr_model.html</loc>
   </url>
   <url>
@@ -44,6 +56,12 @@
   </url>
   <url>
     <loc>/reference/loglik.likelihood_contr_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/mle.html</loc>
+  </url>
+  <url>
+    <loc>/reference/mle.likelihood_model.html</loc>
   </url>
   <url>
     <loc>/reference/score.html</loc>
