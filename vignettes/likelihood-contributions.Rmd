@@ -9,14 +9,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>")
 options(digits=3)
 ```
-```
+
 
 ## Installation
 
