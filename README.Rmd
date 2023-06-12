@@ -1,5 +1,5 @@
 ---
-title: "Likelihood contribution model"
+title: "Likelihood model"
 output: github_document
 ---
 

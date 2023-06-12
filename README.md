@@ -1,4 +1,4 @@
-Likelihood contribution model
+Likelihood model
 ================
 
 # `likelihood.model`
