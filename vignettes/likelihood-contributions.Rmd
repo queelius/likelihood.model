@@ -46,9 +46,9 @@ component lifetimes, i.e., $T_i = \min\{T_{i 1}, \ldots, T_{i m}\}$.
 Let's draw a sample for this model for $m=3$ and $\lambda = (1.1, 1.2, 1.3)$
 for a sample size of $n=90$.
 ```{r data-gen-exp-series}
-n <- 90
+n <- 150
 rates <- c(1.1, 1.2, 1.3)
-set.seed(1234)
+set.seed(1235)
 
 df <- data.frame(t1 = rexp(n, rates[1]),
                  t2 = rexp(n, rates[2]),
@@ -214,20 +214,21 @@ Note that `likelihood_model` objects have a default method for `mle`. Internally
 this method uses `optim` to maximize the log-likelihood, but it packs in some
 additional information and returns the result as an `mle_numerical` object.
 ```{r mle-observed-likelihood-model, cache=TRUE}
-mle.observed <- mle(model.observed, df, rates)
+mle.solver_observed <- mle(model.observed)
+mle.observed <- mle.solver_observed(df, par0 = rates)
 summary(mle.observed)
-loglik(model.observed)(df, algebraic.mle::point(mle.observed))
-
+loglik(model.observed)(df, point(mle.observed))
 ```
 
 
 We implement `hess_loglik.observed` for completeness.
 ```{r hess-loglike}
+#library(dplyr)
 hess_loglik.observed <- function(df, rates, ...) {
     p <- length(rates)
     H <- matrix(0, p, p)
 
-    counts <- df |> count(k)
+    counts <- df |> dplyr::count(k)
     for (j in 1:p) {
         H[j, j] <- -counts$n[j] / rates[j]^2
     }
@@ -236,7 +237,17 @@ hess_loglik.observed <- function(df, rates, ...) {
 H <- -algebraic.mle::fim(mle.observed)
 H[abs(H) < 1e-3] <- 0
 print(H)
-hess_loglik(model.observed)(df, algebraic.mle::point(mle.observed))
+hess_loglik(model.observed)(df, point(mle.observed))
+```
+
+
+Now, we use the Bootstrap method.
+
+```{r}
+
+mle.bs <- bootstrap(model.observed)
+
+boots <- mle.bs(df, par = rates, R = 10)
 ```
 
 ## Case 2: Right-censoring

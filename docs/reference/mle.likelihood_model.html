@@ -67,7 +67,7 @@ they can use this function to compute the MLE.</p>
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for likelihood_model</span></span>
-<span><span class="fu"><a href="mle.html">mle</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span>, <span class="va">par0</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="mle.html">mle</a></span><span class="op">(</span><span class="va">model</span>, algo <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -76,35 +76,60 @@ they can use this function to compute the MLE.</p>
 <dd><p>The likelihood model</p></dd>
 
 
-<dt>data</dt>
-<dd><p>The data</p></dd>
-
-
-<dt>par0</dt>
-<dd><p>The initial guess for the parameters</p></dd>
-
-
-<dt>control</dt>
-<dd><p>Control parameters</p></dd>
+<dt>algo</dt>
+<dd><p>The algorithm to use for the MLE solver. It should
+look like the <code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">stats::optim</a></code> function, i.e., take similar arguments
+(if you don't do anything with them in your algorithm, just accept them
+as <code>...</code> and don't do anything with them) and, especially, return a list with
+the same named values (it may also return more). Defaults to <code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">stats::optim</a></code>.</p></dd>
 
 
 <dt>...</dt>
 <dd><p>Additional arguments to pass into the likelihood model's
-<code>loglik</code> and <code>score</code> methods</p></dd>
+<code>loglik</code>, <code>score</code>, and <code>hess_loglik</code> construction methods</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
     
 
-<p>The MLE of the parameters</p>
-    </div>
+<p>An MLE solver (function) that returns an MLE object and accepts as
+arguments:</p><ul><li><p><code>df</code>: The data frame</p></li>
+<li><p><code>par0</code>: The initial guess for the parameters</p></li>
+<li><p><code>method</code>: additional optimization parameters to use, if available. <code>optim</code>
+makes use of this to choose among a variety of optimization algorithms.</p></li>
+<li><p><code>lower</code>: Lower bounds for the parameters</p></li>
+<li><p><code>upper</code>: Upper bounds for the parameters</p></li>
+<li><p><code>hessian</code>: If <code>TRUE</code>, then the Hessian of the log-likelihood function
+is computed</p></li>
+<li><p><code>control</code>: Control parameters for the optimization algorithm</p></li>
+<li><p><code>...</code>: Additional arguments to pass into loglikelihood and score functions</p></li>
+</ul></div>
     <div id="details">
     <h2>Details</h2>
     <p>This function uses the <code>optim</code> function to find the MLE of the
 parameters of a likelihood model. It uses the <code>loglik</code> and <code>score</code>
 methods to compute the log-likelihood and score function, respectively.</p>
-    </div>
+<p>There are a few interesting options for the <code>control</code> argument:</p><ul><li><p><code>method</code>: The optimization method to use. The default is <code>Nelder-Mead</code>,
+which is a derivative-free method. Other options like include <code>BFGS</code>
+are gradient-based methods, which may be preferable if you provide
+a <code>score</code> function (rather than using the default finite-difference). There
+is also the <code>SANN</code> method, which is a simulated annealing method. This
+method is useful for multimodal likelihood functions, where the MLE
+may be sensitive to the initial guess. The <code>SANN</code> method is a more global
+method, but it is slower and may require some tweaking. Regardless,
+if you do use <code>SANN</code>, you should follow it up with a local search
+method like <code>Nelder-Mead</code> to refine the solution.</p></li>
+<li><p><code>bootstrap</code>: If <code>TRUE</code>, then we estimate the sampling distribution of
+the MLE using the bootstrap. We compute other statistics, too, like
+the standard errors of the parameters, the covariance matrix of the
+parameters, the mean squared error of the parameters, the bias of the
+parameters, and an estimate of the coverage probability of the confidence
+intervals. If you are doing a simulation study, you may also know the
+true parameters, in which case you can provide them using the <code>par_true</code>
+control parameter. If you do, then all of the above estimates like MSE,
+bias, and coverage probability are also computed with respect to that.</p></li>
+</ul></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

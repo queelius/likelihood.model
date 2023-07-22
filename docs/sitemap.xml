@@ -22,6 +22,12 @@
     <loc>/reference/assumptions.likelihood_contr_model.html</loc>
   </url>
   <url>
+    <loc>/reference/boostrap.html</loc>
+  </url>
+  <url>
+    <loc>/reference/bootstrap.likelihood_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/fim.html</loc>
   </url>
   <url>
@@ -40,6 +46,12 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
+    <loc>/reference/lik.html</loc>
+  </url>
+  <url>
+    <loc>/reference/lik.likelihood_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/likelihood.html</loc>
   </url>
   <url>
@@ -52,10 +64,16 @@
     <loc>/reference/likelihood_model.html</loc>
   </url>
   <url>
+    <loc>/reference/likelihood_model_boot.html</loc>
+  </url>
+  <url>
     <loc>/reference/loglik.html</loc>
   </url>
   <url>
     <loc>/reference/loglik.likelihood_contr_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/lrt.html</loc>
   </url>
   <url>
     <loc>/reference/mle.html</loc>

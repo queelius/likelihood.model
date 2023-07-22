@@ -2,7 +2,7 @@
 % Please edit documentation in R/likelihood_contr_model.R
 \name{likelihood_contr_model}
 \alias{likelihood_contr_model}
-\title{Likelihood contribution model}
+\title{Likelihood_contr_model}
 \description{
 This class encapsulates all necessary parts of a likelihood model.
 A likelihood_model should provide the following methods:

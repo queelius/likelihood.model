@@ -1,13 +1,18 @@
-#' @name likelihood_model
-#' @title Likelihood model
-#' @description
-#' A general likelihood model framework. When a likelihood model implements
-#' this concept, it may be used to compute the log-likelihood, score, hessian
-#' of the log-likelihood, Fisher information matrix, and other quantities for
-#' the model. This framework is used to compute the standard errors of the
-#' parameters of the model, maximum likelihood estimates, the asymptotic
-#' sampling distribution of the MLE, and other quantities.
-NULL
+#' Likelihood model
+#'
+#' A general likelihood model framework. When an object `x` implements
+#' the concept of `likelihood_model`, it may be used to compute the
+#' standard errors of the parameters of the model, maximum likelihood
+#' estimates, the asymptotic sampling distribution of the MLE, and
+#' other quantities.
+#' 
+#' To satisfy the concept of `likelihood_model`, at a minimum the
+#' object must implement ``loglik`. For optimal results, it may
+#' also provide implementations for `score`, and `hess_loglik` methods.
+#' @export
+is_likelihood_model <- function(x) {
+    inherits(x, "likelihood_model")
+}
 
 #' Log-likelihood method
 #'
@@ -22,6 +27,20 @@ loglik <- function(model, ...) {
     UseMethod("loglik")
 }
 
+
+#' Likelihood method
+#'
+#' This function returns the likelihood function of a model.
+#'
+#' @param model The likelihood model
+#' @param ... Additional arguments
+#' @return A likelihood function to compute the likelihood given a data frame
+#' and parameters.
+#' @export
+lik <- function(model, ...) {
+    UseMethod("lik")
+}
+
 #' Score method
 #'
 #' This function returns the score function of a model
@@ -33,6 +52,40 @@ loglik <- function(model, ...) {
 #' @export
 score <- function(model, ...) {
     UseMethod("score")
+}
+
+#' Default score method
+#'
+#' In case a `score` method is not provided, this function will be used.
+#' It computes the score by numerical differentiation of the log-likelihood.
+#' @param model The likelihood model
+#' @param control Custom arguments to pass to `numDeriv::grad`.
+#' @param ... Additional arguments (to pass into `loglik`)
+#' @importFrom numDeriv grad
+#' @export
+score.likelihood_model <- function(
+    model,
+    control = list(),
+    ...) {
+
+    defaults <- list(
+        method = "Richardson",
+        side = NULL,
+        method.args = list(r = 6))
+    control <- modifyList(defaults, control)
+
+    ll <- loglik(model, ...)
+    function(df, par, ...) {
+        stopifnot(!is.null(df), !is.null(par))
+
+        grad(
+            func = ll,
+            x = par,
+            method = control$method,
+            side = control$side,
+            method.args = control$method.args,
+            ...)
+    }
 }
 
 #' Hessian of log-likelihood method
@@ -49,45 +102,82 @@ hess_loglik <- function(model, ...) {
     UseMethod("hess_loglik")
 }
 
-#' Fisher information matrix method
+#' Default method to compute the hessian of the log-likelihood.
 #' 
-#' Compute the Fisher information matrix (FIM), which is
-#' an expectation over the data-generating process (DGP):
+#' In case a `hess_loglik` method is not provided, this function will be
+#' used.
+#' It computes the hessian of the log-likelikhood using numerical
+#' differentiation.
 #' 
-#'     FIM(theta|x) = E[-loglik_hessian(x)(data,theta)] / n
-#'     FIM(theta|x) = E[score(x)(data,theta) %*% t(score(x)(data,theta))] / n
-#'
-#' where `x` is the likelihood model (say, exact failure times for
-#' exponentially distributed lifetimes), `theta` is the parameters
-#' of the likelihood model, `loglik_hessian` computes the hessian
-#' of the log-likelihood function on the `data` (which is a random
-#' quantity that we take the expectation over), and `score` is
-#' the score function, the gradient of the log-likelhood function, and
-#' `n` is the number of observations in each `data`. The FIM is
-#' the negative of the expected hessian of the log-likelihood function
-#' (or the expected outer product of the score function).
-#' 
-#' The FIM is a function of the parameters, and is used to compute
-#' the standard errors of the parameters. The FIM is also used to
-#' compute the covariance matrix of the parameters, which is used
-#' to compute the standard errors of the parameters.
-#' 
-#' The FIM is also used to compute the Cramer-Rao lower bound (CRLB),
-#' which is the inverse of the FIM. The CRLB is the minimum variance
-#' of an unbiased estimator of the parameters. The CRLB is used to
-#' compute the asymptotic relative efficiency (ARE) of an estimator
-#' of the parameters, which is the ratio of the variance of the
-#' estimator to the CRLB.
-#' 
-#' @param model likelihood model
-#' @param par true parameters
-#' @param ... additional arguments
-#' @return FIM
+#' @param model The likelihood model
+#' @param ... Additional arguments (to pass into `loglik`)
+#' @param control Custom arguments to pass to `numDeriv::hessian`.
+#' @importFrom numDeriv hessian
 #' @export
-fim <- function(model, par, ...) {
-    UseMethod("fim")
+hess_loglik.likelihood_model <- function(
+    model,
+    ...,
+    control = list()) {
+
+    defaults <- list(
+        method = "Richardson",
+        side = NULL,
+        method.args = list(r = 6))
+    control <- modifyList(defaults, control)
+
+    if (exists("score.", mode = "function", envir = environment(model))) {
+        ll <- loglik(model, ...)
+    } else {
+        ll <- lik(model, ...)
+    }
+    ll <- loglik(model, ...)
+    function(df, par, ...) {
+        stopifnot(!is.null(df), !is.null(par))
+        hessian(
+            func = ll,
+            x = par,
+            method = control$method,
+            side = control$side,
+            method.args = control$method.args,
+            ...)
+    }
 }
 
+#' Fisher information matrix method
+#' 
+#' This function calculates the Fisher information matrix (FIM), an expectation over
+#' the data-generating process (DGP). The FIM is a crucial concept in statistics
+#' because it provides information about the precision of estimates and the amount
+#' of information that data carries about an unknown parameter.
+#'
+#' FIM is a function of the parameters, and is used to compute the standard errors 
+#' of the parameters. It is also used to compute the covariance matrix of the parameters, 
+#' which is in turn used to compute standard errors of the parameters.
+#' 
+#' Additionally, FIM is used to compute the Cramer-Rao lower bound (CRLB), 
+#' the inverse of the FIM. CRLB represents the lower limit of the variance that 
+#' an unbiased estimator can attain. This is used to compute the asymptotic relative 
+#' efficiency (ARE) of an estimator of the parameters, which is the ratio of the 
+#' variance of the estimator to the CRLB.
+#'
+#' The function computes FIM(x)(theta), the FIM of the likelihood model `x`, is based
+#' on the following formulas:
+#' 
+#'     FIM(x)(theta) = E[-loglik_hessian(x)(ob,theta)]
+#'     FIM(x)(theta) = E[score(x)(ob,theta) %*% t(score(x)(ob,theta))]
+#' 
+#' where the expectation is taken with respect to ob ~ DGP. The first formula
+#' is the expected hessian of the log-likelihood function, and the second formula
+#' is the expected outer product of the score function. The two formulas are
+#' equivalent. 
+#' 
+#' @param model A likelihood model
+#' @param ... Additional arguments
+#' @return Function that computes the FIM given a sample and a parameter vector
+#' @export
+fim <- function(model, ...) {
+    UseMethod("fim")
+}
 
 #' Retrieve the assumptions the likelihood model makes about the data.
 #'
@@ -104,11 +194,9 @@ assumptions <- function(model, ...) {
 #' according to a likelihood model.
 #' 
 #' @param model The likelihood model
-#' @param data The data
-#' @param par0 The initial guess for the parameters
 #' @param ... Additional arguments
 #' @export
-mle <- function(model, data, par0, ...) {
+fit <- function(model, ...) {
     UseMethod("mle")
 }
 
@@ -123,52 +211,86 @@ mle <- function(model, data, par0, ...) {
 #' parameters of a likelihood model. It uses the `loglik` and `score`
 #' methods to compute the log-likelihood and score function, respectively.
 #' 
+#' There are a few interesting options for the `control` argument:
+#' 
+#' * `method`: The optimization method to use. The default is `Nelder-Mead`,
+#' which is a derivative-free method. Other options like include `BFGS`
+#' are gradient-based methods, which may be preferable if you provide
+#' a `score` function (rather than using the default finite-difference). There
+#' is also the `SANN` method, which is a simulated annealing method. This
+#' method is useful for multimodal likelihood functions, where the MLE
+#' may be sensitive to the initial guess. The `SANN` method is a more global
+#' method, but it is slower and may require some tweaking. Regardless,
+#' if you do use `SANN`, you should follow it up with a local search
+#' method like `Nelder-Mead` to refine the solution.
+#' 
 #' @param model The likelihood model
-#' @param data The data
-#' @param par0 The initial guess for the parameters
-#' @param control Control parameters
+#' @param algo The algorithm to use for the MLE solver. It should
+#' look like the `stats::optim` function, i.e., take similar arguments
+#' (if you don't do anything with them in your algorithm, just accept them
+#' as `...` and don't do anything with them) and, especially, return a list with
+#' the same named values (it may also return more). Defaults to `stats::optim`.
 #' @param ... Additional arguments to pass into the likelihood model's
-#'            `loglik` and `score` methods
-#' @return The MLE of the parameters
-#' @importFrom stats optim
+#' `loglik`, `score`, and `hess_loglik` construction methods
+#' @return An MLE solver (function) that returns an MLE object and accepts as
+#' arguments:
+#' - `df`: The data frame
+#' - `par0`: The initial guess for the parameters
+#' - `method`: additional optimization parameters to use, if available. `optim`
+#'    makes use of this to choose among a variety of optimization algorithms.
+#' - `lower`: Lower bounds for the parameters
+#' - `upper`: Upper bounds for the parameters
+#' - `hessian`: If `TRUE`, then the Hessian of the log-likelihood function
+#'    is computed
+#' - `control`: Control parameters for the optimization algorithm
+#' - `...`: Additional arguments to pass into loglikelihood and score functions
+#' 
 #' @importFrom algebraic.mle mle_numerical
+#' @importFrom stats optim
 #' @export
-mle.likelihood_model <- function(
-    model, data, par0, control = list(), ...) {
+fit.likelihood_model <- function(model, algo = stats::optim,
+    use_numerical_hess = FALSE, ...) {
 
-    stopifnot(!is.null(par0), !is.null(data))
+    ll <- loglik(model, ...)
+    s <- score(model, ...)
+    H <- hess_loglik(model, ...)
 
-    defaults <- list(
-        lower = rep(-Inf, length(par0)),
-        upper = rep(Inf, length(par0)),
-        method = "Nelder-Mead",
-        sann_sampler = NULL,
-        hessian = TRUE)
-    control <- modifyList(defaults, control)
-    ll <- loglik(model)
-    s <- NULL
-    # which methods use gradient?
-    if (control$method %in% c("BFGS", "CG", "L-BFGS-B")) {
-        s <- score(model)
+
+    function(
+        df,
+        par0,
+        method = c("Nelder-Mead", "BFGS", "SANN", "CG", "L-BFGS-B", "Brent"),
+        lower = -Inf, upper = Inf,
+        hessian = TRUE,
+        control = list(), ...) {
+
+        stopifnot(!is.null(par0), is.data.frame(df))
+
+        method <- match.arg(method)
+
+        defaults <- list(
+            fnscale = -1,
+            maxit = 1000L)
+        control <- modifyList(defaults, control)
+
+        res <- algo(
+            par = par0,
+            fn = function(par, ...) ll(df, par, ...),
+            gr = function(par, ...) s(df, par, ...),
+            ...,
+            method = method,
+            lower = lower,
+            upper = upper,
+            hessian = hessian && use_numerical_hess,
+            control = control)
+
+        if (hessian && !use_numerical_hess) {
+            res$hessian <- H(df, res$par, ...)
+        }
+
+        mle_numerical(res, superclasses = "mle_likelihood_model")
     }
-
-    res <- optim(
-        par = par0,
-        fn = function(par) ll(data, par, ...),
-        gr = if (is.null(s)) NULL else function(par) s(data, par, ...),
-        method = control$method,
-        lower = control$lower,
-        upper = control$upper,
-        hessian = control$hessian,
-        control = list(fnscale=-1, reltol=1e-8, maxit=1000))
-
-    if (is.null(res$hessian)) {
-        res$hessian <- hess_loglik(model)(data, res$par, ...)
-    }
-
-    mle_numerical(res)
 }
-
 
 #' Likelihood method
 #' 
@@ -177,7 +299,7 @@ mle.likelihood_model <- function(
 #' @param model The likelihood model
 #' @param ... Additional arguments to pass into the `loglik` function
 #' @return A likelihood function to compute the likelihood given a data frame
-likelihood.likelihood_model <- function(model, ...) {
+lik.likelihood_model <- function(model, ...) {
     ll <- loglik(model, ...)
     function(df, par, ...) {
         exp(ll(df, par, ...))
@@ -187,61 +309,41 @@ likelihood.likelihood_model <- function(model, ...) {
 #' Default implementation of the Fisher information matrix (FIM)
 #' for a likelihood model
 #' 
-#' Since we do not assume a particular DGP, and often times it is
-#' difficult to compute the FIM analytically, we use the empirical
-#' FIM, which is the average of the outer product of the score
-#' function over a empirical sample (`data`). The empirical FIM
-#' is an estimate of the true FIM.
-#' 
-#' It has a number of uses, e.g., its inverse is the Cramer-Rao
-#' lower bound (CRLB), which is the minimum variance of an unbiased
-#' estimator of the parameters. The CRLB has a number of uses,
-#' such as computing the asymptotic sampling distribution of the
-#' maximum likelihood estimator (MLE) of the parameters for a specified
-#' likelihood model, which is asymptotically normal with mean
-#' equal to the true parameters and variance equal to the inverse
-#' of the FIM. This may be used to compute standard errors of the
-#' parameters, confidence intervals, and other quantities.
-#' 
-#' This is per-observation. If you want the total FIM, multiply by the
-#' number of observations for a given data set.
-#' 
-#' If the true parameters are not known, then you can use an MLE
-#' or some other value (say in a hypothesis test) for the parameters.
+#' This is an empirical FIM, which is the average of the outer product
+#' of the score function over a empirical sample (`data`) or a large simulated
+#' sample. The empirical FIM is an estimate of the true FIM.
 #' 
 #' @param model The likelihood model
-#' @param par The true parameters
-#' @param data The data
-#' @param ... Additional arguments
-#' @return The empirical FIM
-#' @examples
-#' # generate data
-#' df <- data.frame(x = rnorm(10000, 0, 1))
-#' 
-#' # define likelihood model
-#' model <- likelihood_contr_model$new(
-#'   logliks = list(
-#'     normal = function(row, par) dnorm(row$x, par[1], par[2], log = TRUE)
-#'   ),
-#'   obs_type = function(row) "normal"
-#' )
-#' 
-#' # compute FIM
-#' fim(model, c(0, 1), df)
+#' @param ... Additional arguments to pass into the score and hess_loglik function
+#' generators.
+#' @return The empirical FIM function, which takes as arguments:
+#' - `par`: The parameter vector
+#' - `df`: a data frame of observations in the sample used to estimate the FIM. If
+#' you can do a Monte-carlo simulation, just take a very large sample and that should
+#' give you a very good estimate of the FIM.
 #' @export
-fim.likelihood_model <- function(model, par, data, ...) {
-    ## scores <- apply(data, 1, function(row) model$score(row, par, ...))
-    ## tcrossprod(scores) / nrow(data)
-    # fim_mc <- matrix(0, nrow = length(par), ncol = length(par))
-    #R <- nrow(data)
-    #for (i in 1:R) {
-    #    s <- model$score(data[i, ], par, ...)
-    #    fim_mc <- fim_mc + s %*% t(s)
-    #}
-    #fim_mc / R
-    s <- score(model)
-    Reduce("+",
-        lapply(split(data, seq_len(nrow(data))),
-            function(row) { s(row, par) }),
-        function(s) tcrossprod(as.matrix(s))) / nrow(data)
+fim.likelihood_model <- function(model, ...) {
+
+    s <- score(model, ...)
+    H <- hess_loglik(model, ...)
+
+    function(par, df, method = "vectorized", ...) {
+
+        stopifnot(is.data.frame(df), !is.null(par))
+
+        p <- length(par)
+        R <- nrow(df)
+
+        if (method == "iteration") {
+            fim_mc <- matrix(rep(0, p*p), nrow = p, ncol = p)
+            for (i in seq_len(R)) {
+                si <- s(df[i, ], par, ...)
+                fim_mc <- fim_mc + si %*% t(si)
+            }
+            return(fim_mc / R)
+        } else { # if (method == "vectorized") {
+            scores <- apply(df, 1, function(row) s(as.data.frame(t(row)), par, ...))
+            return(tcrossprod(scores) / R)
+        }
+    }
 }

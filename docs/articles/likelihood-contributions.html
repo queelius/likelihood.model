@@ -105,7 +105,7 @@
 <p>Consider a series system with <span class="math inline">\(m\)</span> components, where the <span class="math inline">\(p\)</span>th component in the <span class="math inline">\(i\)</span>-th system has lifetime <span class="math inline">\(T_{i p}\)</span> with rate <span class="math inline">\(\lambda_p\)</span>, and <span class="math inline">\(T_{i j}\)</span> for all <span class="math inline">\(i,j\)</span> are independent. The system lifetime is the minimum of the component lifetimes, i.e., <span class="math inline">\(T_i = \min\{T_{i 1}, \ldots, T_{i m}\}\)</span>.</p>
 <p>Let’s draw a sample for this model for <span class="math inline">\(m=3\)</span> and <span class="math inline">\(\lambda = (1.1, 1.2, 1.3)\)</span> for a sample size of <span class="math inline">\(n=90\)</span>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">90</span></span>
+<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
 <span><span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.1</span>, <span class="fl">1.2</span>, <span class="fl">1.3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
 <span></span>
@@ -124,13 +124,13 @@
 <span>    <span class="op">}</span></span>
 <span><span class="op">}</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        t1    t2 t3       t k</span></span>
-<span><span class="co">#&gt; 1      NA 0.217 NA 0.21695 2</span></span>
-<span><span class="co">#&gt; 2 0.22433    NA NA 0.22433 1</span></span>
-<span><span class="co">#&gt; 3 0.00598    NA NA 0.00598 1</span></span>
-<span><span class="co">#&gt; 4      NA 0.620 NA 0.61963 2</span></span>
-<span><span class="co">#&gt; 5 0.35198    NA NA 0.35198 1</span></span>
-<span><span class="co">#&gt; 6 0.08177    NA NA 0.08177 1</span></span></code></pre></div>
+<span><span class="co">#&gt;        t1     t2    t3       t k</span></span>
+<span><span class="co">#&gt; 1      NA     NA 0.559 0.55902 3</span></span>
+<span><span class="co">#&gt; 2      NA 0.1307    NA 0.13072 2</span></span>
+<span><span class="co">#&gt; 3 0.00598     NA    NA 0.00598 1</span></span>
+<span><span class="co">#&gt; 4      NA     NA 0.451 0.45065 3</span></span>
+<span><span class="co">#&gt; 5      NA 0.0164    NA 0.01638 2</span></span>
+<span><span class="co">#&gt; 6 0.08177     NA    NA 0.08177 1</span></span></code></pre></div>
 <p>Column <span class="math inline">\(t_k\)</span> is the failure time of the <span class="math inline">\(k\)</span>-th component, column <span class="math inline">\(t\)</span> is the column for the series system lifetime, the same as <span class="math inline">\(t_k\)</span>, and column <span class="math inline">\(k\)</span> is the component that caused the system failure.</p>
 <p>We see that the component cause of failure is observed and the other component lifetimes are not observed (NA).</p>
 <p>In what follows, we consider two cases of masking or censoring, or otherwise <em>incomplete data</em> of some form.</p>
@@ -211,14 +211,14 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span><span class="va">rates</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span>, df <span class="op">=</span> <span class="va">df</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fnscale <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $par</span></span>
-<span><span class="co">#&gt; [1] 1.22 1.04 1.08</span></span>
+<span><span class="co">#&gt; [1] 1.15 1.17 1.26</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $value</span></span>
-<span><span class="co">#&gt; [1] -80.1</span></span>
+<span><span class="co">#&gt; [1] -822</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $counts</span></span>
 <span><span class="co">#&gt; function gradient </span></span>
-<span><span class="co">#&gt;       92       NA </span></span>
+<span><span class="co">#&gt;       74       NA </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $convergence</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
@@ -227,29 +227,31 @@
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
 <p>Note that <code>likelihood_model</code> objects have a default method for <code>mle</code>. Internally, this method uses <code>optim</code> to maximize the log-likelihood, but it packs in some additional information and returns the result as an <code>mle_numerical</code> object.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mle.observed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mle.html">mle</a></span><span class="op">(</span><span class="va">model.observed</span>, <span class="va">df</span>, <span class="va">rates</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">mle.solver_observed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mle.html">mle</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span></span>
+<span><span class="va">mle.observed</span> <span class="op">&lt;-</span> <span class="fu">mle.solver_observed</span><span class="op">(</span><span class="va">df</span>, par0 <span class="op">=</span> <span class="va">rates</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mle.observed</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Maximum likelihood estimator of type mle_numerical is normally distributed.</span></span>
+<span><span class="co">#&gt; Maximum likelihood estimator of type likelihood_contr_model is normally distributed.</span></span>
 <span><span class="co">#&gt; The estimates of the parameters are given by:</span></span>
-<span><span class="co">#&gt; [1] 1.22 1.04 1.08</span></span>
-<span><span class="co">#&gt; The standard error is  0.213 0.196 0.2 .</span></span>
+<span><span class="co">#&gt; [1] 1.15 1.17 1.26</span></span>
+<span><span class="co">#&gt; The standard error is  0.0642 0.0648 0.0672 .</span></span>
 <span><span class="co">#&gt; The asymptotic 95% confidence interval of the parameters are given by:</span></span>
-<span><span class="co">#&gt;         2.5% 97.5%</span></span>
-<span><span class="co">#&gt; param1 0.874  1.57</span></span>
-<span><span class="co">#&gt; param2 0.716  1.36</span></span>
-<span><span class="co">#&gt; param3 0.747  1.40</span></span>
-<span><span class="co">#&gt; The MSE of the estimator is  0.124 .</span></span>
-<span><span class="co">#&gt; The log-likelihood is  -80.1 .</span></span>
-<span><span class="co">#&gt; The AIC is  166 .</span></span>
+<span><span class="co">#&gt;        2.5% 97.5%</span></span>
+<span><span class="co">#&gt; param1 1.04  1.26</span></span>
+<span><span class="co">#&gt; param2 1.06  1.28</span></span>
+<span><span class="co">#&gt; param3 1.15  1.37</span></span>
+<span><span class="co">#&gt; The MSE of the estimator is  0.0128 .</span></span>
+<span><span class="co">#&gt; The log-likelihood is  -822 .</span></span>
+<span><span class="co">#&gt; The AIC is  1650 .</span></span>
 <span><span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, <span class="fu">algebraic.mle</span><span class="fu">::</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/point.html" class="external-link">point</a></span><span class="op">(</span><span class="va">mle.observed</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] -80.1</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] -822</span></span></code></pre></div>
 <p>We implement <code>hess_loglik.observed</code> for completeness.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hess_loglik.observed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">rates</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="va">hess_loglik.observed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">rates</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span></span>
 <span>    <span class="va">H</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">p</span>, <span class="va">p</span><span class="op">)</span></span>
 <span></span>
-<span>    <span class="va">counts</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">k</span><span class="op">)</span></span>
+<span>    <span class="va">counts</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">k</span><span class="op">)</span></span>
 <span>    <span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="va">H</span><span class="op">[</span><span class="va">j</span>, <span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="va">counts</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">/</span> <span class="va">rates</span><span class="op">[</span><span class="va">j</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span></span>
 <span>    <span class="op">}</span></span>
@@ -258,15 +260,37 @@
 <span><span class="va">H</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fu">algebraic.mle</span><span class="fu">::</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/fim.html" class="external-link">fim</a></span><span class="op">(</span><span class="va">mle.observed</span><span class="op">)</span></span>
 <span><span class="va">H</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">H</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">H</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      [,1]  [,2]  [,3]</span></span>
-<span><span class="co">#&gt; [1,]  -22   0.0   0.0</span></span>
-<span><span class="co">#&gt; [2,]    0 -25.9   0.0</span></span>
-<span><span class="co">#&gt; [3,]    0   0.0 -25.1</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,] -243    0    0</span></span>
+<span><span class="co">#&gt; [2,]    0 -238    0</span></span>
+<span><span class="co">#&gt; [3,]    0    0 -221</span></span>
 <span><span class="fu"><a href="../reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, <span class="fu">algebraic.mle</span><span class="fu">::</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/point.html" class="external-link">point</a></span><span class="op">(</span><span class="va">mle.observed</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      [,1]  [,2]  [,3]</span></span>
-<span><span class="co">#&gt; [1,]  -22   0.0   0.0</span></span>
-<span><span class="co">#&gt; [2,]    0 -25.9   0.0</span></span>
-<span><span class="co">#&gt; [3,]    0   0.0 -25.1</span></span></code></pre></div>
+<span><span class="co">#&gt;           [,1]      [,2]      [,3]</span></span>
+<span><span class="co">#&gt; [1,] -2.43e+02 -5.24e-09 -4.87e-09</span></span>
+<span><span class="co">#&gt; [2,] -5.24e-09 -2.38e+02 -9.56e-09</span></span>
+<span><span class="co">#&gt; [3,] -4.87e-09 -9.56e-09 -2.21e+02</span></span></code></pre></div>
+<p>Now, we use the Bootstrap method.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mle.html">mle</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">model.observed</span>, df <span class="op">=</span> <span class="va">df</span>, par0 <span class="op">=</span> <span class="va">rates</span>,</span>
+<span>    control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>bootstrap <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; function (df, par0, method = c("Nelder-Mead", "BFGS", "SANN", </span></span>
+<span><span class="co">#&gt;     "CG", "L-BFGS-B", "Brent"), lower = -Inf, upper = Inf, hessian = TRUE, </span></span>
+<span><span class="co">#&gt;     control = list(), ...) </span></span>
+<span><span class="co">#&gt; {</span></span>
+<span><span class="co">#&gt;     stopifnot(!is.null(par0), is.data.frame(df))</span></span>
+<span><span class="co">#&gt;     method &lt;- match.arg(method)</span></span>
+<span><span class="co">#&gt;     defaults &lt;- list(fnscale = -1, maxit = 1000L)</span></span>
+<span><span class="co">#&gt;     control &lt;- modifyList(defaults, control)</span></span>
+<span><span class="co">#&gt;     res &lt;- algo(par = par0, fn = function(par, ...) ll(df, par, </span></span>
+<span><span class="co">#&gt;         ...), gr = function(par, ...) s(df, par, ...), ..., method = method, </span></span>
+<span><span class="co">#&gt;         lower = lower, upper = upper, hessian = FALSE, control = control)</span></span>
+<span><span class="co">#&gt;     if (hessian) {</span></span>
+<span><span class="co">#&gt;         res$hessian &lt;- H(df, res$par, ...)</span></span>
+<span><span class="co">#&gt;     }</span></span>
+<span><span class="co">#&gt;     mle_numerical(res, superclasses = class(model))</span></span>
+<span><span class="co">#&gt; }</span></span>
+<span><span class="co">#&gt; &lt;bytecode: 0x55827db2f4d8&gt;</span></span>
+<span><span class="co">#&gt; &lt;environment: 0x55827d403fd8&gt;</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="case-2-right-censoring">Case 2: Right-censoring<a class="anchor" aria-label="anchor" href="#case-2-right-censoring"></a>
@@ -276,7 +300,7 @@
 <p>As a first stab, you might be inclined to just ignore the censored data. However, this is not a good idea, because it will lead to biased estimates. This is problematic because then we are estimating the parameters of a truncated distribution, <span class="math inline">\(T_i | T_i &lt; \tau\)</span>, rather than the original distribution, <span class="math inline">\(S_i, \tau_i\)</span> where <span class="math inline">\(S_i = T_i\)</span> if <span class="math inline">\(T_i &lt; \tau_i\)</span> and otherwise <span class="math inline">\(S_i = \tau_i\)</span>. This is a well-known problem in statistics, and it is why we need to use <em>survival analysis</em> techniques to handle right-censored data.</p>
 <p>This is similiar to the earlier problem we described where we said it was a mistake to only focus on the component cause of failure and estimate the parameters of the components independently. In that case, we would be estimating component <span class="math inline">\(j\)</span>’s parameters from the truncated distribution, <span class="math inline">\(T_{i j} | K_i = j\)</span>, rather than the original distribution, <span class="math inline">\(T_i = \min\{T_{i 1}, \ldots, T_{i m}\}\)</span>. In either case, the censoring or masking mechanisms must not be ignored, otherwise we will get biased estimates.</p>
 <p>Here’s what that right-censored data looks like, with right-censoring time of <span class="math inline">\(\tau = 0.5\)</span>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># if df$t &gt; .5, then the system was right-censored</span></span>
 <span><span class="va">df.censored</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    censored <span class="op">=</span> <span class="va">t</span> <span class="op">&gt;</span> <span class="fl">.5</span>,</span>
@@ -286,15 +310,15 @@
 <span><span class="va">df.censored</span><span class="op">[</span><span class="va">df.censored</span><span class="op">[</span>,<span class="st">"censored"</span><span class="op">]</span>, <span class="st">"k"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span><span class="va">df.censored</span><span class="op">[</span><span class="va">df.censored</span><span class="op">[</span>,<span class="st">"censored"</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"t"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df.censored</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        t1    t2 t3       t  k censored</span></span>
-<span><span class="co">#&gt; 1      NA 0.217 NA 0.21695  2    FALSE</span></span>
-<span><span class="co">#&gt; 2 0.22433    NA NA 0.22433  1    FALSE</span></span>
-<span><span class="co">#&gt; 3 0.00598    NA NA 0.00598  1    FALSE</span></span>
-<span><span class="co">#&gt; 4      NA    NA NA 0.50000 NA     TRUE</span></span>
-<span><span class="co">#&gt; 5 0.35198    NA NA 0.35198  1    FALSE</span></span>
-<span><span class="co">#&gt; 6 0.08177    NA NA 0.08177  1    FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt;        t1     t2    t3       t  k censored</span></span>
+<span><span class="co">#&gt; 1      NA     NA    NA 0.50000 NA     TRUE</span></span>
+<span><span class="co">#&gt; 2      NA 0.1307    NA 0.13072  2    FALSE</span></span>
+<span><span class="co">#&gt; 3 0.00598     NA    NA 0.00598  1    FALSE</span></span>
+<span><span class="co">#&gt; 4      NA     NA 0.451 0.45065  3    FALSE</span></span>
+<span><span class="co">#&gt; 5      NA 0.0164    NA 0.01638  2    FALSE</span></span>
+<span><span class="co">#&gt; 6 0.08177     NA    NA 0.08177  1    FALSE</span></span></code></pre></div>
 <p>We cosntruct their censoring functions with:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loglik.censored</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">rates</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">t</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
@@ -320,16 +344,16 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mle.censored</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Maximum likelihood estimator of type mle_numerical is normally distributed.</span></span>
 <span><span class="co">#&gt; The estimates of the parameters are given by:</span></span>
-<span><span class="co">#&gt; [1] 1.45 0.92 1.11</span></span>
-<span><span class="co">#&gt; The standard error is  0.265 0.211 0.232 .</span></span>
+<span><span class="co">#&gt; [1] 1.17 1.21 1.26</span></span>
+<span><span class="co">#&gt; The standard error is  0.0713 0.0724 0.0739 .</span></span>
 <span><span class="co">#&gt; The asymptotic 95% confidence interval of the parameters are given by:</span></span>
-<span><span class="co">#&gt;         2.5% 97.5%</span></span>
-<span><span class="co">#&gt; param1 1.016  1.89</span></span>
-<span><span class="co">#&gt; param2 0.573  1.27</span></span>
-<span><span class="co">#&gt; param3 0.732  1.50</span></span>
-<span><span class="co">#&gt; The MSE of the estimator is  0.169 .</span></span>
-<span><span class="co">#&gt; The log-likelihood is  -59.9 .</span></span>
-<span><span class="co">#&gt; The AIC is  126 .</span></span></code></pre></div>
+<span><span class="co">#&gt;        2.5% 97.5%</span></span>
+<span><span class="co">#&gt; param1 1.06  1.29</span></span>
+<span><span class="co">#&gt; param2 1.09  1.33</span></span>
+<span><span class="co">#&gt; param3 1.14  1.38</span></span>
+<span><span class="co">#&gt; The MSE of the estimator is  0.0158 .</span></span>
+<span><span class="co">#&gt; The log-likelihood is  -678 .</span></span>
+<span><span class="co">#&gt; The AIC is  1361 .</span></span></code></pre></div>
 <p>So, recall the true parameters are <span class="math inline">\(\lambda = 1.1, 1.2, 1.3\)</span>. We can see that the estimates are reasonable, particularly for the relatively small sample size.</p>
 </div>
   </div>

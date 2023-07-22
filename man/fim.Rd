@@ -4,46 +4,42 @@
 \alias{fim}
 \title{Fisher information matrix method}
 \usage{
-fim(model, par, ...)
+fim(model, ...)
 }
 \arguments{
-\item{model}{likelihood model}
+\item{model}{A likelihood model}
 
-\item{par}{true parameters}
-
-\item{...}{additional arguments}
+\item{...}{Additional arguments}
 }
 \value{
-FIM
+Function that computes the FIM given a sample and a parameter vector
 }
 \description{
-Compute the Fisher information matrix (FIM), which is
-an expectation over the data-generating process (DGP):
+This function calculates the Fisher information matrix (FIM), an expectation over
+the data-generating process (DGP). The FIM is a crucial concept in statistics
+because it provides information about the precision of estimates and the amount
+of information that data carries about an unknown parameter.
 }
 \details{
-\if{html}{\out{<div class="sourceCode">}}\preformatted{FIM(theta|x) = E[-loglik_hessian(x)(data,theta)] / n
-FIM(theta|x) = E[score(x)(data,theta) \%*\% t(score(x)(data,theta))] / n
+FIM is a function of the parameters, and is used to compute the standard errors
+of the parameters. It is also used to compute the covariance matrix of the parameters,
+which is in turn used to compute standard errors of the parameters.
+
+Additionally, FIM is used to compute the Cramer-Rao lower bound (CRLB),
+the inverse of the FIM. CRLB represents the lower limit of the variance that
+an unbiased estimator can attain. This is used to compute the asymptotic relative
+efficiency (ARE) of an estimator of the parameters, which is the ratio of the
+variance of the estimator to the CRLB.
+
+The function computes FIM(x)(theta), the FIM of the likelihood model \code{x}, is based
+on the following formulas:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{FIM(x)(theta) = E[-loglik_hessian(x)(ob,theta)]
+FIM(x)(theta) = E[score(x)(ob,theta) \%*\% t(score(x)(ob,theta))]
 }\if{html}{\out{</div>}}
 
-where \code{x} is the likelihood model (say, exact failure times for
-exponentially distributed lifetimes), \code{theta} is the parameters
-of the likelihood model, \code{loglik_hessian} computes the hessian
-of the log-likelihood function on the \code{data} (which is a random
-quantity that we take the expectation over), and \code{score} is
-the score function, the gradient of the log-likelhood function, and
-\code{n} is the number of observations in each \code{data}. The FIM is
-the negative of the expected hessian of the log-likelihood function
-(or the expected outer product of the score function).
-
-The FIM is a function of the parameters, and is used to compute
-the standard errors of the parameters. The FIM is also used to
-compute the covariance matrix of the parameters, which is used
-to compute the standard errors of the parameters.
-
-The FIM is also used to compute the Cramer-Rao lower bound (CRLB),
-which is the inverse of the FIM. The CRLB is the minimum variance
-of an unbiased estimator of the parameters. The CRLB is used to
-compute the asymptotic relative efficiency (ARE) of an estimator
-of the parameters, which is the ratio of the variance of the
-estimator to the CRLB.
+where the expectation is taken with respect to ob ~ DGP. The first formula
+is the expected hessian of the log-likelihood function, and the second formula
+is the expected outer product of the score function. The two formulas are
+equivalent.
 }

@@ -1,4 +1,4 @@
-#' @title Likelihood contribution model
+#' @title Likelihood_contr_model
 #' @description
 #' This class encapsulates all necessary parts of a likelihood model.
 #' A likelihood_model should provide the following methods:
@@ -24,12 +24,12 @@
 #' @field hess_logliks list of functions for computing Hessians
 #' @field obs_type function that determines observation type
 #' @field assumptions list of assumptions made by the model
+#' 
 #' @importFrom R6 R6Class
-#' @importFrom magrittr %>%
+#' @importFrom numDeriv grad hessian
 #' @export likelihood_contr_model
 likelihood_contr_model <- R6::R6Class(
     "likelihood_contr_model",
-    
     public = list(
         obs_type = NULL,
         logliks = NULL,
@@ -85,10 +85,7 @@ likelihood_contr_model <- R6::R6Class(
 
             # iid assumption is always made
             self$assumptions <- unique(c("iid", assumptions))
-            class(self) <- c(
-                "likelihood_contr_model",
-                "likelihood_model",
-                class(self))
+            class(self) <- c("likelihood_contr_model", "likelihood_model")
         },
 
         #' @description
