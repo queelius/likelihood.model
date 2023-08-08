@@ -38,6 +38,7 @@ likelihood_exact_normal <- function(ob_col) {
 #' @importFrom stats var
 #' @importFrom MASS ginv
 #' @importFrom algebraic.mle mle
+#' @importFrom generics fit
 #' @export
 fit.likelihood_exact_normal <- function(model, keep_obs = TRUE, ...) {
     
@@ -51,7 +52,8 @@ fit.likelihood_exact_normal <- function(model, keep_obs = TRUE, ...) {
             mu = mean(x),
             var = (1 - 1 / n) * var(x))
         H <- hess_loglik(model, ...)(df, theta.hat)
-        mle(theta.hat = theta.hat,
+        algebraic.mle::mle(
+            theta.hat = theta.hat,
             loglike = loglik(model, ...)(df, theta.hat),
             score = score(model, ...)(df, theta.hat),
             sigma = ginv(H),
@@ -81,7 +83,7 @@ loglik.likelihood_exact_normal <- function(model, ...) {
 
 #' Score function generator for the exact Weibull likelihood model.
 #' @param model The weibull likelihood model
-#' @oaran ... Additional arguments (not used)
+#' @param ... Additional arguments (not used)
 #' @export
 score.likelihood_exact_normal <- function(model, ...) {
     function(df, par, ...) {
@@ -103,6 +105,7 @@ score.likelihood_exact_normal <- function(model, ...) {
 #' @param x data (simple random sample)
 #' @param observed whether to return the observed fisher information, default is
 #'                 `TRUE`
+#' @param ... additional arguments (not used)
 #' @export
 hess_loglik.likelihood_exact_normal <- function(model, ...)
     function(df, par, ...) {
@@ -127,10 +130,12 @@ hess_loglik.likelihood_exact_normal <- function(model, ...)
 #' @param x An `mle_normal` object (subclass of `mle`) to compute the bias of.
 #' @param par The true parameter value. If this is unknown (NULL), the bias is
 #'            estimated.
-#' @param ... Additional arguments (currently unused).
+#' @param ... Additional arguments (not unused).
 #' @return A numeric vector of length 2, the bias of the `mle_normal` estimator.
 #' @seealso \code{\link{bias}} for the generic function.
-#' @importFrom algebraic.mle bias params nobs
+#' @importFrom algebraic.mle bias
+#' @importFrom algebraic.dist params
+#' @importFrom stats nobs
 #' @export
 bias.mle_exact_normal <- function(x, par = NULL, ...) {
     if (is.null(par)) {

@@ -1,4 +1,7 @@
 ^likelihood\.model\.Rproj$
 ^\.Rproj\.user$
 ^doc$
+^\.gitignore$
+^\.Rhistory$
+^docs$
 ^Meta$

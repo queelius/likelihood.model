@@ -18,12 +18,17 @@ The empirical FIM function, which takes as arguments:
 \itemize{
 \item \code{par}: The parameter vector
 \item \code{df}: a data frame of observations in the sample used to estimate the FIM. If
-you can do a Monte-carlo simulation, just take a very large sample and that should
-give you a very good estimate of the FIM.
+you can do a Monte-carlo simulation, a very large sample provides
+a estimate of the FIM (MC integration of the expectation of the
+outer product of the score function).
 }
 }
 \description{
 This is an empirical FIM, which is the average of the outer product
 of the score function over a empirical sample (\code{data}) or a large simulated
 sample. The empirical FIM is an estimate of the true FIM.
+}
+\details{
+Another good estimate of the FIM is just the hessian of the log-likelihood
+evaluated at the MLE.
 }

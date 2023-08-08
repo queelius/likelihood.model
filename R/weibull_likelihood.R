@@ -18,8 +18,10 @@
 #' 
 #' Note: This model may be used as a contribution in the
 #' `likelihood_contr_model` if a more complicated likelihood model
-#' is needed. We define this simple model mostly for illustrative
-#' purposes.
+#' is needed. For instance, if censoring is needed, then
+#' you can also define a censoring likelihood model, or just
+#' directly define it in the `likelihood_contr_model` 
+#' if it is simple enough.
 #' 
 #' @param ob_col The name of the column in a data frame that
 #' contains the observations.
@@ -62,7 +64,7 @@ loglik.likelihood_exact_weibull <- function(model, ...) {
 
 #' Score function generator for the exact Weibull likelihood model.
 #' @param model The weibull likelihood model
-#' @oaran ... Additional arguments (not used)
+#' @param ... Additional arguments (not used)
 #' @export
 score.likelihood_exact_weibull <- function(model, ...) {
     function(df, par, ...) {

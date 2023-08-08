@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{model}{The weibull likelihood model}
+
+\item{...}{Additional arguments (not used)}
 }
 \description{
 Score function generator for the exact Weibull likelihood model.

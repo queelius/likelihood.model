@@ -22,13 +22,17 @@ options(digits=3)
 You can install the development version of `likelihood.model` from
 [GitHub](https://github.com/queelius/likelihood.model) with:
 
-```{r install-likelihood-model, eval = FALSE}
+```{r install-likelihood-model, echo = FALSE}
 if (!require(devtools)) {
     install.packages("devtools")
 }
-devtools::install_github("queelius/likelihood.model")
+if (!require(algebraic.mle)) {
+    install.packages("algebraic.mle")
+}
+if (!require(likelihood.model)) {
+    devtools::install_github("queelius/likelihood.model")
+}
 ```
-
 
 ```{r load-packages, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -210,16 +214,13 @@ standard errors of the estimates.
 optim(rates, fn = loglik(model.observed), df = df, control = list(fnscale = -1))
 ```
 
-Note that `likelihood_model` objects have a default method for `mle`. Internally,
-this method uses `optim` to maximize the log-likelihood, but it packs in some
-additional information and returns the result as an `mle_numerical` object.
+Note that `likelihood_model` objects have a default method for fitting MLEs, `fit`.
+Internally, this method uses `optim` to maximize the log-likelihood, but it packs in some
+additional information and returns the result as a `mle_numerical` object.
 ```{r mle-observed-likelihood-model, cache=TRUE}
-mle.solver_observed <- mle(model.observed)
-mle.observed <- mle.solver_observed(df, par0 = rates)
-summary(mle.observed)
-loglik(model.observed)(df, point(mle.observed))
+#fitter <- fit(model.observed)
+#fitter(df, par = rates)
 ```
-
 
 We implement `hess_loglik.observed` for completeness.
 ```{r hess-loglike}
@@ -234,20 +235,17 @@ hess_loglik.observed <- function(df, rates, ...) {
     }
     H
 }
-H <- -algebraic.mle::fim(mle.observed)
-H[abs(H) < 1e-3] <- 0
-print(H)
-hess_loglik(model.observed)(df, point(mle.observed))
+#H <- -algebraic.mle::observed_fim(model.observed)(df, point(mle.observed))
+#H[abs(H) < 1e-3] <- 0
+#print(H)
+#hess_loglik(model.observed)(df, point(mle.observed))
 ```
 
 
 Now, we use the Bootstrap method.
 
-```{r}
-
-mle.bs <- bootstrap(model.observed)
-
-boots <- mle.bs(df, par = rates, R = 10)
+```{r, eval=F}
+boots <- sampler(model.observed)(df, par = rates, n = 100)
 ```
 
 ## Case 2: Right-censoring

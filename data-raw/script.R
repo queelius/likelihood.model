@@ -222,3 +222,95 @@ for (n in N) {
 }
 
 print(coverate_matrix)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(tidyverse)
+library(generics)
+library(algebraic.mle)
+library(likelihood.model)
+n <- 15000
+rates <- c(1.1, 1.2, 1.3)
+set.seed(1235)
+
+df <- data.frame(t1 = rexp(n, rates[1]),
+                 t2 = rexp(n, rates[2]),
+                 t3 = rexp(n, rates[3]))
+df$t <- apply(df, 1, min)
+
+# map each observation to the corresponding index (component) that was minimum
+df$k <- apply(df, 1, which.min)
+
+for (i in 1:n) {
+    for (p in 1:3) {
+        if (p == df$k[i]) next
+        df[i, p] <- NA
+    }
+}
+
+score.observed <- function(df, rates, ...) {
+    rep(-sum(df$t), length(rates)) + (df |> count(k))$n / rates
+}
+
+loglik.observed <- function(df, rates, ...) {
+    sum(log(rates[df$k])) - sum(rates) * sum(df$t)
+}
+
+model.observed <- likelihood_contr_model$new(
+    obs_type = function(df) {
+        "observed" # expands to `rep("observed", nrow(df))`
+    },
+
+    # letting it dispatch to the right generic method based on the observation
+    # type is more flexible, but we can also specify it directly here
+    # this is useful since we can use different models for the same data
+    # by just changing the likelihood contribution model here. we can do this
+    # for score and hess_loglik as well
+    logliks = list(
+        observed = loglik.observed # we could have ommited this
+                                   # we do ommit it for the score function
+                                   # also, since we can specify any function
+                                   # here, we are not constrained to any 
+                                   # naming convention, e.g., it could have
+                                   # been defined inline as
+                                   #   `observed = function(df, rates, ...) {
+                                   #      ... }`
+    )
+)
+
+mle1 <- optim(rates, fn = loglik(model.observed), df = df, control = list(fnscale = -1), hessian= TRUE)
+mle1$hessian
+
+hess_loglik.observed <- function(df, rates, ...) {
+    p <- length(rates)
+    H <- matrix(0, p, p)
+
+    counts <- df |> dplyr::count(k)
+    for (j in 1:p) {
+        H[j, j] <- -counts$n[j] / rates[j]^2
+    }
+    H
+}
+H <- fim(model.observed)
+#H[abs(H) < 1e-3] <- 0
+#print(H)
+#hess_loglik(model.observed)(df, point(mle.observed))
+boots <- sampler(model.observed)(df, par = rates, n = 100)

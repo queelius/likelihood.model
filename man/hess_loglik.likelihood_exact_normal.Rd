@@ -8,6 +8,8 @@ distribution}
 \method{hess_loglik}{likelihood_exact_normal}(model, ...)
 }
 \arguments{
+\item{...}{additional arguments (not used)}
+
 \item{x}{data (simple random sample)}
 
 \item{observed}{whether to return the observed fisher information, default is

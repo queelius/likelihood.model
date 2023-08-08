@@ -2,7 +2,7 @@
 % Please edit documentation in R/normal_likelihood.R
 \name{likelihood_exact_normal}
 \alias{likelihood_exact_normal}
-\title{Exact Weibull likelihood model}
+\title{Exact Normal likelihood model}
 \usage{
 likelihood_exact_normal(ob_col)
 }

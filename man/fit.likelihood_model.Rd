@@ -4,34 +4,23 @@
 \alias{fit.likelihood_model}
 \title{Default MLE solver for subclasses of \code{likelihood_model}.}
 \usage{
-\method{fit}{likelihood_model}(model, algo = stats::optim, use_numerical_hess = FALSE, ...)
+\method{fit}{likelihood_model}(model, ...)
 }
 \arguments{
 \item{model}{The likelihood model}
 
-\item{algo}{The algorithm to use for the MLE solver. It should
-look like the \code{stats::optim} function, i.e., take similar arguments
-(if you don't do anything with them in your algorithm, just accept them
-as \code{...} and don't do anything with them) and, especially, return a list with
-the same named values (it may also return more). Defaults to \code{stats::optim}.}
-
 \item{...}{Additional arguments to pass into the likelihood model's
-\code{loglik}, \code{score}, and \code{hess_loglik} construction methods}
+\code{loglik}, \code{score}, and \code{hess_loglik} constructors.}
 }
 \value{
 An MLE solver (function) that returns an MLE object and accepts as
 arguments:
 \itemize{
 \item \code{df}: The data frame
-\item \code{par0}: The initial guess for the parameters
-\item \code{method}: additional optimization parameters to use, if available. \code{optim}
-makes use of this to choose among a variety of optimization algorithms.
-\item \code{lower}: Lower bounds for the parameters
-\item \code{upper}: Upper bounds for the parameters
-\item \code{hessian}: If \code{TRUE}, then the Hessian of the log-likelihood function
-is computed
+\item \code{par}: The initial guess for the parameters
 \item \code{control}: Control parameters for the optimization algorithm
-\item \code{...}: Additional arguments to pass into loglikelihood and score functions
+\item \code{...}: Additional arguments to pass into the likelihood model's
+constructed functions from \code{loglik}, \code{score}, and \code{hess_loglik}.
 }
 }
 \description{

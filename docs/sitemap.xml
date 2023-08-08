@@ -22,6 +22,12 @@
     <loc>/reference/assumptions.likelihood_contr_model.html</loc>
   </url>
   <url>
+    <loc>/reference/assumptions.likelihood_exact_weibull.html</loc>
+  </url>
+  <url>
+    <loc>/reference/bias.mle_exact_normal.html</loc>
+  </url>
+  <url>
     <loc>/reference/boostrap.html</loc>
   </url>
   <url>
@@ -34,7 +40,19 @@
     <loc>/reference/fim.likelihood_contr_model.html</loc>
   </url>
   <url>
+    <loc>/reference/fim.likelihood_exact_normal_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/fim.likelihood_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/fit.html</loc>
+  </url>
+  <url>
+    <loc>/reference/fit.likelihood_exact_normal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/fit.likelihood_model.html</loc>
   </url>
   <url>
     <loc>/reference/hess_loglik.html</loc>
@@ -43,7 +61,19 @@
     <loc>/reference/hess_loglik.likelihood_contr_model.html</loc>
   </url>
   <url>
+    <loc>/reference/hess_loglik.likelihood_exact_normal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/hess_loglik.likelihood_exact_weibull.html</loc>
+  </url>
+  <url>
+    <loc>/reference/hess_loglik.likelihood_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/is_likelihood_model.html</loc>
   </url>
   <url>
     <loc>/reference/lik.html</loc>
@@ -61,6 +91,12 @@
     <loc>/reference/likelihood_contr_model.html</loc>
   </url>
   <url>
+    <loc>/reference/likelihood_exact_normal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/likelihood_exact_weibull.html</loc>
+  </url>
+  <url>
     <loc>/reference/likelihood_model.html</loc>
   </url>
   <url>
@@ -73,6 +109,12 @@
     <loc>/reference/loglik.likelihood_contr_model.html</loc>
   </url>
   <url>
+    <loc>/reference/loglik.likelihood_exact_normal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/loglik.likelihood_exact_weibull.html</loc>
+  </url>
+  <url>
     <loc>/reference/lrt.html</loc>
   </url>
   <url>
@@ -82,9 +124,21 @@
     <loc>/reference/mle.likelihood_model.html</loc>
   </url>
   <url>
+    <loc>/reference/sampler.likelihood_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/score.html</loc>
   </url>
   <url>
     <loc>/reference/score.likelihood_contr_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/score.likelihood_exact_normal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/score.likelihood_exact_weibull.html</loc>
+  </url>
+  <url>
+    <loc>/reference/score.likelihood_model.html</loc>
   </url>
 </urlset>

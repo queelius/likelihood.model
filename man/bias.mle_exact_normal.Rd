@@ -12,7 +12,7 @@
 \item{par}{The true parameter value. If this is unknown (NULL), the bias is
 estimated.}
 
-\item{...}{Additional arguments (currently unused).}
+\item{...}{Additional arguments (not unused).}
 }
 \value{
 A numeric vector of length 2, the bias of the \code{mle_normal} estimator.

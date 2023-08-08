@@ -16,6 +16,6 @@
 \description{
 In case a \code{hess_loglik} method is not provided, this function will be
 used.
-It computes the hessian of the log-likelikhood using numerical
+It computes the hessian of the log-likelihood function using numerical
 differentiation.
 }

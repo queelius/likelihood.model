@@ -66,25 +66,35 @@
         </td>
         <td><p>Retrieve the assumptions in the likelihood contributions model.</p></td>
       </tr><tr><td>
-          <p><code><a href="boostrap.html">boostrap()</a></code> </p>
+          <p><code><a href="assumptions.likelihood_exact_weibull.html">assumptions(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
         </td>
-        <td><p>Bootstrap a model. The statistics that are bootstrapped are the
-parameters of the model, or other salient characteristics that
-are important to the model. In a likelihood model, for instance,
-the parameters are bootstrapped.</p></td>
+        <td><p>List the assumptions made by the model.</p></td>
       </tr><tr><td>
-          <p><code><a href="bootstrap.likelihood_model.html">bootstrap.likelihood_model()</a></code> </p>
+          <p><code><a href="bias.mle_exact_normal.html">bias(<i>&lt;mle_exact_normal&gt;</i>)</a></code> </p>
         </td>
-        <td><p>Bootstrap a likelihood model</p></td>
+        <td><p>Computes the bias of an <code>mle_normal</code> object.</p></td>
       </tr><tr><td>
           <p><code><a href="fim.html">fim()</a></code> </p>
         </td>
         <td><p>Fisher information matrix method</p></td>
       </tr><tr><td>
+          <p><code><a href="fim.likelihood_exact_normal_model.html">fim(<i>&lt;likelihood_exact_normal_model&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>FIM function generator for the normal distribution with
+exact observations.</p></td>
+      </tr><tr><td>
           <p><code><a href="fim.likelihood_model.html">fim(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
         </td>
         <td><p>Default implementation of the Fisher information matrix (FIM)
 for a likelihood model</p></td>
+      </tr><tr><td>
+          <p><code><a href="fit.likelihood_exact_normal.html">fit(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Customized MLE fit for the exact normal likelihood model.</p></td>
+      </tr><tr><td>
+          <p><code><a href="fit.likelihood_model.html">fit(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Default MLE solver for subclasses of <code>likelihood_model</code>.</p></td>
       </tr><tr><td>
           <p><code><a href="hess_loglik.html">hess_loglik()</a></code> </p>
         </td>
@@ -93,6 +103,24 @@ for a likelihood model</p></td>
           <p><code><a href="hess_loglik.likelihood_contr_model.html">hess_loglik(<i>&lt;likelihood_contr_model&gt;</i>)</a></code> </p>
         </td>
         <td><p>Hessian of log-likelihood method for likelihood_contr_model</p></td>
+      </tr><tr><td>
+          <p><code><a href="hess_loglik.likelihood_exact_normal.html">hess_loglik(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Fisher information matrix generator given data <code>x</code> for the normal
+distribution</p></td>
+      </tr><tr><td>
+          <p><code><a href="hess_loglik.likelihood_exact_weibull.html">hess_loglik(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Hessian of the log-likelihood function generator for the weibull
+likelihood model.</p></td>
+      </tr><tr><td>
+          <p><code><a href="hess_loglik.likelihood_model.html">hess_loglik(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Default method to compute the hessian of the log-likelihood.</p></td>
+      </tr><tr><td>
+          <p><code><a href="is_likelihood_model.html">is_likelihood_model()</a></code> </p>
+        </td>
+        <td><p>Likelihood model</p></td>
       </tr><tr><td>
           <p><code><a href="lik.html">lik()</a></code> </p>
         </td>
@@ -104,15 +132,15 @@ for a likelihood model</p></td>
       </tr><tr><td>
           <p><code><a href="likelihood_contr_model.html">likelihood_contr_model</a></code> </p>
         </td>
-        <td><p>Likelihood contribution model</p></td>
+        <td><p>Likelihood_contr_model</p></td>
       </tr><tr><td>
-          <p><code><a href="likelihood_model.html">likelihood_model</a></code> </p>
+          <p><code><a href="likelihood_exact_normal.html">likelihood_exact_normal()</a></code> </p>
         </td>
-        <td><p>Likelihood model</p></td>
+        <td><p>Exact Normal likelihood model</p></td>
       </tr><tr><td>
-          <p><code><a href="likelihood_model_boot.html">likelihood_model_boot</a></code> </p>
+          <p><code><a href="likelihood_exact_weibull.html">likelihood_exact_weibull()</a></code> </p>
         </td>
-        <td><p>Likelihood model bootstrapping</p></td>
+        <td><p>Exact Weibull likelihood model</p></td>
       </tr><tr><td>
           <p><code><a href="loglik.html">loglik()</a></code> </p>
         </td>
@@ -122,18 +150,21 @@ for a likelihood model</p></td>
         </td>
         <td><p>Log-likelihood method for likelihood_contr_model</p></td>
       </tr><tr><td>
+          <p><code><a href="loglik.likelihood_exact_normal.html">loglik(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Log-likelihood function generator for the exact Weibull likelihood model.</p></td>
+      </tr><tr><td>
+          <p><code><a href="loglik.likelihood_exact_weibull.html">loglik(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Log-likelihood function generator for the exact Weibull likelihood model.</p></td>
+      </tr><tr><td>
           <p><code><a href="lrt.html">lrt()</a></code> </p>
         </td>
         <td><p>Likelihood ratio test</p></td>
       </tr><tr><td>
-          <p><code><a href="mle.html">mle()</a></code> </p>
+          <p><code><a href="sampler.likelihood_model.html">sampler(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
         </td>
-        <td><p>Generic method for maximum likelihood estimation (MLE)
-according to a likelihood model.</p></td>
-      </tr><tr><td>
-          <p><code><a href="mle.likelihood_model.html">mle(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Default MLE solver for subclasses of <code>likelihood_model</code>.</p></td>
+        <td><p>Estimate the sampling distribution of the MLE for a likelihood model.</p></td>
       </tr><tr><td>
           <p><code><a href="score.html">score()</a></code> </p>
         </td>
@@ -142,6 +173,18 @@ according to a likelihood model.</p></td>
           <p><code><a href="score.likelihood_contr_model.html">score(<i>&lt;likelihood_contr_model&gt;</i>)</a></code> </p>
         </td>
         <td><p>Score method for likelihood_contr_model</p></td>
+      </tr><tr><td>
+          <p><code><a href="score.likelihood_exact_normal.html">score(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Score function generator for the exact Weibull likelihood model.</p></td>
+      </tr><tr><td>
+          <p><code><a href="score.likelihood_exact_weibull.html">score(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Score function generator for the exact Weibull likelihood model.</p></td>
+      </tr><tr><td>
+          <p><code><a href="score.likelihood_model.html">score(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Default score method</p></td>
       </tr></tbody></table></div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

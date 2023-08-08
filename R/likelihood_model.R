@@ -106,7 +106,7 @@ hess_loglik <- function(model, ...) {
 #' 
 #' In case a `hess_loglik` method is not provided, this function will be
 #' used.
-#' It computes the hessian of the log-likelikhood using numerical
+#' It computes the hessian of the log-likelihood function using numerical
 #' differentiation.
 #' 
 #' @param model The likelihood model
@@ -190,16 +190,6 @@ assumptions <- function(model, ...) {
     UseMethod("assumptions")
 }
 
-#' Generic method for maximum likelihood estimation (MLE)
-#' according to a likelihood model.
-#' 
-#' @param model The likelihood model
-#' @param ... Additional arguments
-#' @export
-fit <- function(model, ...) {
-    UseMethod("mle")
-}
-
 #' Default MLE solver for subclasses of `likelihood_model`.
 #' 
 #' Note that `likelihood_model` is not a class, but a concept,
@@ -225,70 +215,52 @@ fit <- function(model, ...) {
 #' method like `Nelder-Mead` to refine the solution.
 #' 
 #' @param model The likelihood model
-#' @param algo The algorithm to use for the MLE solver. It should
-#' look like the `stats::optim` function, i.e., take similar arguments
-#' (if you don't do anything with them in your algorithm, just accept them
-#' as `...` and don't do anything with them) and, especially, return a list with
-#' the same named values (it may also return more). Defaults to `stats::optim`.
 #' @param ... Additional arguments to pass into the likelihood model's
-#' `loglik`, `score`, and `hess_loglik` construction methods
+#' `loglik`, `score`, and `hess_loglik` constructors.
 #' @return An MLE solver (function) that returns an MLE object and accepts as
 #' arguments:
 #' - `df`: The data frame
-#' - `par0`: The initial guess for the parameters
-#' - `method`: additional optimization parameters to use, if available. `optim`
-#'    makes use of this to choose among a variety of optimization algorithms.
-#' - `lower`: Lower bounds for the parameters
-#' - `upper`: Upper bounds for the parameters
-#' - `hessian`: If `TRUE`, then the Hessian of the log-likelihood function
-#'    is computed
+#' - `par`: The initial guess for the parameters
 #' - `control`: Control parameters for the optimization algorithm
-#' - `...`: Additional arguments to pass into loglikelihood and score functions
-#' 
+#' - `...`: Additional arguments to pass into the likelihood model's
+#'          constructed functions from `loglik`, `score`, and `hess_loglik`.
 #' @importFrom algebraic.mle mle_numerical
 #' @importFrom stats optim
+#' @importFrom utils modifyList
+#' @importFrom generics fit
 #' @export
-fit.likelihood_model <- function(model, algo = stats::optim,
-    use_numerical_hess = FALSE, ...) {
+fit.likelihood_model <- function(model, ...) {
 
     ll <- loglik(model, ...)
     s <- score(model, ...)
     H <- hess_loglik(model, ...)
 
-
     function(
         df,
-        par0,
+        par,
         method = c("Nelder-Mead", "BFGS", "SANN", "CG", "L-BFGS-B", "Brent"),
-        lower = -Inf, upper = Inf,
-        hessian = TRUE,
-        control = list(), ...) {
+        ...,
+        control = list()) {
 
-        stopifnot(!is.null(par0), is.data.frame(df))
-
+        stopifnot(!is.null(par))
+        defaults <- list(fnscale = -1)
+        control <- modifyList(defaults, control)
         method <- match.arg(method)
 
-        defaults <- list(
-            fnscale = -1,
-            maxit = 1000L)
-        control <- modifyList(defaults, control)
-
-        res <- algo(
-            par = par0,
-            fn = function(par, ...) ll(df, par, ...),
-            gr = function(par, ...) s(df, par, ...),
-            ...,
+        sol <- optim(
+            par = par,
+            fn = function(par) ll(df, par, ...),
+            gr = if (method == "SANN") {
+                NULL
+            } else {
+                function(par) s(df, par, ...)
+            },
+            hessian = FALSE,
             method = method,
-            lower = lower,
-            upper = upper,
-            hessian = hessian && use_numerical_hess,
             control = control)
 
-        if (hessian && !use_numerical_hess) {
-            res$hessian <- H(df, res$par, ...)
-        }
-
-        mle_numerical(res, superclasses = "mle_likelihood_model")
+        sol$hessian <- H(df, sol$par, ...)
+        mle_numerical(sol, superclasses = "mle_likelihood_model")
     }
 }
 
@@ -313,37 +285,74 @@ lik.likelihood_model <- function(model, ...) {
 #' of the score function over a empirical sample (`data`) or a large simulated
 #' sample. The empirical FIM is an estimate of the true FIM.
 #' 
+#' Another good estimate of the FIM is just the hessian of the log-likelihood
+#' evaluated at the MLE.
+#' 
 #' @param model The likelihood model
 #' @param ... Additional arguments to pass into the score and hess_loglik function
 #' generators.
 #' @return The empirical FIM function, which takes as arguments:
 #' - `par`: The parameter vector
 #' - `df`: a data frame of observations in the sample used to estimate the FIM. If
-#' you can do a Monte-carlo simulation, just take a very large sample and that should
-#' give you a very good estimate of the FIM.
+#'         you can do a Monte-carlo simulation, a very large sample provides
+#'         a estimate of the FIM (MC integration of the expectation of the
+#'         outer product of the score function).
 #' @export
 fim.likelihood_model <- function(model, ...) {
 
     s <- score(model, ...)
-    H <- hess_loglik(model, ...)
-
-    function(par, df, method = "vectorized", ...) {
-
-        stopifnot(is.data.frame(df), !is.null(par))
+    function(par, df, ...) {
+        stopifnot(!is.null(par))
 
         p <- length(par)
         R <- nrow(df)
 
-        if (method == "iteration") {
-            fim_mc <- matrix(rep(0, p*p), nrow = p, ncol = p)
-            for (i in seq_len(R)) {
-                si <- s(df[i, ], par, ...)
-                fim_mc <- fim_mc + si %*% t(si)
-            }
-            return(fim_mc / R)
-        } else { # if (method == "vectorized") {
-            scores <- apply(df, 1, function(row) s(as.data.frame(t(row)), par, ...))
-            return(tcrossprod(scores) / R)
+        FIM <- matrix(rep(0, p*p), nrow = p, ncol = p)
+        for (i in 1:R) {
+            si <- s(df[i, ], par, ...)
+            FIM <- FIM + si %*% t(si)
         }
+        FIM / R
+    }
+}
+
+#' Estimate the sampling distribution of the MLE for a likelihood model.
+#' 
+#' We use the bootstrap method. In other words, we treat the data as an
+#' empirical distribution and sample from it to get a new dataset, then
+#' we fit the model to that dataset and return the MLE. We do this R
+#' times and return the R MLEs.
+#' 
+#' This is the default method, but if you want to use a different method,
+#' you should define your own method for your likelihood model.
+#' 
+#' @param model The likelihood model
+#' @param ... Additional arguments to pass into the likelihood model
+#' @param nthreads The number of threads to use for parallelization
+#' @return A function that returns an bootstrapped sampling distribution of an
+#' MLE.
+#' @importFrom stats optim
+#' @importFrom boot boot
+#' @importFrom algebraic.mle mle_boot
+#' @importFrom algebraic.dist sampler
+#' @export
+sampler.likelihood_model <- function(
+    model,
+    df,
+    par,
+    ...,
+    nthreads = 1L) {
+
+    solver <- fit(model, ...)
+    sol <- solver(df, par, ...)
+    function (n, ...) {
+        mle_boot(boot(
+            data = df,
+            statistic = function(df, ind) {
+                solver(df[ind, ], par = params(sol), ...)$par
+            },
+            R = n,
+            parallel = "multicore",
+            nthreads = nthreads, ...))
     }
 }

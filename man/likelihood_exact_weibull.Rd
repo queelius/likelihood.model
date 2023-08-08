@@ -30,6 +30,8 @@ of the log-likelihood for the model.
 
 Note: This model may be used as a contribution in the
 \code{likelihood_contr_model} if a more complicated likelihood model
-is needed. We define this simple model mostly for illustrative
-purposes.
+is needed. For instance, if censoring is needed, then
+you can also define a censoring likelihood model, or just
+directly define it in the \code{likelihood_contr_model}
+if it is simple enough.
 }
