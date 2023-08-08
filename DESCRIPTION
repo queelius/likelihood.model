@@ -1,6 +1,6 @@
 Package: likelihood.model
 Type: Package
-Title: Likelihood model
+Title: Likelihood Model
 Version: 0.1.0
 Authors@R: 
     person("Alexander", "Towell", , "lex@metafunctor.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6443-9897"))
@@ -14,6 +14,7 @@ Imports:
     CDFt,
     zoo,
     mvtnorm,
+    generics,
     MASS,
     stats,
     numDeriv,
@@ -26,9 +27,7 @@ Suggests:
     rmarkdown,
     dplyr,
     knitr,
-    ggplot2,
     tibble,
-    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.2.3
 Config/testthat/edition: 3

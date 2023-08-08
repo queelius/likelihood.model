@@ -27,20 +27,6 @@ loglik <- function(model, ...) {
     UseMethod("loglik")
 }
 
-
-#' Likelihood method
-#'
-#' This function returns the likelihood function of a model.
-#'
-#' @param model The likelihood model
-#' @param ... Additional arguments
-#' @return A likelihood function to compute the likelihood given a data frame
-#' and parameters.
-#' @export
-lik <- function(model, ...) {
-    UseMethod("lik")
-}
-
 #' Score method
 #'
 #' This function returns the score function of a model
@@ -214,7 +200,7 @@ assumptions <- function(model, ...) {
 #' if you do use `SANN`, you should follow it up with a local search
 #' method like `Nelder-Mead` to refine the solution.
 #' 
-#' @param model The likelihood model
+#' @param object The `likelihood_model` object
 #' @param ... Additional arguments to pass into the likelihood model's
 #' `loglik`, `score`, and `hess_loglik` constructors.
 #' @return An MLE solver (function) that returns an MLE object and accepts as
@@ -229,11 +215,11 @@ assumptions <- function(model, ...) {
 #' @importFrom utils modifyList
 #' @importFrom generics fit
 #' @export
-fit.likelihood_model <- function(model, ...) {
+fit.likelihood_model <- function(object, ...) {
 
-    ll <- loglik(model, ...)
-    s <- score(model, ...)
-    H <- hess_loglik(model, ...)
+    ll <- loglik(object, ...)
+    s <- score(object, ...)
+    H <- hess_loglik(object, ...)
 
     function(
         df,
@@ -261,20 +247,6 @@ fit.likelihood_model <- function(model, ...) {
 
         sol$hessian <- H(df, sol$par, ...)
         mle_numerical(sol, superclasses = "mle_likelihood_model")
-    }
-}
-
-#' Likelihood method
-#' 
-#' This function returns the likelihood function of a model.
-#' 
-#' @param model The likelihood model
-#' @param ... Additional arguments to pass into the `loglik` function
-#' @return A likelihood function to compute the likelihood given a data frame
-lik.likelihood_model <- function(model, ...) {
-    ll <- loglik(model, ...)
-    function(df, par, ...) {
-        exp(ll(df, par, ...))
     }
 }
 
@@ -349,10 +321,10 @@ sampler.likelihood_model <- function(
         mle_boot(boot(
             data = df,
             statistic = function(df, ind) {
-                solver(df[ind, ], par = params(sol), ...)$par
+                params(solver(df[ind, ], par = params(sol), ...))
             },
             R = n,
             parallel = "multicore",
-            nthreads = nthreads, ...))
+            ncpus = nthreads, ...))
     }
 }

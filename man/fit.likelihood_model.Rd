@@ -4,10 +4,10 @@
 \alias{fit.likelihood_model}
 \title{Default MLE solver for subclasses of \code{likelihood_model}.}
 \usage{
-\method{fit}{likelihood_model}(model, ...)
+\method{fit}{likelihood_model}(object, ...)
 }
 \arguments{
-\item{model}{The likelihood model}
+\item{object}{The \code{likelihood_model} object}
 
 \item{...}{Additional arguments to pass into the likelihood model's
 \code{loglik}, \code{score}, and \code{hess_loglik} constructors.}

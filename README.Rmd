@@ -3,17 +3,17 @@ title: "Likelihood model"
 output: github_document
 ---
 
-# `likelihood.model`
+# R package: `likelihood.model`
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-`likelihood.model` is an R package for specifying likelihood models for
-statistical inference.
+The R package `likelihood.model` is designed for specifying and using
+likelihood models for statistical inference.
 
 The basic likelihood model is a concept that, in order for your object
-to satisfy, must implement a number of generic functions. The package
+to satisfy, must implement a number of generic functions/methods. The package
 provides a class, `likelihood_contr_model`, which implements these functions
 and serves as a flexible framework for specifying likelihood models
 based on the idea of independent likelihood contributions for different

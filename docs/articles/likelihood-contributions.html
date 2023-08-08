@@ -98,8 +98,10 @@
 <span><span class="co">#&gt; Loading required package: likelihood.model</span></span></code></pre>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/algebraic.dist" class="external-link">algebraic.dist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/algebraic.mle" class="external-link">algebraic.mle</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/likelihood.model" class="external-link">likelihood.model</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/likelihood.model" class="external-link">likelihood.model</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://generics.r-lib.org" class="external-link">generics</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="exponential-series-system">Exponential series system<a class="anchor" aria-label="anchor" href="#exponential-series-system"></a>
@@ -229,8 +231,24 @@
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
 <p>Note that <code>likelihood_model</code> objects have a default method for fitting MLEs, <code>fit</code>. Internally, this method uses <code>optim</code> to maximize the log-likelihood, but it packs in some additional information and returns the result as a <code>mle_numerical</code> object.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#fitter &lt;- fit(model.observed)</span></span>
-<span><span class="co">#fitter(df, par = rates)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">rates.hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/fit.html" class="external-link">fit</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="va">rates</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">rates.hat</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Maximum likelihood estimator of type mle_likelihood_model is normally distributed.</span></span>
+<span><span class="co">#&gt; The estimates of the parameters are given by:</span></span>
+<span><span class="co">#&gt; [1] 1.37 1.26 1.24</span></span>
+<span><span class="co">#&gt; The standard error is  0.188 0.181 0.179 .</span></span>
+<span><span class="co">#&gt; The asymptotic 95% confidence interval of the parameters are given by:</span></span>
+<span><span class="co">#&gt;         2.5% 97.5%</span></span>
+<span><span class="co">#&gt; param1 0.999  1.73</span></span>
+<span><span class="co">#&gt; param2 0.910  1.62</span></span>
+<span><span class="co">#&gt; param3 0.888  1.59</span></span>
+<span><span class="co">#&gt; The MSE of the individual components in a multivariate estimator is:</span></span>
+<span><span class="co">#&gt;          [,1]      [,2]      [,3]</span></span>
+<span><span class="co">#&gt; [1,] 3.53e-02  1.14e-13  1.70e-12</span></span>
+<span><span class="co">#&gt; [2,] 1.14e-13  3.26e-02 -1.05e-12</span></span>
+<span><span class="co">#&gt; [3,] 1.70e-12 -1.05e-12  3.19e-02</span></span>
+<span><span class="co">#&gt; The log-likelihood is  -112 .</span></span>
+<span><span class="co">#&gt; The AIC is  229 .</span></span></code></pre></div>
 <p>We implement <code>hess_loglik.observed</code> for completeness.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#library(dplyr)</span></span>
@@ -244,13 +262,31 @@
 <span>    <span class="op">}</span></span>
 <span>    <span class="va">H</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#H &lt;- -algebraic.mle::observed_fim(model.observed)(df, point(mle.observed))</span></span>
-<span><span class="co">#H[abs(H) &lt; 1e-3] &lt;- 0</span></span>
-<span><span class="co">#print(H)</span></span>
-<span><span class="co">#hess_loglik(model.observed)(df, point(mle.observed))</span></span></code></pre></div>
+<span></span>
+<span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/observed_fim.html" class="external-link">observed_fim</a></span><span class="op">(</span><span class="va">rates.hat</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           [,1]      [,2]      [,3]</span></span>
+<span><span class="co">#&gt; [1,]  2.84e+01 -9.93e-11 -1.51e-09</span></span>
+<span><span class="co">#&gt; [2,] -9.93e-11  3.07e+01  1.01e-09</span></span>
+<span><span class="co">#&gt; [3,] -1.51e-09  1.01e-09  3.13e+01</span></span>
+<span><span class="fu"><a href="../reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://queelius.github.io/algebraic.dist/reference/params.html" class="external-link">params</a></span><span class="op">(</span><span class="va">rates.hat</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           [,1]      [,2]      [,3]</span></span>
+<span><span class="co">#&gt; [1,] -2.84e+01  9.93e-11  1.51e-09</span></span>
+<span><span class="co">#&gt; [2,]  9.93e-11 -3.07e+01 -1.01e-09</span></span>
+<span><span class="co">#&gt; [3,]  1.51e-09 -1.01e-09 -3.13e+01</span></span></code></pre></div>
 <p>Now, we use the Bootstrap method.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">boots</span> <span class="op">&lt;-</span> <span class="fu">sampler</span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="va">rates</span>, n <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">model.samp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.dist/reference/sampler.html" class="external-link">sampler</a></span><span class="op">(</span><span class="va">model.observed</span>, df <span class="op">=</span> <span class="va">df</span>, par <span class="op">=</span> <span class="va">rates</span><span class="op">)</span></span>
+<span><span class="va">dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.dist/reference/empirical_dist.html" class="external-link">empirical_dist</a></span><span class="op">(</span><span class="fu">model.samp</span><span class="op">(</span>n<span class="op">=</span><span class="fl">5</span><span class="op">)</span><span class="op">$</span><span class="va">t</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://queelius.github.io/algebraic.dist/reference/expectation.html" class="external-link">expectation</a></span><span class="op">(</span><span class="va">dist</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1.32 1.30 1.20</span></span>
+<span></span>
+<span><span class="co"># this is still incorrect -- do it for a single element</span></span>
+<span><span class="co"># in the FIM to see if you can get it to work</span></span>
+<span><span class="fu"><a href="../reference/fim.html">fim</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">rates</span>, <span class="va">df</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,] 72.2 64.8 58.6</span></span>
+<span><span class="co">#&gt; [2,] 64.8 58.3 52.8</span></span>
+<span><span class="co">#&gt; [3,] 58.6 52.8 47.9</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="case-2-right-censoring">Case 2: Right-censoring<a class="anchor" aria-label="anchor" href="#case-2-right-censoring"></a>

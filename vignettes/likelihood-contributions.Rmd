@@ -36,8 +36,10 @@ if (!require(likelihood.model)) {
 
 ```{r load-packages, message=FALSE, warning=FALSE}
 library(tidyverse)
+library(algebraic.dist)
 library(algebraic.mle)
 library(likelihood.model)
+library(generics)
 ```
 
 ## Exponential series system
@@ -218,8 +220,8 @@ Note that `likelihood_model` objects have a default method for fitting MLEs, `fi
 Internally, this method uses `optim` to maximize the log-likelihood, but it packs in some
 additional information and returns the result as a `mle_numerical` object.
 ```{r mle-observed-likelihood-model, cache=TRUE}
-#fitter <- fit(model.observed)
-#fitter(df, par = rates)
+rates.hat <- fit(model.observed)(df, par = rates)
+summary(rates.hat)
 ```
 
 We implement `hess_loglik.observed` for completeness.
@@ -235,17 +237,22 @@ hess_loglik.observed <- function(df, rates, ...) {
     }
     H
 }
-#H <- -algebraic.mle::observed_fim(model.observed)(df, point(mle.observed))
-#H[abs(H) < 1e-3] <- 0
-#print(H)
-#hess_loglik(model.observed)(df, point(mle.observed))
+
+observed_fim(rates.hat)
+hess_loglik(model.observed)(df, params(rates.hat))
 ```
 
 
 Now, we use the Bootstrap method.
 
-```{r, eval=F}
-boots <- sampler(model.observed)(df, par = rates, n = 100)
+```{r}
+model.samp <- sampler(model.observed, df = df, par = rates)
+dist <- empirical_dist(model.samp(n=5)$t)
+expectation(dist, function(x) x)
+
+# this is still incorrect -- do it for a single element
+# in the FIM to see if you can get it to work
+fim(model.observed)(rates, df) * nrow(df)
 ```
 
 ## Case 2: Right-censoring
