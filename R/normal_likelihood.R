@@ -52,15 +52,24 @@ fit.likelihood_exact_normal <- function(model, keep_obs = TRUE, ...) {
             mu = mean(x),
             var = (1 - 1 / n) * var(x))
         H <- hess_loglik(model, ...)(df, theta.hat)
+
+        # the inverse of a 2x2 symmetric, invertible matrix is easy to compute
+        # using that well known formula. we use the negatie of this inverse
+        # to estimate the covariance matrix of the MLE.
+
+        inv_H <- matrix(c(
+            H[2, 2], -H[1, 2],
+            -H[1, 2], H[1, 1]), nrow = 2) / (H[1, 1] * H[2, 2] - H[1, 2]^2)
+
         algebraic.mle::mle(
             theta.hat = theta.hat,
             loglike = loglik(model, ...)(df, theta.hat),
             score = score(model, ...)(df, theta.hat),
-            sigma = ginv(H),
+            sigma = -inv_H,
             info = H,
             obs = if (keep_obs) x else NULL,
             nobs = n,
-            superclasses = c("mle_exact_normal")
+            superclasses = c("mle_likelihood_exact_normal")
         )
     }
 }
@@ -103,11 +112,9 @@ score.likelihood_exact_normal <- function(model, ...) {
 #' distribution
 #'
 #' @param x data (simple random sample)
-#' @param observed whether to return the observed fisher information, default is
-#'                 `TRUE`
 #' @param ... additional arguments (not used)
 #' @export
-hess_loglik.likelihood_exact_normal <- function(model, ...)
+hess_loglik.likelihood_exact_normal <- function(model, ...) {
     function(df, par, ...) {
         stopifnot(!is.null(par), length(par) == 2)
         x <- as.data.frame(df)[[model$ob_col]]
@@ -120,6 +127,7 @@ hess_loglik.likelihood_exact_normal <- function(model, ...)
             var_var = -0.5 * n / par[2]^2 + 1 / par[2]^3 *
                 (sum(x^2) - 2 * par[1] * S + n * par[1]^2)),
             nrow = 2)
+    }
 }
 
 #' Computes the bias of an `mle_normal` object.
