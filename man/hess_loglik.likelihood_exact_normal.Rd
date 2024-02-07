@@ -11,9 +11,6 @@ distribution}
 \item{...}{additional arguments (not used)}
 
 \item{x}{data (simple random sample)}
-
-\item{observed}{whether to return the observed fisher information, default is
-\code{TRUE}}
 }
 \description{
 Fisher information matrix generator given data \code{x} for the normal

@@ -68,19 +68,17 @@ assumptions.likelihood_name <- function(model, ...) {
 #' parameters.
 #' @export
 loglik.likelihood_name <- function(model, ...) {
+    x <- as.data.frame(df)[[model$ob_col]]
+    n <- length(x)
+    stopifnot(n > 0)
+
     if (is.null(model$type_col)) {
         function(df, par, ...) {
-            x <- as.data.frame(df)[[model$ob_col]]
-            n <- length(x)
-            stopifnot(n > 0, all(x > 0))
             do.call(paste0("d", model$dist_name), c(list(x), par))
             sum(do.call(paste0("d", model$dist_name), c(list(x), par), log.p = TRUE))
         }
     } else {
         function(df, par, ...) {
-            x <- as.data.frame(df)[[model$ob_col]]
-            n <- length(x)
-            stopifnot(n > 0)
             type <- as.character(df[[model$type_col]])
             ifelse(type == "left",
                    do.call(paste0("p", model$dist_name), c(list(x), par)),
