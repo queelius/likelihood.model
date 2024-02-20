@@ -10,6 +10,12 @@
     <loc>/articles/likelihood-contributions.html</loc>
   </url>
   <url>
+    <loc>/articles/likelihood-name-model.html</loc>
+  </url>
+  <url>
+    <loc>/articles/likelihood-name.html</loc>
+  </url>
+  <url>
     <loc>/authors.html</loc>
   </url>
   <url>
@@ -25,6 +31,12 @@
     <loc>/reference/assumptions.likelihood_exact_weibull.html</loc>
   </url>
   <url>
+    <loc>/reference/assumptions.likelihood_name.html</loc>
+  </url>
+  <url>
+    <loc>/reference/assumptions.likelihood_name_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/bias.mle_exact_normal.html</loc>
   </url>
   <url>
@@ -32,6 +44,9 @@
   </url>
   <url>
     <loc>/reference/bootstrap.likelihood_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dof.html</loc>
   </url>
   <url>
     <loc>/reference/fim.html</loc>
@@ -70,6 +85,9 @@
     <loc>/reference/hess_loglik.likelihood_model.html</loc>
   </url>
   <url>
+    <loc>/reference/hypothesis_test.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
@@ -103,6 +121,9 @@
     <loc>/reference/likelihood_model_boot.html</loc>
   </url>
   <url>
+    <loc>/reference/likelihood_name.html</loc>
+  </url>
+  <url>
     <loc>/reference/loglik.html</loc>
   </url>
   <url>
@@ -115,6 +136,12 @@
     <loc>/reference/loglik.likelihood_exact_weibull.html</loc>
   </url>
   <url>
+    <loc>/reference/loglik.likelihood_name.html</loc>
+  </url>
+  <url>
+    <loc>/reference/loglik.likelihood_name_model.html</loc>
+  </url>
+  <url>
     <loc>/reference/lrt.html</loc>
   </url>
   <url>
@@ -122,6 +149,12 @@
   </url>
   <url>
     <loc>/reference/mle.likelihood_model.html</loc>
+  </url>
+  <url>
+    <loc>/reference/pval.html</loc>
+  </url>
+  <url>
+    <loc>/reference/pval.hypothesis_test.html</loc>
   </url>
   <url>
     <loc>/reference/sampler.likelihood_model.html</loc>

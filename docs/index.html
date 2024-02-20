@@ -52,6 +52,9 @@
 <li>
       <a href="articles/likelihood-contributions.html">Likelihood contributions model</a>
     </li>
+    <li>
+      <a href="articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -78,11 +81,11 @@
 <div class="section level1"><div class="page-header"><h1 id="likelihood-model">Likelihood model<a class="anchor" aria-label="anchor" href="#likelihood-model"></a>
 </h1></div></div>
 <div class="section level1">
-<h1 id="likelihoodmodel">
-<code>likelihood.model</code><a class="anchor" aria-label="anchor" href="#likelihoodmodel"></a>
+<h1 id="r-package-likelihoodmodel">R package: <code>likelihood.model</code>
+<a class="anchor" aria-label="anchor" href="#r-package-likelihoodmodel"></a>
 </h1>
-<p><code>likelihood.model</code> is an R package for specifying likelihood models for statistical inference.</p>
-<p>The basic likelihood model is a concept that, in order for your object to satisfy, must implement a number of generic functions. The package provides a class, <code>likelihood_contr_model</code>, which implements these functions and serves as a flexible framework for specifying likelihood models based on the idea of independent likelihood contributions for different types of observations, e.g., right-censored versus exact observations.</p>
+<p>The R package <code>likelihood.model</code> is designed for specifying and using likelihood models for statistical inference.</p>
+<p>The basic likelihood model is a concept that, in order for your object to satisfy, must implement a number of generic functions/methods. The package provides a class, <code>likelihood_contr_model</code>, which implements these functions and serves as a flexible framework for specifying likelihood models based on the idea of independent likelihood contributions for different types of observations, e.g., right-censored versus exact observations.</p>
 <p>The package is designed to be used with the <a href="https://github.com/queelius/algebraic.mle" class="external-link"><code>algebraic.mle</code></a> package, which provides a framework for performing maximum likelihood estimation (MLE).</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>

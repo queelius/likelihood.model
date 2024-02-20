@@ -1,18 +1,18 @@
 Likelihood model
 ================
 
-# `likelihood.model`
+# R package: `likelihood.model`
 
-`likelihood.model` is an R package for specifying likelihood models for
-statistical inference.
+The R package `likelihood.model` is designed for specifying and using
+likelihood models for statistical inference.
 
 The basic likelihood model is a concept that, in order for your object
-to satisfy, must implement a number of generic functions. The package
-provides a class, `likelihood_contr_model`, which implements these
-functions and serves as a flexible framework for specifying likelihood
-models based on the idea of independent likelihood contributions for
-different types of observations, e.g., right-censored versus exact
-observations.
+to satisfy, must implement a number of generic functions/methods. The
+package provides a class, `likelihood_contr_model`, which implements
+these functions and serves as a flexible framework for specifying
+likelihood models based on the idea of independent likelihood
+contributions for different types of observations, e.g., right-censored
+versus exact observations.
 
 The package is designed to be used with the
 [`algebraic.mle`](https://github.com/queelius/algebraic.mle) package,

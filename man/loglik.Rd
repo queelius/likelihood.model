@@ -12,8 +12,8 @@ loglik(model, ...)
 \item{...}{Additional arguments}
 }
 \value{
-A log-likelihood function to compute the log-likelihood given a data frame
-and parameters.
+A log-likelihood function to compute the log-likelihood given a data
+frame and parameters.
 }
 \description{
 This function returns the log-likelihood function of a model

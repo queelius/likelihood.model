@@ -34,6 +34,9 @@
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
     </li>
+    <li>
+      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
+    </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/queelius/likelihood.model/" class="external-link">
@@ -70,27 +73,17 @@
         </td>
         <td><p>List the assumptions made by the model.</p></td>
       </tr><tr><td>
-          <p><code><a href="bias.mle_exact_normal.html">bias(<i>&lt;mle_exact_normal&gt;</i>)</a></code> </p>
+          <p><code><a href="assumptions.likelihood_name_model.html">assumptions(<i>&lt;likelihood_name_model&gt;</i>)</a></code> </p>
         </td>
-        <td><p>Computes the bias of an <code>mle_normal</code> object.</p></td>
+        <td><p>List the assumptions made by the model.</p></td>
+      </tr><tr><td>
+          <p><code><a href="dof.html">dof()</a></code> </p>
+        </td>
+        <td><p>Generic method for extracting the degrees of freedom from a hypothesis test</p></td>
       </tr><tr><td>
           <p><code><a href="fim.html">fim()</a></code> </p>
         </td>
         <td><p>Fisher information matrix method</p></td>
-      </tr><tr><td>
-          <p><code><a href="fim.likelihood_exact_normal_model.html">fim(<i>&lt;likelihood_exact_normal_model&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>FIM function generator for the normal distribution with
-exact observations.</p></td>
-      </tr><tr><td>
-          <p><code><a href="fim.likelihood_model.html">fim(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Default implementation of the Fisher information matrix (FIM)
-for a likelihood model</p></td>
-      </tr><tr><td>
-          <p><code><a href="fit.likelihood_exact_normal.html">fit(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Customized MLE fit for the exact normal likelihood model.</p></td>
       </tr><tr><td>
           <p><code><a href="fit.likelihood_model.html">fit(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
         </td>
@@ -104,11 +97,6 @@ for a likelihood model</p></td>
         </td>
         <td><p>Hessian of log-likelihood method for likelihood_contr_model</p></td>
       </tr><tr><td>
-          <p><code><a href="hess_loglik.likelihood_exact_normal.html">hess_loglik(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Fisher information matrix generator given data <code>x</code> for the normal
-distribution</p></td>
-      </tr><tr><td>
           <p><code><a href="hess_loglik.likelihood_exact_weibull.html">hess_loglik(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
         </td>
         <td><p>Hessian of the log-likelihood function generator for the weibull
@@ -118,6 +106,10 @@ likelihood model.</p></td>
         </td>
         <td><p>Default method to compute the hessian of the log-likelihood.</p></td>
       </tr><tr><td>
+          <p><code><a href="hypothesis_test.html">hypothesis_test()</a></code> </p>
+        </td>
+        <td><p>Hypothesis test structure</p></td>
+      </tr><tr><td>
           <p><code><a href="is_likelihood_model.html">is_likelihood_model()</a></code> </p>
         </td>
         <td><p>Likelihood model</p></td>
@@ -126,13 +118,22 @@ likelihood model.</p></td>
         </td>
         <td><p>Likelihood_contr_model</p></td>
       </tr><tr><td>
-          <p><code><a href="likelihood_exact_normal.html">likelihood_exact_normal()</a></code> </p>
-        </td>
-        <td><p>Exact Normal likelihood model</p></td>
-      </tr><tr><td>
           <p><code><a href="likelihood_exact_weibull.html">likelihood_exact_weibull()</a></code> </p>
         </td>
         <td><p>Exact Weibull likelihood model</p></td>
+      </tr><tr><td>
+          <p><code><a href="likelihood_name.html">likelihood_name()</a></code> </p>
+        </td>
+        <td><p>This is a likelihood model generator based on the convention
+used in R, where we have a name for a distribution,
+like <code>normal</code>, <code>weibull</code>, <code>exp</code>, etc. and then
+we have a set of functions that are named
+<code>p&lt;name&gt;</code>, <code>d&lt;name&gt;</code>, <code>q&lt;name&gt;</code>, <code>r&lt;name&gt;</code>, etc.,
+where the first letter is the first letter of the
+distribution name. For instance, for the normal
+distribution, we have <code>pnorm</code>, <code>dnorm</code>, <code>qnorm</code>,
+<code>rnorm</code>, respectively for the cdf, pdf, quantile
+function, and random variate generator.</p></td>
       </tr><tr><td>
           <p><code><a href="loglik.html">loglik()</a></code> </p>
         </td>
@@ -142,17 +143,25 @@ likelihood model.</p></td>
         </td>
         <td><p>Log-likelihood method for likelihood_contr_model</p></td>
       </tr><tr><td>
-          <p><code><a href="loglik.likelihood_exact_normal.html">loglik(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Log-likelihood function generator for the exact Weibull likelihood model.</p></td>
-      </tr><tr><td>
           <p><code><a href="loglik.likelihood_exact_weibull.html">loglik(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
         </td>
         <td><p>Log-likelihood function generator for the exact Weibull likelihood model.</p></td>
       </tr><tr><td>
+          <p><code><a href="loglik.likelihood_name_model.html">loglik(<i>&lt;likelihood_name_model&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Log-likelihood function generator for the named likelihood model.</p></td>
+      </tr><tr><td>
           <p><code><a href="lrt.html">lrt()</a></code> </p>
         </td>
         <td><p>Likelihood ratio test</p></td>
+      </tr><tr><td>
+          <p><code><a href="pval.html">pval()</a></code> </p>
+        </td>
+        <td><p>Generic method for extracting the p-value from a hypothesis test</p></td>
+      </tr><tr><td>
+          <p><code><a href="pval.hypothesis_test.html">pval(<i>&lt;hypothesis_test&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>p-value method for hypothesis tests</p></td>
       </tr><tr><td>
           <p><code><a href="sampler.likelihood_model.html">sampler(<i>&lt;likelihood_model&gt;</i>)</a></code> </p>
         </td>
@@ -165,10 +174,6 @@ likelihood model.</p></td>
           <p><code><a href="score.likelihood_contr_model.html">score(<i>&lt;likelihood_contr_model&gt;</i>)</a></code> </p>
         </td>
         <td><p>Score method for likelihood_contr_model</p></td>
-      </tr><tr><td>
-          <p><code><a href="score.likelihood_exact_normal.html">score(<i>&lt;likelihood_exact_normal&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Score function generator for the exact Weibull likelihood model.</p></td>
       </tr><tr><td>
           <p><code><a href="score.likelihood_exact_weibull.html">score(<i>&lt;likelihood_exact_weibull&gt;</i>)</a></code> </p>
         </td>

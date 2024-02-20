@@ -10,10 +10,12 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(
     collapse = TRUE,
-    comment = "#>")
-options(digits=3)
+    comment = "#>"
+)
+options(digits = 2)
 ```
 
 
@@ -34,12 +36,13 @@ if (!require(likelihood.model)) {
 }
 ```
 
-```{r load-packages, message=FALSE, warning=FALSE}
+```{r load-packages, message=FALSE, warning=FALSE, echo = FALSE}
 library(tidyverse)
 library(algebraic.dist)
 library(algebraic.mle)
 library(likelihood.model)
 library(generics)
+library(MASS)
 ```
 
 ## Exponential series system
@@ -56,9 +59,11 @@ n <- 150
 rates <- c(1.1, 1.2, 1.3)
 set.seed(1235)
 
-df <- data.frame(t1 = rexp(n, rates[1]),
-                 t2 = rexp(n, rates[2]),
-                 t3 = rexp(n, rates[3]))
+df <- data.frame(
+    t1 = rexp(n, rates[1]),
+    t2 = rexp(n, rates[2]),
+    t3 = rexp(n, rates[3])
+)
 df$t <- apply(df, 1, min)
 
 # map each observation to the corresponding index (component) that was minimum
@@ -154,15 +159,29 @@ $$
 $$
 which has a score
 $$
-    s_i = 1 / \lambda_1 - t_i
+    s_i =
+        \frac{1}{\lambda_1}
+        \begin{bmatrix}
+            1 \\
+            0 \\
+            0
+        \end{bmatrix}
+        - t_i
+        \begin{bmatrix}
+            1 \\
+            1 \\
+            1
+        \end{bmatrix}
 $$
 and a Hessian
 $$
-    H_i = \begin{bmatrix}
-        -1 / \lambda_1^2 & 0 & 0 \\
-        0 & 0 & 0 \\
-        0 & 0 & 0
-    \end{bmatrix}.
+    H_i =
+        -\frac{1}{\lambda_1^2}
+        \begin{bmatrix}
+            1 & 0 & 0 \\
+            0 & 0 & 0 \\
+            0 & 0 & 0
+        \end{bmatrix}.
 $$
 
 To get the total log-likelihood, score, and Hessian, we just sum them up
@@ -177,33 +196,15 @@ This allows dispatching based on the observation type, as defined in `obs_type`.
 
 ```{r observed-likelihood, cache=TRUE}
 score.observed <- function(df, rates, ...) {
-    rep(-sum(df$t), length(rates)) + (df |> count(k))$n / rates
+  rep(-sum(df$t), length(rates)) + (df |> dplyr::count(k))$n / rates
 }
 
 loglik.observed <- function(df, rates, ...) {
-    sum(log(rates[df$k])) - sum(rates) * sum(df$t)
+  sum(log(rates[df$k])) - sum(rates) * sum(df$t)
 }
 
 model.observed <- likelihood_contr_model$new(
-    obs_type = function(df) {
-        "observed" # expands to `rep("observed", nrow(df))`
-    },
-
-    # letting it dispatch to the right generic method based on the observation
-    # type is more flexible, but we can also specify it directly here
-    # this is useful since we can use different models for the same data
-    # by just changing the likelihood contribution model here. we can do this
-    # for score and hess_loglik as well
-    logliks = list(
-        observed = loglik.observed # we could have ommited this
-                                   # we do ommit it for the score function
-                                   # also, since we can specify any function
-                                   # here, we are not constrained to any 
-                                   # naming convention, e.g., it could have
-                                   # been defined inline as
-                                   #   `observed = function(df, rates, ...) {
-                                   #      ... }`
-    )
+  obs_type = function(df) { "observed" }
 )
 ```
 
@@ -213,7 +214,7 @@ We use the `optim` function to do the numerical optimization. We use the
 `hessian = TRUE` argument to get the Hessian matrix, which we can use to get the
 standard errors of the estimates.
 ```{r mle-optim-observed, cache=TRUE}
-optim(rates, fn = loglik(model.observed), df = df, control = list(fnscale = -1))
+optim(rates, fn = loglik(model.observed), df=df, control=list(fnscale=-1))
 ```
 
 Note that `likelihood_model` objects have a default method for fitting MLEs, `fit`.
@@ -226,18 +227,15 @@ summary(rates.hat)
 
 We implement `hess_loglik.observed` for completeness.
 ```{r hess-loglike}
-#library(dplyr)
 hess_loglik.observed <- function(df, rates, ...) {
-    p <- length(rates)
-    H <- matrix(0, p, p)
-
-    counts <- df |> dplyr::count(k)
-    for (j in 1:p) {
-        H[j, j] <- -counts$n[j] / rates[j]^2
-    }
-    H
+  p <- length(rates)
+  H <- matrix(0, p, p)
+  counts <- df |> dplyr::count(k)
+  for (j in 1:p) {
+    H[j, j] <- -counts$n[j] / rates[j]^2
+  }
+  H
 }
-
 observed_fim(rates.hat)
 hess_loglik(model.observed)(df, params(rates.hat))
 ```
@@ -247,12 +245,10 @@ Now, we use the Bootstrap method.
 
 ```{r}
 model.samp <- sampler(model.observed, df = df, par = rates)
-dist <- empirical_dist(model.samp(n=5)$t)
-expectation(dist, function(x) x)
-
-# this is still incorrect -- do it for a single element
-# in the FIM to see if you can get it to work
-fim(model.observed)(rates, df) * nrow(df)
+dist <- empirical_dist(model.samp(n = 5000)$t)
+print(expectation(dist, function(x) x))
+print(vcov(dist))
+print(ginv(vcov(dist)))
 ```
 
 ## Case 2: Right-censoring
@@ -291,8 +287,8 @@ df.censored <- df |> mutate(
     t = ifelse(censored, .5, t)
 )
 
-df.censored[df.censored[,"censored"], "k"] <- NA
-df.censored[df.censored[,"censored"], paste0("t",1:3)] <- rep(NA, 3)
+df.censored[df.censored[, "censored"], "k"] <- NA
+df.censored[df.censored[, "censored"], paste0("t", 1:3)] <- rep(NA, 3)
 head(df.censored)
 ```
 
@@ -312,17 +308,21 @@ hess_loglik_censored <- function(df, rates) {
 model.censored <- likelihood_contr_model$new(
     obs_type = function(df) {
         ifelse(df$censored, "censored", "observed")
-    })
+    }
+)
 
 mle.censored <- mle_numerical(
     optim(
         rates,
         fn = loglik(model.censored),
         df = df.censored, hessian = TRUE,
-    control = list(fnscale = -1)))
+        control = list(fnscale = -1)
+    )
+)
 summary(mle.censored)
 ```
 
 
-So, recall the true parameters are $\lambda = `r rates`$. We can see that the
-estimates are reasonable, particularly for the relatively small sample size.
+So, recall the true parameters are $\lambda = (`r rates`)'$.
+We can see that the estimates are reasonable, particularly
+for the relatively small sample size.

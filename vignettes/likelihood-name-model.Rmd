@@ -1,0 +1,153 @@
+---
+title: "Likelihood Named Distributions Model"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+vignette: >
+  %\VignetteIndexEntry{Likelihood Named Distributions Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+options(digits = 2)
+```
+
+## Likelihood Named Distributions Model: `likelihood_name_model`
+
+### Introduction
+
+The `likelihood.model` package introduces a flexible framework for working with
+likelihood models in R. Here, we demonstrate a model based on the naming
+conventions of distribution functions in R, making it easy to construct
+likelihood models for a wide range of distributions and handle different types
+of censoring. This vignette provides a brief guide to using the
+`likelihood_name_model` within the `likelihood.model` package.
+
+> You can also use these likelihood functions as likelihood contributions in a
+> more complicated likelihood contribution model.
+
+### Conceptual Foundation
+
+At the heart of many statistical models lies the concept of likelihood, a fundamental tool in estimating parameters and testing hypotheses. The `likelihood.model` package builds on this foundation, providing a way to generate likelihood models based on named distributions (e.g., normal, exponential) and handle data that may be subject to different censoring mechanisms—such as exact, left-censored, right-censored, or interval-censored observations.
+
+### Getting Started
+
+#### Installation
+
+To begin, install the `likelihood.model` package from GitHub:
+
+```{r}
+if (!require(devtools)) {
+  install.packages("devtools")
+}
+devtools::install_github("queelius/likelihood.model")
+```
+
+#### Loading the Package
+
+Load the package along with other necessary libraries:
+
+```{r}
+library(likelihood.model)
+library(tidyverse)
+```
+
+### Creating a Likelihood Model
+
+Start by creating a simple likelihood model for a normal distribution:
+
+```{r}
+model <- likelihood_name("norm", "x", "censoring")
+print(model)
+```
+
+This model is based on the normal distribution, with `x` as the observation
+column and `censoring` as the censoring column that indicates the type of
+censoring for the corresponding observation.
+
+### Detailed Example
+
+Let's simulate some data to apply our model:
+
+```{r}
+generate_data <- function(n, right_censoring_quantile, sampler) {
+  df <- data.frame(
+    x = sampler(n),
+    censoring = rep("exact", n)
+  )
+  q <- qnorm(right_censoring_quantile)
+
+  for (i in 1:n) {
+    if (df[i, 1] > q) {
+      df[i, ] <- list(q, "right")
+    }
+  }
+  df
+}
+
+df <- generate_data(n = 100, right_censoring_quantile = .5,
+                    sampler = function(n) rnorm(n, mean = 0, sd = 1)
+```
+
+Now we have a dataset `df` with $n=100$ observations, with
+50% ($`right_censoring_quantile` = 0.5$) expected to be right-censored.
+Now, compute the log-likelihood of the dataset given the parameters:
+
+```{r}
+ll <- loglik(model)
+```
+
+#### Customizing the Optimization Algorithm
+
+To fine-tune the model fitting process, you can customize the optimization algorithm used by `fit`:
+
+```{r}
+mle <- fit(model, df, par = c(mean = 0, sd = 1))
+print(mle)
+```
+There are a number of control parameters that can be passed to `fit` to customize the optimization algorithm. For example, you can specify the maximum number of iterations, the convergence tolerance, the optimization method, and any box constraints on the parameters.
+
+```{r}
+xs <- seq(-5,5,.1)
+ys <- numeric(length(xs))
+for (i in seq_along(xs)) {
+  ys[i] <- ll(df, par = c(mean = xs[i], sd = params(mle)[2]))
+}
+plot(xs, ys, type = "l", xlab = "Mean", ylab = "Log-likelihood")
+points(params(mle)[1], ll(df, par = params(mle)), col = "blue", pch = 19)
+for (i in seq_along(xs)) {
+  ys[i] <- ll(df, par = c(mean = params(mle)[1], sd = xs[i]))
+}
+lines(xs, ys, col = "red")
+points(params(mle)[2], ll(df, par = params(mle)), col = "blue", pch = 19)
+```
+
+We can show the confidence intervals for the parameters:
+```{r}
+confint(mle)
+```
+We can do many other tasks, too, See: [algebraic.mle](https://www.github.com/queelius/algebraic.mle)
+in addition to the functions availabel in this package.
+Since the MLE is itself a distribution, you may also use the [algebraic.dist](https://www.github.com/queelius/algebraic.dist)
+to do other tasks, such as expectations.
+
+### Hypothesis Testing
+
+The `likelihood.model` package also provides a simple likelihood ratio test to
+compare two models using the `lrt` function. For example, we can compare the
+normal distribution model to a model based on the exponential distribution:
+
+```{r}
+df.test <- generate_data(n = 100, right_censoring_quantile = .75,
+                         sampler = function(n) rexp(n, rate = 1))
+model_exp <- likelihood_name("exp", "x", "censoring")
+mle_exp <- fit(model_exp)(df.test, par = c(rate = 1))
+model_norm <- likelihood_name("norm", "x", "censoring")
+mle_norm <- fit(model_norm)(df.test, par = c(mean = 1, sd = 1))
+print(lrt(mle_exp, mle_norm))
+```

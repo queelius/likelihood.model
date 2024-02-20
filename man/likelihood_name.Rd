@@ -2,7 +2,7 @@
 % Please edit documentation in R/likelihood_name.R
 \name{likelihood_name}
 \alias{likelihood_name}
-\title{This is a likelihood mode generator based on the convention
+\title{This is a likelihood model generator based on the convention
 used in R, where we have a name for a distribution,
 like \code{normal}, \code{weibull}, \code{exp}, etc. and then
 we have a set of functions that are named
@@ -13,7 +13,7 @@ distribution, we have \code{pnorm}, \code{dnorm}, \code{qnorm},
 \code{rnorm}, respectively for the cdf, pdf, quantile
 function, and random variate generator.}
 \usage{
-likelihood_name(dist_name, ob_col, type_col = NULL)
+likelihood_name(dist_name, ob_col, censor_col)
 }
 \arguments{
 \item{dist_name}{The name of the distribution.}
@@ -22,12 +22,10 @@ likelihood_name(dist_name, ob_col, type_col = NULL)
 contains the observations.}
 
 \item{type_col}{The name of the column in a data frame that
-contains the censoring type. If \code{NULL}, then
-no censoring is assumed (exact observations).
-If \code{type_col} is not \code{NULL}, then values in this column
-are used to determine the type of censoring.
+contains the censoring type. The values in this column determine the type of
+censoring.
 \itemize{
-\item NA or \code{exact}: exact observation
+\item \code{exact} or NA: exact observation
 \item \code{left}: left-censored observation
 \item \code{right}: right-censored observation
 \item \code{interval}: interval-censored observation

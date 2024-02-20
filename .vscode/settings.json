@@ -1,0 +1,7 @@
+{
+  "editor.tabSize": 2,
+  "[r]": {
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false
+} 
+}

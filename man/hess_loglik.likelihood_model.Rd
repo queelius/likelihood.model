@@ -4,14 +4,14 @@
 \alias{hess_loglik.likelihood_model}
 \title{Default method to compute the hessian of the log-likelihood.}
 \usage{
-\method{hess_loglik}{likelihood_model}(model, ..., control = list())
+\method{hess_loglik}{likelihood_model}(model, control = list(), ...)
 }
 \arguments{
 \item{model}{The likelihood model}
 
-\item{...}{Additional arguments (to pass into \code{loglik})}
-
 \item{control}{Custom arguments to pass to \code{numDeriv::hessian}.}
+
+\item{...}{Additional arguments (to pass into \code{loglik})}
 }
 \description{
 In case a \code{hess_loglik} method is not provided, this function will be

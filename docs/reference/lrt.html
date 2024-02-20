@@ -34,6 +34,9 @@
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
     </li>
+    <li>
+      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
+    </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/queelius/likelihood.model/" class="external-link">
@@ -60,33 +63,37 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">lrt</span><span class="op">(</span><span class="va">ll1</span>, <span class="va">ll2</span>, <span class="va">data</span>, <span class="va">par1</span>, <span class="va">par2</span>, df <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">lrt</span><span class="op">(</span><span class="va">model1</span>, <span class="va">model2</span>, <span class="va">data</span>, <span class="va">par1</span>, <span class="va">par2</span>, dof <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>data</dt>
-<dd><p>data</p></dd>
+<dd><p>the data which the likelihood models are fitted to</p></dd>
 
 
-<dt>par1</dt>
-<dd><p>parameters for first model</p></dd>
-
-
-<dt>par2</dt>
-<dd><p>parameters for second model</p></dd>
+<dt>dof</dt>
+<dd><p>degrees of freedom</p></dd>
 
 
 <dt>...</dt>
 <dd><p>additional arguments</p></dd>
 
 
-<dt>model1</dt>
-<dd><p>first likelihood model</p></dd>
+<dt>null</dt>
+<dd><p>the null (simpler) likelihood model</p></dd>
 
 
-<dt>model2</dt>
-<dd><p>second likelihood model</p></dd>
+<dt>alt</dt>
+<dd><p>the more complicated model</p></dd>
+
+
+<dt>null_par</dt>
+<dd><p>parameters for null model</p></dd>
+
+
+<dt>alt_par</dt>
+<dd><p>parameters for alternative model</p></dd>
 
 </dl></div>
     <div id="value">

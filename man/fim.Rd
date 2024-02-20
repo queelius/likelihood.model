@@ -15,24 +15,25 @@ fim(model, ...)
 Function that computes the FIM given a sample and a parameter vector
 }
 \description{
-This function calculates the Fisher information matrix (FIM), an expectation over
-the data-generating process (DGP). The FIM is a crucial concept in statistics
-because it provides information about the precision of estimates and the amount
-of information that data carries about an unknown parameter.
+This function calculates the Fisher information matrix (FIM), an expectation
+over the data-generating process (DGP). The FIM is a crucial concept in
+statistics because it provides information about the precision of estimates
+and the amount of information that data carries about an unknown parameter.
 }
 \details{
-FIM is a function of the parameters, and is used to compute the standard errors
-of the parameters. It is also used to compute the covariance matrix of the parameters,
-which is in turn used to compute standard errors of the parameters.
+FIM is a function of the parameters, and is used to compute the standard
+errors of the parameters. It is also used to compute the covariance matrix of
+the parameters, which is in turn used to compute standard errors of the
+parameters.
 
 Additionally, FIM is used to compute the Cramer-Rao lower bound (CRLB),
 the inverse of the FIM. CRLB represents the lower limit of the variance that
-an unbiased estimator can attain. This is used to compute the asymptotic relative
-efficiency (ARE) of an estimator of the parameters, which is the ratio of the
-variance of the estimator to the CRLB.
+an unbiased estimator can attain. This is used to compute the asymptotic
+relative efficiency (ARE) of an estimator of the parameters, which is the
+ratio of the variance of the estimator to the CRLB.
 
-The function computes FIM(x)(theta), the FIM of the likelihood model \code{x}, is based
-on the following formulas:
+The function computes FIM(x)(theta), the FIM of the likelihood model \code{x}, is
+based on the following formulas:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{FIM(x)(theta) = E[-loglik_hessian(x)(ob,theta)]
 FIM(x)(theta) = E[score(x)(ob,theta) \%*\% t(score(x)(ob,theta))]
