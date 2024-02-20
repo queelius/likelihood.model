@@ -7,12 +7,11 @@
 #' - `score`: computes the score of the model
 #' - `hess_loglik`: computes the Hessian of the log-likelihood given
 #'  a data frame and parameters
-#' - `fim`: computes the Fisher information matrix (expectation)
 #' 
-#' It provides methods for computing the log-likelihood, score, the
-#' Hessian of log-likelihood, and the Fisher information matrix (FIM).
+#' It provides methods for computing the log-likelihood, score, and
+#' the Hessian of log-likelihood.
 #' 
-#' It also allows for different *likelihood contributions* depending
+#' It also allows for different likelihood contributions depending
 #' on the  observation type of a row in the data frame. For example,
 #' if the data frame contains both exact and interval-censored
 #' observations, then the log-likelihood contributions for exact

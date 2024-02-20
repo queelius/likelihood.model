@@ -9,8 +9,12 @@ S3method(hess_loglik,likelihood_exact_weibull)
 S3method(hess_loglik,likelihood_model)
 S3method(loglik,likelihood_contr_model)
 S3method(loglik,likelihood_exact_weibull)
+<<<<<<< HEAD
 S3method(loglik,likelihood_name_model)
 S3method(print,likelihood_model)
+=======
+S3method(loglik,likelihood_name)
+>>>>>>> 705b9acf2cade3476fd17d5fab9051d07bc709b5
 S3method(pval,hypothesis_test)
 S3method(sampler,likelihood_model)
 S3method(score,likelihood_contr_model)
@@ -42,4 +46,8 @@ importFrom(stats,pchisq)
 importFrom(stats,pf)
 importFrom(stats,qnorm)
 importFrom(stats,qt)
+<<<<<<< HEAD
+=======
+importFrom(stats,var)
+>>>>>>> 705b9acf2cade3476fd17d5fab9051d07bc709b5
 importFrom(utils,modifyList)
