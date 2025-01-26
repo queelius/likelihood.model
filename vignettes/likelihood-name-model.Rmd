@@ -91,7 +91,7 @@ generate_data <- function(n, right_censoring_quantile, sampler) {
 }
 
 df <- generate_data(n = 100, right_censoring_quantile = .5,
-                    sampler = function(n) rnorm(n, mean = 0, sd = 1)
+                    sampler = function(n) rnorm(n, mean = 0, sd = 1))
 ```
 
 Now we have a dataset `df` with $n=100$ observations, with

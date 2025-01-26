@@ -4,22 +4,19 @@
 \alias{lrt}
 \title{Likelihood ratio test}
 \usage{
-lrt(model1, model2, data, par1, par2, dof = NULL, ...)
+lrt(null, alt, data, null_par, alt_par, dof = NULL, ...)
 }
 \arguments{
-\item{data}{the data which the likelihood models are fitted to}
+\item{null}{the likelihood value from a simpler likelihood model nested
+within the alternative model}
+
+\item{alt}{the likelihood value from the more complicated model}
+
+\item{data}{a data frame}
 
 \item{dof}{degrees of freedom}
 
 \item{...}{additional arguments}
-
-\item{null}{the null (simpler) likelihood model}
-
-\item{alt}{the more complicated model}
-
-\item{null_par}{parameters for null model}
-
-\item{alt_par}{parameters for alternative model}
 }
 \value{
 likelihood ratio test

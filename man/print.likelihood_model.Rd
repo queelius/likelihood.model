@@ -4,7 +4,7 @@
 \alias{print.likelihood_model}
 \title{Print method for likelihood models}
 \usage{
-\method{print}{likelihood_model}(x, ...)
+\method{print}{likelihood_model}(x, show.loglik = FALSE, ...)
 }
 \arguments{
 \item{x}{A likelihood model}
