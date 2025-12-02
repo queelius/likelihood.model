@@ -208,6 +208,7 @@ assumptions <- function(model, ...) {
 #' @importFrom stats optim
 #' @importFrom utils modifyList
 #' @importFrom generics fit
+#' @export fit
 #' @export
 fit.likelihood_model <- function(object, ...) {
   ll <- loglik(object, ...)

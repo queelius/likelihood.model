@@ -90,18 +90,20 @@ hess_loglik.likelihood_exact_weibull <- function(model, ...) {
   function(df, par, ...) {
     x <- as.data.frame(df)[[model$ob_col]]
     n <- length(x)
-    stopifnot(n > 0, all(x > 0)) # we need at least one observation
-    # and all observations must be positive
+    stopifnot(n > 0, all(x > 0))
     k <- par[1] # shape
     l <- par[2] # scale
     x_l_k <- (x / l)^k
     log_x_l <- log(x / l)
-    p_k_l <- n / l - sum(x_l_k * (1 + k * log_x_l)) / l
+    # d^2 ll / dk dl
+    p_k_l <- -n / l + sum(x_l_k * (1 + k * log_x_l)) / l
     matrix(
       c(
-        shape_shape = n / k^2 + sum(x_l_k * log_x_l^2),
+        # d^2 ll / dk^2 = -n/k^2 - sum((x/l)^k * (log(x/l))^2)
+        shape_shape = -n / k^2 - sum(x_l_k * log_x_l^2),
         shape_scale = p_k_l, shape_scale = p_k_l,
-        scale_scale = -n * k / l^2 + k * (k + 1) / l^2 * sum(x_l_k)
+        # d^2 ll / dl^2 = nk/l^2 - k(k+1)/l^2 * sum((x/l)^k)
+        scale_scale = n * k / l^2 - k * (k + 1) / l^2 * sum(x_l_k)
       ),
       nrow = 2
     )

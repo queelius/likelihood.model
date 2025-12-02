@@ -314,12 +314,8 @@ test_that("analytical hessian has expected structure for Weibull", {
     x = c(shape, scale)
   )
 
-  # Note: There appears to be a sign error in the analytical Hessian implementation.
-  # The analytical hessian has opposite signs from the numerical hessian.
-  # This test documents the actual package behavior.
-  # The analytical hessian should be NEGATIVE of what numerical gives for correct concavity.
-  expect_equal(analytical_hess, -numerical_hess, tolerance = 1e-4,
-               info = "Analytical Hessian has opposite sign from numerical (package behavior)")
+  # Analytical Hessian should match numerical Hessian
+  expect_equal(analytical_hess, numerical_hess, tolerance = 1e-4)
 })
 
 test_that("likelihood_exact_weibull validates positive observations", {
