@@ -259,7 +259,7 @@ fit.likelihood_model <- function(object, ...) {
 #' @importFrom stats optim
 #' @importFrom boot boot
 #' @importFrom algebraic.mle mle_boot
-#' @importFrom algebraic.dist sampler
+#' @importFrom algebraic.dist sampler params
 #' @export
 sampler.likelihood_model <- function(model, df, par, ..., nthreads = 1L) {
   solver <- fit(model, ...)
@@ -268,7 +268,7 @@ sampler.likelihood_model <- function(model, df, par, ..., nthreads = 1L) {
     mle_boot(boot(
       data = df,
       statistic = function(df, ind) {
-        params(solver(df[ind, ], par = params(sol), ...))
+        params(solver(df[ind, , drop = FALSE], par = params(sol), ...))
       },
       R = n,
       parallel = "multicore",
