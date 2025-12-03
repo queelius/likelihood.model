@@ -37,7 +37,7 @@ if (!require(likelihood.model)) {
 ```
 
 ```{r load-packages, message=FALSE, warning=FALSE, echo = FALSE}
-library(tidyverse)
+library(dplyr)
 library(algebraic.dist)
 library(algebraic.mle)
 library(likelihood.model)
@@ -241,14 +241,16 @@ hess_loglik(model.observed)(df, params(rates.hat))
 ```
 
 
-Now, we use the Bootstrap method.
+Now, we use the Bootstrap method to estimate the sampling distribution of the MLE.
 
-```{r}
+```{r bootstrap, cache=TRUE}
 model.samp <- sampler(model.observed, df = df, par = rates)
-dist <- empirical_dist(model.samp(n = 5000)$t)
+boot_result <- model.samp(n = 500)
+dist <- empirical_dist(boot_result$t)
+cat("Bootstrap mean:\n")
 print(expectation(dist, function(x) x))
+cat("\nBootstrap covariance:\n")
 print(vcov(dist))
-print(ginv(vcov(dist)))
 ```
 
 ## Case 2: Right-censoring

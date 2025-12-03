@@ -52,9 +52,11 @@ devtools::install_github("queelius/likelihood.model")
 
 Load the package along with other necessary libraries:
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(likelihood.model)
-library(tidyverse)
+library(algebraic.mle)
+library(algebraic.dist)
+library(dplyr)
 ```
 
 ### Creating a Likelihood Model
@@ -75,6 +77,8 @@ censoring for the corresponding observation.
 Let's simulate some data to apply our model:
 
 ```{r}
+set.seed(123)
+
 generate_data <- function(n, right_censoring_quantile, sampler) {
   df <- data.frame(
     x = sampler(n),
@@ -102,29 +106,32 @@ Now, compute the log-likelihood of the dataset given the parameters:
 ll <- loglik(model)
 ```
 
-#### Customizing the Optimization Algorithm
+#### Fitting the Model
 
-To fine-tune the model fitting process, you can customize the optimization algorithm used by `fit`:
+The `fit` function returns a solver that can be used to find the MLE:
 
 ```{r}
-mle <- fit(model, df, par = c(mean = 0, sd = 1))
+solver <- fit(model)
+mle <- solver(df, par = c(mean = 0, sd = 1))
 print(mle)
 ```
-There are a number of control parameters that can be passed to `fit` to customize the optimization algorithm. For example, you can specify the maximum number of iterations, the convergence tolerance, the optimization method, and any box constraints on the parameters.
+
+The solver accepts control parameters to customize the optimization algorithm, including the method (`"Nelder-Mead"`, `"BFGS"`, `"SANN"`, etc.), convergence tolerance, and maximum iterations.
 
 ```{r}
-xs <- seq(-5,5,.1)
+xs <- seq(-5, 5, 0.1)
 ys <- numeric(length(xs))
+mle_params <- unname(params(mle))  # strip names to avoid parameter name conflicts
 for (i in seq_along(xs)) {
-  ys[i] <- ll(df, par = c(mean = xs[i], sd = params(mle)[2]))
+  ys[i] <- ll(df, par = c(mean = xs[i], sd = mle_params[2]))
 }
 plot(xs, ys, type = "l", xlab = "Mean", ylab = "Log-likelihood")
-points(params(mle)[1], ll(df, par = params(mle)), col = "blue", pch = 19)
+points(mle_params[1], ll(df, par = mle_params), col = "blue", pch = 19)
 for (i in seq_along(xs)) {
-  ys[i] <- ll(df, par = c(mean = params(mle)[1], sd = xs[i]))
+  ys[i] <- ll(df, par = c(mean = mle_params[1], sd = xs[i]))
 }
 lines(xs, ys, col = "red")
-points(params(mle)[2], ll(df, par = params(mle)), col = "blue", pch = 19)
+points(mle_params[2], ll(df, par = mle_params), col = "blue", pch = 19)
 ```
 
 We can show the confidence intervals for the parameters:
@@ -138,16 +145,35 @@ to do other tasks, such as expectations.
 
 ### Hypothesis Testing
 
-The `likelihood.model` package also provides a simple likelihood ratio test to
-compare two models using the `lrt` function. For example, we can compare the
-normal distribution model to a model based on the exponential distribution:
+The `likelihood.model` package provides a likelihood ratio test via the `lrt`
+function to compare nested models. For example, we can test whether data from
+a normal distribution fits better than a simpler exponential model:
 
 ```{r}
+# Generate test data from exponential distribution
+set.seed(456)
 df.test <- generate_data(n = 100, right_censoring_quantile = .75,
                          sampler = function(n) rexp(n, rate = 1))
+
+# Fit both models
 model_exp <- likelihood_name("exp", "x", "censoring")
-mle_exp <- fit(model_exp)(df.test, par = c(rate = 1))
 model_norm <- likelihood_name("norm", "x", "censoring")
-mle_norm <- fit(model_norm)(df.test, par = c(mean = 1, sd = 1))
-print(lrt(mle_exp, mle_norm))
+
+solver_exp <- fit(model_exp)
+solver_norm <- fit(model_norm)
+
+mle_exp <- solver_exp(df.test, par = c(rate = 1))
+mle_norm <- solver_norm(df.test, par = c(mean = 1, sd = 1))
+
+# Compare log-likelihoods
+cat("Exponential log-likelihood:", loglik_val(mle_exp), "\n")
+cat("Normal log-likelihood:", loglik_val(mle_norm), "\n")
+
+# Perform LRT (exponential as null, normal as alternative)
+# Note: These aren't truly nested, but we can still compare
+lrt_result <- lrt(model_exp, model_norm, df.test,
+                  null_par = params(mle_exp),
+                  alt_par = params(mle_norm),
+                  dof = 1)  # normal has 1 more parameter
+print(lrt_result)
 ```

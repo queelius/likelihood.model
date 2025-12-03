@@ -1,0 +1,232 @@
+---
+title: "Getting Started with likelihood.model"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+vignette: >
+  %\VignetteIndexEntry{Getting Started with likelihood.model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>",
+    fig.width = 6,
+    fig.height = 4
+)
+options(digits = 4)
+```
+
+## Introduction
+
+The `likelihood.model` package provides a flexible framework for specifying and
+using likelihood models for statistical inference in R. It supports:
+- Standard R distributions (normal, Weibull, exponential, etc.)
+- Censored data (left, right, and interval censoring)
+- Custom likelihood contributions for complex models
+- Maximum likelihood estimation with confidence intervals
+- Bootstrap sampling distributions
+
+This vignette provides a quick introduction to the main features.
+
+## Installation
+
+```{r install, eval=FALSE}
+# Install from GitHub
+if (!require(devtools)) install.packages("devtools")
+devtools::install_github("queelius/likelihood.model")
+
+# Also install companion packages for full functionality
+devtools::install_github("queelius/algebraic.mle")
+devtools::install_github("queelius/algebraic.dist")
+```
+
+## Loading Packages
+
+```{r load, message=FALSE, warning=FALSE}
+library(likelihood.model)
+library(algebraic.mle)
+```
+
+## Example 1: Basic MLE with Weibull Distribution
+
+Let's start with a simple example: fitting a Weibull distribution to survival
+data using the `likelihood_exact_weibull` model, which provides analytical
+derivatives for faster and more accurate estimation.
+
+```{r weibull-example}
+# Generate synthetic survival data
+set.seed(42)
+n <- 150
+true_shape <- 2.5
+true_scale <- 3.0
+df <- data.frame(x = rweibull(n, shape = true_shape, scale = true_scale))
+
+# Create the likelihood model
+model <- likelihood_exact_weibull("x")
+
+# View model assumptions
+assumptions(model)
+
+# Fit the MLE
+solver <- fit(model)
+mle <- solver(df, par = c(1, 1))  # initial guess: shape=1, scale=1
+
+# View results
+summary(mle)
+```
+
+### Extracting Results
+
+```{r weibull-results}
+# Parameter estimates
+cat("Estimated parameters:\n")
+print(params(mle))
+
+# Confidence intervals
+cat("\n95% Confidence Intervals:\n")
+print(confint(mle))
+
+# Standard errors
+cat("\nStandard Errors:\n")
+print(sqrt(diag(vcov(mle))))
+
+# Log-likelihood value
+cat("\nLog-likelihood:", loglik_val(mle), "\n")
+```
+
+## Example 2: Handling Censored Data
+
+A key feature of `likelihood.model` is proper handling of censored data. Let's
+simulate data with right-censoring and show how ignoring censoring leads to
+biased estimates.
+
+```{r censoring-example}
+# Generate normal data with right-censoring
+set.seed(123)
+n <- 200
+true_mean <- 10
+true_sd <- 2
+censor_time <- 11
+
+# Generate latent (true) values
+x_latent <- rnorm(n, true_mean, true_sd)
+
+# Apply censoring
+censored <- x_latent > censor_time
+df_cens <- data.frame(
+  x = ifelse(censored, censor_time, x_latent),
+  censor = ifelse(censored, "right", "exact")
+)
+
+cat("Censoring rate:", mean(censored) * 100, "%\n")
+```
+
+### Fitting with Proper Censoring
+
+```{r censoring-fit}
+# Create model that handles censoring
+model_cens <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+
+# Fit the model
+solver_cens <- fit(model_cens)
+mle_cens <- solver_cens(df_cens, par = c(0, 1))
+
+cat("MLE (accounting for censoring):\n")
+cat("  Mean:", params(mle_cens)[1], "(true:", true_mean, ")\n")
+cat("  SD:  ", params(mle_cens)[2], "(true:", true_sd, ")\n")
+```
+
+### Comparison: Naive vs Proper Estimation
+
+```{r censoring-comparison}
+# Naive estimates (ignoring censoring)
+naive_mean <- mean(df_cens$x)
+naive_sd <- sd(df_cens$x)
+
+cat("\nComparison of estimates:\n")
+cat("                     Mean      SD\n")
+cat(sprintf("True values:      %7.3f   %5.3f\n", true_mean, true_sd))
+cat(sprintf("MLE (correct):    %7.3f   %5.3f\n", params(mle_cens)[1], params(mle_cens)[2]))
+cat(sprintf("Naive (biased):   %7.3f   %5.3f\n", naive_mean, naive_sd))
+cat("\nNote: Naive estimates are biased downward due to censoring!\n")
+```
+
+## Example 3: Bootstrap Sampling Distribution
+
+For more robust inference, especially with small samples, we can use bootstrap
+methods to estimate the sampling distribution of the MLE.
+
+```{r bootstrap-example, cache=TRUE}
+# Using the Weibull example from before
+model <- likelihood_exact_weibull("x")
+df <- data.frame(x = rweibull(150, shape = 2.5, scale = 3.0))
+
+# Create bootstrap sampler
+boot_sampler <- sampler(model, df = df, par = c(1, 1))
+
+# Generate bootstrap samples (100 replicates for speed)
+boot_result <- boot_sampler(n = 100)
+
+# Compare asymptotic vs bootstrap standard errors
+mle <- fit(model)(df, par = c(1, 1))
+asymp_se <- sqrt(diag(vcov(mle)))
+boot_se <- apply(boot_result$t, 2, sd)
+
+cat("Standard Error Comparison:\n")
+cat("           Asymptotic  Bootstrap\n")
+cat(sprintf("Shape:     %10.4f  %9.4f\n", asymp_se[1], boot_se[1]))
+cat(sprintf("Scale:     %10.4f  %9.4f\n", asymp_se[2], boot_se[2]))
+```
+
+## Example 4: Verifying the Score at MLE
+
+At the MLE, the score function (gradient of log-likelihood) should be
+approximately zero. This provides a useful diagnostic.
+
+```{r score-check}
+model <- likelihood_exact_weibull("x")
+df <- data.frame(x = rweibull(100, 2, 1.5))
+
+# Fit MLE
+mle <- fit(model)(df, par = c(1, 1))
+
+# Evaluate score at MLE
+score_func <- score(model)
+score_at_mle <- score_func(df, params(mle))
+
+cat("Score at MLE (should be near zero):\n")
+print(score_at_mle)
+```
+
+## Summary of Key Functions
+
+| Function | Description |
+|----------|-------------|
+| `likelihood_name()` | Create model for standard R distributions |
+| `likelihood_exact_weibull()` | Weibull model with analytical derivatives |
+| `likelihood_contr_model$new()` | Custom likelihood contributions |
+| `loglik()` | Get log-likelihood function |
+| `score()` | Get score (gradient) function |
+| `hess_loglik()` | Get Hessian of log-likelihood |
+| `fit()` | Create MLE solver |
+| `sampler()` | Create bootstrap sampler |
+| `assumptions()` | View model assumptions |
+| `lrt()` | Likelihood ratio test |
+
+## Next Steps
+
+For more advanced usage, see the other vignettes:
+
+- **Likelihood Named Distributions Model**: Detailed coverage of `likelihood_name`
+  with various censoring types
+- **Likelihood Contributions Model**: Building custom models for complex scenarios
+  like series systems with component failures
+
+## Session Info
+
+```{r session}
+sessionInfo()
+```
