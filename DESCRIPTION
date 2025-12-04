@@ -17,7 +17,8 @@ Imports:
     stats,
     numDeriv,
     boot,
-    dplyr
+    dplyr,
+    algebraic.mle
 URL: https://github.com/queelius/likelihood.model,
     https://queelius.github.io/likelihood.model/
 BugReports: https://github.com/queelius/likelihood.model/issues
