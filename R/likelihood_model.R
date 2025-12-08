@@ -261,6 +261,7 @@ fit.likelihood_model <- function(object, ...) {
 #' @importFrom boot boot
 #' @importFrom algebraic.mle mle_boot
 #' @importFrom algebraic.dist sampler params
+#' @export sampler
 #' @export
 sampler.likelihood_model <- function(model, df, par, ..., nthreads = 1L) {
   solver <- fit(model, ...)

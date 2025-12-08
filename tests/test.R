@@ -24,6 +24,7 @@ get_mle_params <- function(mle_result) {
 # =============================================================================
 
 test_that("get_params returns default when par is NULL or all NA", {
+  get_params <- likelihood.model:::get_params
   default <- c(1, 2, 3)
 
   # NULL input returns default
@@ -43,6 +44,7 @@ test_that("get_params returns default when par is NULL or all NA", {
 })
 
 test_that("prepare_args handles named and unnamed parameters", {
+  prepare_args <- likelihood.model:::prepare_args
   # Test with unnamed parameters (should infer names from function formals)
   args <- prepare_args(1.5, c(2, 3), dnorm)
   expect_equal(args[[1]], 1.5)  # primary input
@@ -63,6 +65,7 @@ test_that("prepare_args handles named and unnamed parameters", {
 })
 
 test_that("method_exists correctly detects methods", {
+  method_exists <- likelihood.model:::method_exists
   # print method should exist for many classes
   expect_true(method_exists("print", "data.frame"))
 
