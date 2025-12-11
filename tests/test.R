@@ -977,3 +977,97 @@ test_that("comparison of likelihood_name_model and likelihood_exact_weibull", {
   # Both should give the same log-likelihood
   expect_equal(ll_name, ll_exact, tolerance = 1e-10)
 })
+
+# =============================================================================
+# PRINT.LIKELIHOOD_MODEL TESTS
+# =============================================================================
+
+test_that("print.likelihood_model outputs model information", {
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+
+  # Capture output
+  output <- capture.output(print(model))
+
+  # Check that key information is printed
+  expect_true(any(grepl("Likelihood model", output)))
+  expect_true(any(grepl("Observation column", output)))
+})
+
+test_that("print.likelihood_model with show.loglik=TRUE shows loglik function", {
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+
+  # Capture output with show.loglik=TRUE
+  output <- capture.output(print(model, show.loglik = TRUE))
+
+  # Should include loglik function output
+  expect_true(any(grepl("Log-likelihood function", output)))
+})
+
+test_that("print.likelihood_model returns model invisibly", {
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+
+  # print should return model invisibly
+  result <- print(model)
+  expect_identical(result, model)
+})
+
+# =============================================================================
+# LRT WITH NULL DOF TESTS
+# =============================================================================
+
+test_that("lrt computes dof automatically when NULL", {
+  set.seed(1014)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+
+  # Use likelihood_exact_weibull for both models
+  null_model <- likelihood_exact_weibull("x")
+  alt_model <- likelihood_exact_weibull("x")
+
+  # Fit both models
+  null_par <- c(1.5, 1.2)  # 2 parameters
+
+  alt_par <- c(2.0, 1.0)   # 2 parameters
+
+  # When dof is NULL, it should be computed as length(alt_par) - length(null_par)
+  result <- lrt(null_model, alt_model, df,
+                null_par = null_par, alt_par = alt_par, dof = NULL)
+
+  # dof should be 0 (2 - 2)
+  expect_equal(result$dof, 0)
+  expect_true(!is.null(result$stat))
+  expect_true(!is.null(result$p.value))
+})
+
+# =============================================================================
+# FIT WITH SANN METHOD TESTS
+# =============================================================================
+
+test_that("fit.likelihood_model works with SANN method (no gradient)", {
+  set.seed(1015)
+  df <- data.frame(x = rnorm(100, mean = 5, sd = 2), censor = rep("exact", 100))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+
+  # SANN should work without gradient (gr = NULL)
+  result <- solver(df, par = c(0, 1), method = "SANN",
+                   control = list(maxit = 1000))
+
+  params <- get_mle_params(result)
+  expect_true(!is.null(params))
+  expect_true(!any(is.na(params)))
+
+  # Parameters should be reasonable (not exact due to SANN stochasticity)
+  expect_lt(abs(params[1] - 5), 1.5)
+  expect_lt(abs(params[2] - 2), 1.5)
+})
+
+# =============================================================================
+# FIM GENERIC TESTS
+# =============================================================================
+
+test_that("fim generic dispatches correctly", {
+  # fim is a generic that requires a method
+  # Test that it exists and errors appropriately for objects without methods
+  expect_error(fim(list()), "no applicable method")
+})
