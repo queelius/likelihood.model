@@ -2,7 +2,7 @@
 % Please edit documentation in R/likelihood_name.R
 \name{assumptions.likelihood_name_model}
 \alias{assumptions.likelihood_name_model}
-\title{List the assumptions made by the model.}
+\title{List the assumptions made by the model}
 \usage{
 \method{assumptions}{likelihood_name_model}(model, ...)
 }
@@ -11,10 +11,9 @@
 
 \item{...}{Additional arguments}
 }
+\value{
+Character vector of assumptions
+}
 \description{
-Since this is a very simple model that assumes
-i.i.d. observations sampled from the named
-distribution, a censoring mechanism (if any)
-that is independent of the observations and parameters
-of the model.
+List the assumptions made by the model
 }

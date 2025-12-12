@@ -2,41 +2,43 @@
 % Please edit documentation in R/likelihood_name.R
 \name{likelihood_name}
 \alias{likelihood_name}
-\title{This is a likelihood model generator based on the convention
-used in R, where we have a name for a distribution,
-like \code{normal}, \code{weibull}, \code{exp}, etc. and then
-we have a set of functions that are named
-\verb{p<name>}, \verb{d<name>}, \verb{q<name>}, \verb{r<name>}, etc.,
-where the first letter is the first letter of the
-distribution name. For instance, for the normal
-distribution, we have \code{pnorm}, \code{dnorm}, \code{qnorm},
-\code{rnorm}, respectively for the cdf, pdf, quantile
-function, and random variate generator.}
+\title{Likelihood model generator for standard R distributions}
 \usage{
-likelihood_name(dist_name, ob_col, censor_col)
+likelihood_name(dist_name, ob_col, censor_col = NULL)
 }
 \arguments{
-\item{dist_name}{The name of the distribution.}
+\item{dist_name}{The name of the distribution (e.g., "norm", "weibull", "exp")}
 
-\item{ob_col}{The name of the column in a data frame that
-contains the observations.}
+\item{ob_col}{The name of the column containing observations}
 
-\item{type_col}{The name of the column in a data frame that
-contains the censoring type. The values in this column determine the type of
-censoring.
-\itemize{
-\item \code{exact} or NA: exact observation
-\item \code{left}: left-censored observation
-\item \code{right}: right-censored observation
-\item \code{interval}: interval-censored observation
-}}
+\item{censor_col}{The name of the column containing censoring type, or NULL
+for all exact observations. Valid values: "exact", "left", "right", or NA.}
+}
+\value{
+A likelihood model object
 }
 \description{
-This function generates a likelihood model based on
-a distribution name. The distribution name is
-used to generate the log-likelihood function,
-the score function, and the Hessian of the
-log-likelihood function for either exact (pdf),
-left-censored (cdf), right-censored (1 - cdf),
-or interval-censored (cdf(b) - cdf(a)) observations.
+Creates a likelihood model based on R's distribution naming convention,
+where distributions have functions named \verb{d<name>} (PDF), \verb{p<name>} (CDF),
+\verb{q<name>} (quantile), and \verb{r<name>} (random generation).
+}
+\details{
+The model automatically handles exact and censored observations:
+\itemize{
+\item Exact: uses PDF (d\if{html}{\out{<name>}})
+\item Left-censored: uses CDF (p\if{html}{\out{<name>}})
+\item Right-censored: uses survival function (1 - CDF)
+}
+}
+\examples{
+# Simple case - all exact observations
+model <- likelihood_name("norm", ob_col = "x")
+df <- data.frame(x = rnorm(100))
+ll <- loglik(model)
+ll(df, c(mean = 0, sd = 1))
+
+# With censoring
+model <- likelihood_name("weibull", ob_col = "time", censor_col = "status")
+df <- data.frame(time = rweibull(100, 2, 1),
+                 status = sample(c("exact", "right"), 100, replace = TRUE))
 }

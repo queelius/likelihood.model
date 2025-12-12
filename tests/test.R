@@ -226,9 +226,15 @@ test_that("assumptions for likelihood_name_model returns expected assumptions", 
   model <- likelihood_name("weibull", ob_col = "t", censor_col = "censor")
   assumptions_list <- assumptions(model)
 
-  expect_true("independent" %in% assumptions_list)
+  expect_true("independent observations" %in% assumptions_list)
   expect_true("identically distributed" %in% assumptions_list)
   expect_true("weibull distribution" %in% assumptions_list)
+  expect_true("censoring independent of observations" %in% assumptions_list)
+
+  # Model without censoring should have fewer assumptions
+  model_no_censor <- likelihood_name("norm", ob_col = "x")
+  assumptions_no_censor <- assumptions(model_no_censor)
+  expect_false("censoring independent of observations" %in% assumptions_no_censor)
 })
 
 test_that("likelihood_name works with weibull distribution", {
@@ -243,6 +249,22 @@ test_that("likelihood_name works with weibull distribution", {
   # Compare to manual calculation
   expected_ll <- sum(dweibull(df$x, shape_true, scale_true, log = TRUE))
   computed_ll <- ll_func(df, c(shape_true, scale_true))
+
+  expect_equal(computed_ll, expected_ll, tolerance = 1e-10)
+})
+
+test_that("likelihood_name works without censor_col (all exact)", {
+  set.seed(112)
+  mean_true <- 5
+  sd_true <- 2
+  df <- data.frame(x = rnorm(100, mean_true, sd_true))
+
+  # No censor_col - should treat all as exact
+  model <- likelihood_name("norm", ob_col = "x")
+  ll_func <- loglik(model)
+
+  expected_ll <- sum(dnorm(df$x, mean_true, sd_true, log = TRUE))
+  computed_ll <- ll_func(df, c(mean_true, sd_true))
 
   expect_equal(computed_ll, expected_ll, tolerance = 1e-10)
 })

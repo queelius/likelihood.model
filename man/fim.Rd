@@ -12,7 +12,7 @@ fim(model, ...)
 \item{...}{Additional arguments}
 }
 \value{
-Function that computes the FIM given a sample and a parameter vector
+Function that computes the FIM given a parameter vector and sample size
 }
 \description{
 This function calculates the Fisher information matrix (FIM), an expectation

@@ -153,10 +153,85 @@ hess_loglik.likelihood_model <- function(model, control = list(), ...) {
 #'
 #' @param model A likelihood model
 #' @param ... Additional arguments
-#' @return Function that computes the FIM given a sample and a parameter vector
+#' @return Function that computes the FIM given a parameter vector and sample size
 #' @export
 fim <- function(model, ...) {
   UseMethod("fim")
+}
+
+#' Default FIM method using Monte Carlo estimation
+#'
+#' Computes the Fisher information matrix by Monte Carlo simulation.
+#' Uses the outer product of scores.
+#'
+#' This default requires the model to implement `rdata` and `score` methods.
+#'
+#' @param model A likelihood model
+#' @param ... Additional arguments passed to rdata
+#' @return Function that takes (theta, n_obs, n_samples, ...) and returns FIM matrix
+#' @export
+fim.likelihood_model <- function(model, ...) {
+  score_fn <- score(model)
+  rdata_fn <- rdata(model)
+
+  function(theta, n_obs, n_samples = 1000, ...) {
+    p <- length(theta)
+    fim_sum <- matrix(0, nrow = p, ncol = p)
+
+    for (b in seq_len(n_samples)) {
+      data_b <- rdata_fn(theta, n = n_obs, ...)
+      s <- score_fn(data_b, theta)
+      fim_sum <- fim_sum + outer(s, s)
+    }
+    fim_sum / n_samples
+  }
+}
+
+#' Observed information matrix method
+#'
+#' Returns the observed information matrix, which is the negative Hessian
+#' of the log-likelihood evaluated at the data and parameter values.
+#'
+#' At the MLE, the observed information is a consistent estimator of the
+#' Fisher information matrix.
+#'
+#' @param model A likelihood model
+#' @param ... Additional arguments
+#' @return Function that computes -hess_loglik(df, par)
+#' @export
+observed_info <- function(model, ...) {
+  UseMethod("observed_info")
+}
+
+#' Default observed information method
+#'
+#' Returns a function that computes -hess_loglik(df, par).
+#'
+#' @param model A likelihood model
+#' @param ... Additional arguments passed to hess_loglik
+#' @return Function that takes (df, par, ...) and returns observed information matrix
+#' @export
+observed_info.likelihood_model <- function(model, ...) {
+  H_fn <- hess_loglik(model, ...)
+  function(df, par, ...) {
+    -H_fn(df, par, ...)
+  }
+}
+
+#' Random data generation method
+#'
+#' Returns a function that generates random data from the model's
+#' data-generating process (DGP) at a given parameter value.
+#'
+#' This is used by the default `fim` method for Monte Carlo estimation
+#' of the Fisher information matrix.
+#'
+#' @param model A likelihood model
+#' @param ... Additional arguments
+#' @return Function that takes (theta, n, ...) and returns a data frame
+#' @export
+rdata <- function(model, ...) {
+  UseMethod("rdata")
 }
 
 #' Retrieve the assumptions the likelihood model makes about the data.

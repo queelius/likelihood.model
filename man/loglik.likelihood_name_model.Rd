@@ -2,7 +2,7 @@
 % Please edit documentation in R/likelihood_name.R
 \name{loglik.likelihood_name_model}
 \alias{loglik.likelihood_name_model}
-\title{Log-likelihood function generator for the named likelihood model.}
+\title{Log-likelihood function for named distribution models}
 \usage{
 \method{loglik}{likelihood_name_model}(model, ...)
 }
@@ -12,9 +12,8 @@
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A function to compute the log-likelihood given a data frame and
-parameters.
+A function(df, par, ...) that computes the log-likelihood
 }
 \description{
-Log-likelihood function generator for the named likelihood model.
+Log-likelihood function for named distribution models
 }
