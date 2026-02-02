@@ -2,76 +2,19 @@ library(testthat)
 library(likelihood.model)
 
 # Helper function to get parameter estimates from MLE result
-# algebraic.mle stores estimates in $theta.hat
+# fisher_mle stores estimates in $par, accessible via coef()
 get_mle_params <- function(mle_result) {
-  if (!is.null(mle_result$theta.hat)) {
-    return(mle_result$theta.hat)
-  }
-  # Fallback to coef if available
+  # Use coef() for fisher_mle objects
   result <- coef(mle_result)
   if (!is.null(result)) {
     return(result)
   }
-  # Last resort: try $par from optim result
-  if (!is.null(mle_result$sol$par)) {
-    return(mle_result$sol$par)
+  # Fallback: try $par directly
+  if (!is.null(mle_result$par)) {
+    return(mle_result$par)
   }
   return(NULL)
 }
-
-# =============================================================================
-# UTILITY FUNCTIONS TESTS
-# =============================================================================
-
-test_that("get_params returns default when par is NULL or all NA", {
-  get_params <- likelihood.model:::get_params
-  default <- c(1, 2, 3)
-
-  # NULL input returns default
-  expect_equal(get_params(NULL, default), default)
-
-  # All NA input returns default
-  expect_equal(get_params(c(NA, NA, NA), default), default)
-
-  # Partial NA input: substitute NA values from default
-  expect_equal(get_params(c(5, NA, 7), default), c(5, 2, 7))
-
-  # No NA values: return par unchanged
-  expect_equal(get_params(c(5, 6, 7), default), c(5, 6, 7))
-
-  # NULL default: return par if no substitution needed
-  expect_equal(get_params(c(5, 6, 7), NULL), c(5, 6, 7))
-})
-
-test_that("prepare_args handles named and unnamed parameters", {
-  prepare_args <- likelihood.model:::prepare_args
-  # Test with unnamed parameters (should infer names from function formals)
-  args <- prepare_args(1.5, c(2, 3), dnorm)
-  expect_equal(args[[1]], 1.5)  # primary input
-  expect_equal(args$mean, 2)
-  expect_equal(args$sd, 3)
-
-  # Test with named parameters
-  args_named <- prepare_args(1.5, c(mean = 2, sd = 3), dnorm)
-  expect_equal(args_named[[1]], 1.5)
-  expect_equal(args_named$mean, 2)
-  expect_equal(args_named$sd, 3)
-
-  # Test with Weibull distribution
-  args_weibull <- prepare_args(2.0, c(1.5, 2.0), dweibull)
-  expect_equal(args_weibull[[1]], 2.0)
-  expect_equal(args_weibull$shape, 1.5)
-  expect_equal(args_weibull$scale, 2.0)
-})
-
-test_that("method_exists correctly detects methods", {
-  method_exists <- likelihood.model:::method_exists
-  # print method should exist for many classes
-  expect_true(method_exists("print", "data.frame"))
-
-  # Nonexistent class should return FALSE
-  expect_false(method_exists("print", "nonexistent_class_xyz123"))
-})
 
 # =============================================================================
 # IS_LIKELIHOOD_MODEL TESTS
@@ -87,8 +30,8 @@ test_that("is_likelihood_model correctly identifies likelihood models", {
   model_name <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
   expect_true(is_likelihood_model(model_name))
 
-  # likelihood_exact_weibull is a likelihood model
-  model_weibull <- likelihood_exact_weibull("x")
+  # weibull_uncensored is a likelihood model (aliased as likelihood_exact_weibull)
+  model_weibull <- weibull_uncensored("x")
   expect_true(is_likelihood_model(model_weibull))
 
   # Non-likelihood model objects return FALSE
@@ -270,24 +213,30 @@ test_that("likelihood_name works without censor_col (all exact)", {
 })
 
 # =============================================================================
-# LIKELIHOOD_EXACT_WEIBULL TESTS
+# WEIBULL_UNCENSORED TESTS
 # =============================================================================
 
-test_that("likelihood_exact_weibull creates model with correct structure", {
-  model <- likelihood_exact_weibull("x")
+test_that("weibull_uncensored creates model with correct structure", {
+  model <- weibull_uncensored("x")
 
   expect_true(is_likelihood_model(model))
   expect_equal(model$ob_col, "x")
-  expect_true("likelihood_exact_weibull" %in% class(model))
+  expect_true("weibull_uncensored" %in% class(model))
 })
 
-test_that("loglik for likelihood_exact_weibull matches R's dweibull", {
+test_that("likelihood_exact_weibull alias works", {
+  model <- likelihood_exact_weibull("x")
+  expect_true(is_likelihood_model(model))
+  expect_true("weibull_uncensored" %in% class(model))
+})
+
+test_that("loglik for weibull_uncensored matches R's dweibull", {
   set.seed(222)
   shape <- 2.5
   scale <- 1.5
   df <- data.frame(x = rweibull(50, shape, scale))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   ll_func <- loglik(model)
 
   expected_ll <- sum(dweibull(df$x, shape, scale, log = TRUE))
@@ -302,7 +251,7 @@ test_that("analytical score matches numerical gradient for Weibull", {
   scale <- 2.2
   df <- data.frame(x = rweibull(100, shape, scale))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   ll_func <- loglik(model)
   score_func <- score(model)
 
@@ -326,7 +275,7 @@ test_that("analytical hessian has expected structure for Weibull", {
   scale <- 1.0
   df <- data.frame(x = rweibull(100, shape, scale))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   ll_func <- loglik(model)
   hess_func <- hess_loglik(model)
 
@@ -343,28 +292,28 @@ test_that("analytical hessian has expected structure for Weibull", {
   expect_equal(analytical_hess, numerical_hess, tolerance = 1e-4)
 })
 
-test_that("likelihood_exact_weibull validates positive observations", {
+test_that("weibull_uncensored validates positive observations", {
   df_invalid <- data.frame(x = c(1.0, -0.5, 2.0))  # Contains negative value
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   ll_func <- loglik(model)
 
   expect_error(ll_func(df_invalid, c(2, 1)),
                info = "Should error on non-positive observations")
 })
 
-test_that("likelihood_exact_weibull requires non-empty data", {
+test_that("weibull_uncensored requires non-empty data", {
   df_empty <- data.frame(x = numeric(0))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   ll_func <- loglik(model)
 
   expect_error(ll_func(df_empty, c(2, 1)),
                info = "Should error on empty data frame")
 })
 
-test_that("assumptions for likelihood_exact_weibull returns expected list", {
-  model <- likelihood_exact_weibull("x")
+test_that("assumptions for weibull_uncensored returns expected list", {
+  model <- weibull_uncensored("x")
   assumptions_list <- assumptions(model)
 
   expect_true("independent" %in% assumptions_list)
@@ -602,7 +551,7 @@ test_that("fit.likelihood_model finds correct MLE for Weibull data", {
   true_scale <- 1
   df <- data.frame(x = rweibull(100, shape = true_shape, scale = true_scale))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   solver <- fit(model)
   result <- solver(df, par = c(1.5, 0.8))
 
@@ -654,13 +603,12 @@ test_that("fit.likelihood_model requires initial parameters", {
 # =============================================================================
 
 test_that("sampler.likelihood_model generates bootstrap samples", {
-  skip_if_not_installed("algebraic.mle")
   skip_if_not_installed("boot")
 
   set.seed(1002)
   df <- data.frame(x = rweibull(200, shape = 2, scale = 1))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
 
   # Create sampler
   model_sampler <- sampler(model, df = df, par = c(2, 1))
@@ -668,16 +616,19 @@ test_that("sampler.likelihood_model generates bootstrap samples", {
   # Generate bootstrap samples
   boot_result <- model_sampler(n = 10)
 
-  # Should return an object with bootstrap estimates
-  expect_true(!is.null(boot_result))
+  # Should return a fisher_boot object
+  expect_true(inherits(boot_result, "fisher_boot"))
+  expect_true(inherits(boot_result, "fisher_mle"))
 
-  # Bootstrap estimates should be stored in t
-  expect_equal(nrow(boot_result$t), 10)
-  expect_equal(ncol(boot_result$t), 2)  # shape and scale
+  # Bootstrap estimates should be stored in replicates
+  expect_equal(nrow(boot_result$replicates), 10)
+  expect_equal(ncol(boot_result$replicates), 2)  # shape and scale
+
+  # coef() should return original MLE
+  expect_equal(length(coef(boot_result)), 2)
 })
 
 test_that("sampler.likelihood_model bootstrap distribution is centered near MLE", {
-  skip_if_not_installed("algebraic.mle")
   skip_if_not_installed("boot")
 
   set.seed(1003)
@@ -685,7 +636,7 @@ test_that("sampler.likelihood_model bootstrap distribution is centered near MLE"
   true_scale <- 1.5
   df <- data.frame(x = rweibull(200, shape = true_shape, scale = true_scale))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
 
   # First fit to get MLE
   solver <- fit(model)
@@ -697,7 +648,7 @@ test_that("sampler.likelihood_model bootstrap distribution is centered near MLE"
   boot_result <- model_sampler(n = 50)
 
   # Bootstrap mean should be close to MLE
-  boot_mean <- colMeans(boot_result$t)
+  boot_mean <- colMeans(boot_result$replicates)
   expect_equal(boot_mean[1], mle_params[1], tolerance = 0.4)
   expect_equal(boot_mean[2], mle_params[2], tolerance = 0.4)
 })
@@ -720,7 +671,7 @@ test_that("lrt computes correct test statistic", {
 
   # Null model: exponential (shape fixed at 1, estimate scale only)
   # We'll use Weibull but the null hypothesis is shape = 1
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
 
   # Alternative: Weibull (estimate both shape and scale)
   ll_func <- loglik(model)
@@ -797,10 +748,10 @@ test_that("loglik handles data with single observation", {
   expect_equal(computed_ll, expected_ll, tolerance = 1e-10)
 })
 
-test_that("likelihood_exact_weibull handles single observation", {
+test_that("weibull_uncensored handles single observation", {
   df <- data.frame(x = 2.0)
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   ll_func <- loglik(model)
 
   expected_ll <- dweibull(2.0, shape = 2, scale = 1, log = TRUE)
@@ -828,7 +779,7 @@ test_that("hess_loglik returns symmetric matrix", {
   set.seed(1008)
   df <- data.frame(x = rweibull(50, 2, 1))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   hess_func <- hess_loglik(model)
 
   H <- hess_func(df, c(2, 1))
@@ -837,11 +788,11 @@ test_that("hess_loglik returns symmetric matrix", {
   expect_equal(H, t(H), tolerance = 1e-10)
 })
 
-test_that("score sums to approximately zero at MLE for likelihood_exact_weibull", {
+test_that("score sums to approximately zero at MLE for weibull_uncensored", {
   set.seed(1009)
   df <- data.frame(x = rweibull(200, 2, 1))
 
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
 
   # Fit to get MLE
   solver <- fit(model)
@@ -954,7 +905,7 @@ test_that("full workflow: create model, fit, get score and hessian", {
   df <- data.frame(x = rweibull(150, true_shape, true_scale))
 
   # Create model
-  model <- likelihood_exact_weibull("x")
+  model <- weibull_uncensored("x")
   expect_true(is_likelihood_model(model))
 
   # Get functions
@@ -983,7 +934,7 @@ test_that("full workflow: create model, fit, get score and hessian", {
   expect_lt(abs(mle_par[2] - true_scale), 0.5)
 })
 
-test_that("comparison of likelihood_name_model and likelihood_exact_weibull", {
+test_that("comparison of likelihood_name_model and weibull_uncensored", {
   set.seed(1013)
   shape <- 2.0
   scale <- 1.0
@@ -991,7 +942,7 @@ test_that("comparison of likelihood_name_model and likelihood_exact_weibull", {
   df_exact <- data.frame(x = df_name$x)  # Same data, different format
 
   model_name <- likelihood_name("weibull", ob_col = "x", censor_col = "censor")
-  model_exact <- likelihood_exact_weibull("x")
+  model_exact <- weibull_uncensored("x")
 
   ll_name <- loglik(model_name)(df_name, c(shape, scale))
   ll_exact <- loglik(model_exact)(df_exact, c(shape, scale))
@@ -1041,9 +992,9 @@ test_that("lrt computes dof automatically when NULL", {
   set.seed(1014)
   df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
 
-  # Use likelihood_exact_weibull for both models
-  null_model <- likelihood_exact_weibull("x")
-  alt_model <- likelihood_exact_weibull("x")
+  # Use weibull_uncensored for both models
+  null_model <- weibull_uncensored("x")
+  alt_model <- weibull_uncensored("x")
 
   # Fit both models
   null_par <- c(1.5, 1.2)  # 2 parameters
@@ -1092,4 +1043,782 @@ test_that("fim generic dispatches correctly", {
   # fim is a generic that requires a method
   # Test that it exists and errors appropriately for objects without methods
   expect_error(fim(list()), "no applicable method")
+})
+
+# =============================================================================
+# FISHER_MLE CLASS TESTS
+# =============================================================================
+
+test_that("fisher_mle creates object with correct structure", {
+  result <- fisher_mle(
+    par = c(mean = 0, sd = 1),
+    loglik_val = -50.5,
+    hessian = matrix(c(-100, 0, 0, -50), 2, 2),
+    nobs = 100
+  )
+
+  expect_true(inherits(result, "fisher_mle"))
+  expect_true(inherits(result, "mle"))
+
+  # Test base R generic methods
+
+  expect_equal(coef(result), c(mean = 0, sd = 1))
+  expect_true(!is.null(vcov(result)))
+  expect_equal(nobs(result), 100)
+
+  # logLik should return a logLik object
+  ll <- logLik(result)
+  expect_true(inherits(ll, "logLik"))
+  expect_equal(as.numeric(ll), -50.5)
+})
+
+test_that("fisher_mle confint computes Wald confidence intervals", {
+  result <- fisher_mle(
+    par = c(mean = 5, sd = 2),
+    vcov = matrix(c(0.04, 0, 0, 0.02), 2, 2),  # SE = 0.2 and ~0.14
+    loglik_val = -100,
+    nobs = 100
+  )
+
+  ci <- confint(result, level = 0.95)
+
+  # Check structure
+  expect_true(is.matrix(ci))
+  expect_equal(nrow(ci), 2)
+  expect_equal(ncol(ci), 2)
+
+  # Intervals should be centered around estimates
+  expect_lt(ci[1, 1], 5)  # lower < estimate
+  expect_gt(ci[1, 2], 5)  # upper > estimate
+})
+
+test_that("fisher_mle se returns standard errors", {
+  result <- fisher_mle(
+    par = c(a = 1, b = 2),
+    vcov = matrix(c(0.25, 0, 0, 0.16), 2, 2),  # SE = 0.5 and 0.4
+    loglik_val = -50
+  )
+
+  se_vals <- se(result)
+  expect_equal(se_vals, c(0.5, 0.4))
+})
+
+test_that("fisher_mle aic and bic compute correctly", {
+  result <- fisher_mle(
+    par = c(a = 1, b = 2),
+    loglik_val = -100,
+    nobs = 50
+  )
+
+  # AIC = -2*logL + 2*k = -2*(-100) + 2*2 = 204
+  expect_equal(aic(result), 204)
+
+  # BIC = -2*logL + k*log(n) = 200 + 2*log(50)
+  expected_bic <- 200 + 2 * log(50)
+  expect_equal(bic(result), expected_bic)
+})
+
+test_that("fisher_mle summary produces correct output", {
+  result <- fisher_mle(
+    par = c(mean = 5, sd = 2),
+    vcov = matrix(c(0.04, 0, 0, 0.02), 2, 2),
+    loglik_val = -100,
+    nobs = 100
+  )
+
+  summ <- summary(result)
+  expect_true(inherits(summ, "summary_fisher_mle"))
+  expect_true(!is.null(summ$coefficients))
+  expect_equal(summ$loglik, -100)
+  expect_equal(summ$nobs, 100)
+})
+
+test_that("fit.likelihood_model returns fisher_mle object", {
+  set.seed(2001)
+  df <- data.frame(x = rnorm(100, 5, 2), censor = rep("exact", 100))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+  result <- solver(df, par = c(0, 1))
+
+  expect_true(inherits(result, "fisher_mle"))
+  expect_true(inherits(result, "mle"))
+  expect_true(result$converged)
+  expect_equal(result$nobs, 100)
+})
+
+# =============================================================================
+# FISHERIAN INFERENCE TESTS
+# =============================================================================
+
+test_that("support function computes log relative likelihood", {
+  set.seed(2002)
+  df <- data.frame(x = rnorm(100, 5, 2), censor = rep("exact", 100))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+  mle_result <- solver(df, par = c(0, 1))
+
+  # Support at MLE should be 0
+  s_at_mle <- support(mle_result, coef(mle_result), df, model)
+  expect_equal(s_at_mle, 0, tolerance = 1e-10)
+
+  # Support at other values should be negative
+  s_away <- support(mle_result, c(0, 1), df, model)
+  expect_true(s_away < 0)
+})
+
+test_that("relative_likelihood computes exp(support)", {
+  set.seed(2003)
+  df <- data.frame(x = rnorm(50, 3, 1), censor = rep("exact", 50))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+  mle_result <- solver(df, par = c(0, 1))
+
+  # Relative likelihood at MLE should be 1
+  rl_at_mle <- relative_likelihood(mle_result, coef(mle_result), df, model)
+  expect_equal(rl_at_mle, 1, tolerance = 1e-10)
+
+  # Relative likelihood elsewhere should be between 0 and 1
+  rl_away <- relative_likelihood(mle_result, c(0, 1), df, model)
+  expect_true(rl_away > 0 && rl_away < 1)
+})
+
+test_that("likelihood_interval computes profile interval for multivariate case", {
+  set.seed(2004)
+  # Use normal (2 parameters) and compute profile likelihood interval for mean
+  df <- data.frame(x = rnorm(100, mean = 5, sd = 2), censor = rep("exact", 100))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+  mle_result <- solver(df, par = c(0, 1))
+
+  # Compute 1/8 likelihood interval for mean parameter only
+  li <- likelihood_interval(mle_result, df, model, k = 8, param = 1)
+
+  expect_true(inherits(li, "likelihood_interval"))
+  expect_equal(nrow(li), 1)
+  expect_equal(ncol(li), 2)
+
+  # Interval should contain MLE for mean
+  mle_val <- coef(mle_result)[1]
+  expect_true(li[1, 1] < mle_val && mle_val < li[1, 2])
+})
+
+test_that("profile_loglik computes profile for single parameter", {
+  set.seed(2005)
+  df <- data.frame(x = rnorm(100, 5, 2), censor = rep("exact", 100))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+  mle_result <- solver(df, par = c(0, 1))
+
+  # Profile for first parameter (mean)
+  prof <- profile_loglik(mle_result, df, model, param = 1, n_grid = 20)
+
+  expect_true(inherits(prof, "profile_loglik"))
+  expect_equal(nrow(prof), 20)
+  expect_true("loglik" %in% names(prof))
+  expect_true("support" %in% names(prof))
+  expect_true("relative_likelihood" %in% names(prof))
+
+  # Maximum profile loglik should be near MLE
+  max_idx <- which.max(prof$loglik)
+  expect_equal(prof[[1]][max_idx], coef(mle_result)[1], tolerance = 0.5)
+})
+
+test_that("deviance computes correctly for fisher_mle", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  # Single model deviance = -2 * logL = 100
+  expect_equal(deviance(result), 100)
+
+  # Comparison deviance
+  null_result <- fisher_mle(
+    par = c(a = 0.5),
+    loglik_val = -55,
+    nobs = 100
+  )
+
+  # Deviance = 2*(logL_full - logL_null) = 2*(-50 - (-55)) = 10
+  expect_equal(deviance(result, null_result), 10)
+})
+
+test_that("evidence computes log likelihood ratio", {
+  set.seed(2006)
+  df <- data.frame(x = rnorm(50, 5, 1), censor = rep("exact", 50))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+
+  # Evidence for theta1 vs theta2
+  ev <- evidence(model, df, c(5, 1), c(0, 1))
+
+  # Should strongly favor true parameters (5, 1) over (0, 1)
+  expect_true(ev > 0)
+  expect_true(ev > log(8))  # Strong evidence
+})
+
+# =============================================================================
+# FISHER_BOOT CLASS TESTS
+# =============================================================================
+
+test_that("fisher_boot inherits from fisher_mle", {
+  skip_if_not_installed("boot")
+
+  set.seed(2007)
+  df <- data.frame(x = rweibull(100, 2, 1))
+
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_result <- model_sampler(n = 20)
+
+  expect_true(inherits(boot_result, "fisher_boot"))
+  expect_true(inherits(boot_result, "fisher_mle"))
+  expect_true(inherits(boot_result, "mle"))
+
+  # Base methods should work
+  expect_equal(length(coef(boot_result)), 2)
+  expect_true(is.matrix(vcov(boot_result)))
+})
+
+test_that("fisher_boot bias computes from bootstrap replicates", {
+  skip_if_not_installed("boot")
+
+  set.seed(2008)
+  df <- data.frame(x = rweibull(200, 2, 1))
+
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_result <- model_sampler(n = 50)
+
+  # Bias should be computed from replicates
+  b <- bias(boot_result)
+  expect_equal(length(b), 2)
+
+  # Expected: mean(replicates) - original MLE
+  expected_bias <- colMeans(boot_result$replicates) - coef(boot_result)
+  expect_equal(b, expected_bias)
+})
+
+test_that("sampler generic works on fisher_mle for asymptotic sampling", {
+  result <- fisher_mle(
+    par = c(mean = 5, sd = 2),
+    vcov = matrix(c(0.04, 0, 0, 0.02), 2, 2),
+    loglik_val = -100,
+    nobs = 100
+  )
+
+  samp_fn <- sampler(result)
+  samples <- samp_fn(1000)
+
+  expect_equal(dim(samples), c(1000, 2))
+
+  # Samples should be centered near MLE
+  expect_equal(mean(samples[, 1]), 5, tolerance = 0.1)
+  expect_equal(mean(samples[, 2]), 2, tolerance = 0.1)
+})
+
+# =============================================================================
+# EDGE CASE AND BUG FIX VALIDATION TESTS
+# =============================================================================
+
+test_that("lrt with dof=NULL computes dof from parameter lengths", {
+  set.seed(3001)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+
+  model <- weibull_uncensored("x")
+
+  # alt_par has 3 elements, null_par has 2 => dof should be 1
+  # We use the same model but supply different-length parameter vectors
+  # to test the auto-computation of dof
+  null_par <- c(2, 1)
+  alt_par <- c(2, 1, 0.5)
+
+  # This should NOT error — it should auto-compute dof = 1
+  # Before the fix, stopifnot(dof >= 0) with NULL dof silently passed,
+  # but dof was computed *after* the stat, meaning the bug was ordering.
+  result <- lrt(model, model, df,
+                null_par = null_par, alt_par = alt_par, dof = NULL)
+
+  expect_equal(result$dof, 1)
+  expect_true(is.finite(result$stat))
+  expect_true(result$p.value >= 0 && result$p.value <= 1)
+})
+
+test_that("likelihood_interval works for normal mean (negative parameter)", {
+  set.seed(3002)
+  # Use normal distribution where mean can be negative
+  df <- data.frame(x = rnorm(200, mean = -3, sd = 1.5),
+                   censor = rep("exact", 200))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  solver <- fit(model)
+  mle_result <- solver(df, par = c(0, 1))
+
+  # Profile likelihood interval for mean (param 1)
+  # This previously failed with L-BFGS-B because it assumed positive params
+  li <- likelihood_interval(mle_result, df, model, k = 8, param = 1)
+
+  expect_true(inherits(li, "likelihood_interval"))
+  expect_equal(nrow(li), 1)
+
+  # Interval should contain MLE
+  mle_mean <- coef(mle_result)[1]
+  expect_true(li[1, 1] < mle_mean && mle_mean < li[1, 2])
+
+  # Mean should be negative, so lower bound should also be negative
+
+  expect_true(li[1, 1] < 0)
+})
+
+test_that("evidence returns 0 when comparing same parameters", {
+  set.seed(3003)
+  df <- data.frame(x = rnorm(50, 5, 1), censor = rep("exact", 50))
+
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+
+  # Evidence for identical parameters should be exactly 0
+  ev <- evidence(model, df, c(5, 1), c(5, 1))
+  expect_equal(ev, 0)
+})
+
+test_that("fisher_mle with NULL vcov: se returns NA, sampler errors", {
+  result <- fisher_mle(
+    par = c(a = 1, b = 2),
+    loglik_val = -50,
+    nobs = 100
+    # vcov and hessian both NULL
+  )
+
+  # se should return NA values
+  se_vals <- se(result)
+  expect_equal(length(se_vals), 2)
+  expect_true(all(is.na(se_vals)))
+
+  # sampler should error cleanly
+  expect_error(sampler(result), "Cannot create sampler: vcov is NULL")
+})
+
+# =============================================================================
+# EXPONENTIAL_LIFETIME TESTS
+# =============================================================================
+
+test_that("exponential_lifetime creates model with correct structure", {
+  model <- exponential_lifetime("t")
+  expect_true(is_likelihood_model(model))
+  expect_equal(model$ob_col, "t")
+  expect_null(model$censor_col)
+  expect_true("exponential_lifetime" %in% class(model))
+
+  model_c <- exponential_lifetime("t", censor_col = "status")
+  expect_equal(model_c$censor_col, "status")
+})
+
+test_that("loglik matches manual d*log(lambda) - lambda*T", {
+  set.seed(4001)
+  lambda <- 2.0
+  x <- rexp(100, rate = lambda)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  ll_func <- loglik(model)
+
+  # Manual calculation
+  n <- length(x)
+  total_time <- sum(x)
+  manual_ll <- n * log(lambda) - lambda * total_time
+
+  expect_equal(ll_func(df, lambda), manual_ll, tolerance = 1e-12)
+})
+
+test_that("loglik matches sum of dexp(x, rate, log=TRUE)", {
+  set.seed(4002)
+  lambda <- 1.5
+  x <- rexp(80, rate = lambda)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  ll_func <- loglik(model)
+
+  expected_ll <- sum(dexp(x, rate = lambda, log = TRUE))
+  expect_equal(ll_func(df, lambda), expected_ll, tolerance = 1e-10)
+})
+
+test_that("closed-form MLE equals d/T exactly", {
+  set.seed(4003)
+  lambda_true <- 3.0
+  n <- 200
+  x <- rexp(n, rate = lambda_true)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  result <- fit(model)(df)
+
+  # Closed-form MLE: lambda_hat = n / sum(x)
+  expected_mle <- n / sum(x)
+  expect_equal(unname(coef(result)), expected_mle, tolerance = 1e-12)
+
+  # Should be close to true value
+  expect_lt(abs(coef(result) - lambda_true), 0.5)
+
+  # MLE should have converged
+  expect_true(result$converged)
+  expect_equal(result$nobs, n)
+})
+
+test_that("analytical score matches numDeriv::grad", {
+  set.seed(4004)
+  lambda <- 2.5
+  x <- rexp(50, rate = lambda)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  ll_func <- loglik(model)
+  score_func <- score(model)
+
+  # Test at several parameter values
+  for (lam in c(1.0, 2.0, 3.0, 5.0)) {
+    analytical <- score_func(df, lam)
+    numerical <- numDeriv::grad(function(p) ll_func(df, p), lam)
+    expect_equal(unname(analytical), numerical, tolerance = 1e-6,
+                 info = paste("Score mismatch at lambda =", lam))
+  }
+})
+
+test_that("analytical hessian matches numDeriv::hessian", {
+  set.seed(4005)
+  lambda <- 2.0
+  x <- rexp(100, rate = lambda)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  ll_func <- loglik(model)
+  hess_func <- hess_loglik(model)
+
+  for (lam in c(1.0, 2.0, 4.0)) {
+    analytical <- hess_func(df, lam)
+    numerical <- numDeriv::hessian(function(p) ll_func(df, p), lam)
+    expect_equal(as.numeric(analytical), as.numeric(numerical), tolerance = 1e-4,
+                 info = paste("Hessian mismatch at lambda =", lam))
+  }
+})
+
+test_that("right-censored MLE is correct", {
+  set.seed(4006)
+  lambda_true <- 2.0
+  n <- 200
+  censor_time <- 0.4
+
+  x_raw <- rexp(n, rate = lambda_true)
+  x_obs <- pmin(x_raw, censor_time)
+  status <- ifelse(x_raw > censor_time, "right", "exact")
+
+  df <- data.frame(t = x_obs, status = status)
+  model <- exponential_lifetime("t", censor_col = "status")
+
+  result <- fit(model)(df)
+  lambda_hat <- unname(coef(result))
+
+  # Verify closed-form: d / T
+  d <- sum(status == "exact")
+  total_time <- sum(x_obs)
+  expect_equal(lambda_hat, d / total_time, tolerance = 1e-12)
+
+  # Should be reasonable (right-censoring still gives consistent estimator)
+  expect_lt(abs(lambda_hat - lambda_true), 0.8)
+})
+
+test_that("score is exactly zero at MLE", {
+  set.seed(4007)
+  x <- rexp(100, rate = 1.5)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  result <- fit(model)(df)
+
+  # Score at MLE should be exactly 0 (closed-form solution)
+  score_func <- score(model)
+  s <- score_func(df, coef(result))
+  expect_equal(unname(s), 0, tolerance = 1e-12)
+
+  # Also stored in the MLE object
+  expect_equal(unname(score_val(result)), 0, tolerance = 1e-12)
+})
+
+test_that("FIM equals n/lambda^2", {
+  model <- exponential_lifetime("t")
+  fim_func <- fim(model)
+
+  # FIM for n observations at lambda
+  for (lam in c(0.5, 1.0, 2.0, 5.0)) {
+    for (n_obs in c(10, 100, 1000)) {
+      expected_fim <- matrix(n_obs / lam^2, 1, 1)
+      computed_fim <- fim_func(lam, n_obs)
+      expect_equal(as.numeric(computed_fim), as.numeric(expected_fim),
+                   tolerance = 1e-12,
+                   info = paste("FIM mismatch at lambda =", lam, "n =", n_obs))
+    }
+  }
+})
+
+test_that("full Fisherian inference works with exponential_lifetime", {
+  set.seed(4008)
+  lambda_true <- 2.0
+  n <- 200
+  x <- rexp(n, rate = lambda_true)
+  df <- data.frame(t = x)
+
+  model <- exponential_lifetime("t")
+  mle_result <- fit(model)(df)
+
+  # Support at MLE should be 0
+  s_at_mle <- support(mle_result, coef(mle_result), df, model)
+  expect_equal(unname(s_at_mle), 0, tolerance = 1e-10)
+
+  # Support away from MLE should be negative
+  s_away <- support(mle_result, c(lambda = 0.5), df, model)
+  expect_true(unname(s_away) < 0)
+
+  # Relative likelihood at MLE is 1
+  rl_at_mle <- relative_likelihood(mle_result, coef(mle_result), df, model)
+  expect_equal(unname(rl_at_mle), 1, tolerance = 1e-10)
+
+  # Likelihood interval should contain MLE
+  li <- likelihood_interval(mle_result, df, model, k = 8)
+  mle_val <- unname(coef(mle_result))
+  expect_true(!is.na(li[1, 1]) && !is.na(li[1, 2]))
+  expect_true(li[1, 1] < mle_val && mle_val < li[1, 2])
+})
+
+test_that("exponential_lifetime matches likelihood_name('exp', ...)", {
+  set.seed(4009)
+  lambda_true <- 1.5
+  x <- rexp(100, rate = lambda_true)
+
+  # exponential_lifetime model
+  df_exp <- data.frame(t = x)
+  model_exp <- exponential_lifetime("t")
+  ll_exp <- loglik(model_exp)(df_exp, lambda_true)
+
+  # likelihood_name model (note: dexp uses 'rate' parameter)
+  df_name <- data.frame(t = x, censor = rep("exact", length(x)))
+  model_name <- likelihood_name("exp", ob_col = "t", censor_col = "censor")
+  ll_name <- loglik(model_name)(df_name, lambda_true)
+
+  expect_equal(ll_exp, ll_name, tolerance = 1e-10)
+})
+
+test_that("exponential_lifetime errors with no exact observations", {
+  df <- data.frame(t = c(1, 2, 3), status = rep("right", 3))
+  model <- exponential_lifetime("t", censor_col = "status")
+
+  expect_error(fit(model)(df), "no exact")
+})
+
+test_that("exponential_lifetime rdata generates correct data", {
+  model <- exponential_lifetime("t")
+  rdata_fn <- rdata(model)
+
+  set.seed(4010)
+  df <- rdata_fn(theta = 2.0, n = 100)
+  expect_equal(nrow(df), 100)
+  expect_true("t" %in% names(df))
+  expect_true(all(df$t > 0))
+
+  # With censoring
+  model_c <- exponential_lifetime("t", censor_col = "status")
+  rdata_fn_c <- rdata(model_c)
+  df_c <- rdata_fn_c(theta = 2.0, n = 100, censor_time = 0.5)
+  expect_equal(nrow(df_c), 100)
+  expect_true("t" %in% names(df_c))
+  expect_true("status" %in% names(df_c))
+  expect_true(all(df_c$t <= 0.5))
+  expect_true(all(df_c$status %in% c("exact", "right")))
+})
+
+test_that("assumptions include censoring note when censor_col is set", {
+  model <- exponential_lifetime("t")
+  a <- assumptions(model)
+  expect_false("non-informative right censoring" %in% a)
+
+  model_c <- exponential_lifetime("t", censor_col = "status")
+  a_c <- assumptions(model_c)
+  expect_true("non-informative right censoring" %in% a_c)
+})
+
+# =============================================================================
+# NEW TESTS: LIKELIHOOD_NAME_MODEL VALIDATION & FEATURES
+# =============================================================================
+
+test_that("likelihood_name errors on invalid distribution name", {
+  expect_error(likelihood_name("nonexistent_dist_xyz", ob_col = "x"),
+               "not found")
+})
+
+test_that("loglik warns on unknown censoring values", {
+  df <- data.frame(x = c(1, 2, 3), censor = c("exact", "righ", "unknwn"))
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  ll <- loglik(model)
+  # "righ" and "unknwn" are unrecognized typos
+  expect_warning(ll(df, c(0, 1)), "Unknown censoring values")
+})
+
+test_that("loglik errors on too many parameters", {
+  df <- data.frame(x = rnorm(10))
+  model <- likelihood_name("norm", ob_col = "x")
+  ll <- loglik(model)
+  expect_error(ll(df, c(0, 1, 0.5)), "Too many parameters")
+})
+
+test_that("loglik handles interval-censored data", {
+  df <- data.frame(
+    x = c(1.0, 2.0, 3.0),
+    x_upper = c(1.5, 2.5, 3.5),
+    censor = c("interval", "interval", "interval")
+  )
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor",
+                           ob_col_upper = "x_upper")
+  ll <- loglik(model)
+  expected <- sum(log(pnorm(df$x_upper, 0, 1) - pnorm(df$x, 0, 1)))
+  expect_equal(ll(df, c(0, 1)), expected, tolerance = 1e-10)
+})
+
+test_that("loglik handles all four censoring types together", {
+  df <- data.frame(
+    x = c(0.5, 1.5, -0.5, 2.0),
+    x_upper = c(NA, NA, NA, 3.0),
+    censor = c("exact", "right", "left", "interval")
+  )
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor",
+                           ob_col_upper = "x_upper")
+  ll <- loglik(model)
+  expected <- dnorm(0.5, 0, 1, log = TRUE) +
+    pnorm(1.5, 0, 1, log.p = TRUE, lower.tail = FALSE) +
+    pnorm(-0.5, 0, 1, log.p = TRUE) +
+    log(pnorm(3.0, 0, 1) - pnorm(2.0, 0, 1))
+  expect_equal(ll(df, c(0, 1)), expected, tolerance = 1e-10)
+})
+
+test_that("loglik returns 0 when observation column is missing from data", {
+  # When ob_col is missing, df[[ob_col]] returns NULL, length(NULL) == 0,
+  # so the function returns 0 (empty data path). This documents current behavior.
+  df <- data.frame(y = rnorm(10))
+  model <- likelihood_name("norm", ob_col = "x")
+  ll <- loglik(model)
+  expect_equal(ll(df, c(0, 1)), 0)
+})
+
+test_that("loglik works with all-censored data (no exact observations)", {
+  df <- data.frame(x = c(1, 2, 3), censor = rep("right", 3))
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  ll <- loglik(model)
+  expected <- sum(pnorm(c(1, 2, 3), 0, 1, log.p = TRUE, lower.tail = FALSE))
+  expect_equal(ll(df, c(0, 1)), expected, tolerance = 1e-10)
+})
+
+test_that("likelihood_name works with gamma distribution", {
+  set.seed(42)
+  df <- data.frame(x = rgamma(100, shape = 2, rate = 3))
+  model <- likelihood_name("gamma", ob_col = "x")
+  ll <- loglik(model)
+  expected <- sum(dgamma(df$x, shape = 2, rate = 3, log = TRUE))
+  expect_equal(ll(df, c(2, 3)), expected, tolerance = 1e-10)
+})
+
+test_that("interval censoring errors without ob_col_upper", {
+  df <- data.frame(
+    x = c(1.0, 2.0),
+    censor = c("interval", "interval")
+  )
+  model <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
+  ll <- loglik(model)
+  expect_error(ll(df, c(0, 1)), "ob_col_upper")
+})
+
+# =============================================================================
+# NEW TESTS: LIKELIHOOD_CONTR_MODEL ADVANCED CASES
+# =============================================================================
+
+test_that("S3 hess_loglik wrapper for contr_model matches R6 method", {
+  loglik.hess_wrap_test <- function(df, par, ...) {
+    sum(dnorm(df$x, par[1], par[2], log = TRUE))
+  }
+  assign("loglik.hess_wrap_test", loglik.hess_wrap_test, envir = .GlobalEnv)
+  on.exit(rm("loglik.hess_wrap_test", envir = .GlobalEnv))
+
+  model <- likelihood_contr_model$new(obs_type = function(df) "hess_wrap_test")
+  set.seed(42)
+  df <- data.frame(x = rnorm(30))
+  par <- c(0, 1)
+
+  hess_wrapper <- hess_loglik(model)
+  expect_equal(hess_wrapper(df, par), model$hess_loglik(df, par))
+})
+
+test_that("contr_model score works with single-parameter multi-type model", {
+  loglik.spm_a <- function(df, par, ...) sum(dexp(df$x, par[1], log = TRUE))
+  loglik.spm_b <- function(df, par, ...) sum(dexp(df$x, par[1], log = TRUE))
+  score.spm_a <- function(df, par, ...) sum(1/par[1] - df$x)
+  score.spm_b <- function(df, par, ...) sum(1/par[1] - df$x)
+
+  assign("loglik.spm_a", loglik.spm_a, envir = .GlobalEnv)
+  assign("loglik.spm_b", loglik.spm_b, envir = .GlobalEnv)
+  assign("score.spm_a", score.spm_a, envir = .GlobalEnv)
+  assign("score.spm_b", score.spm_b, envir = .GlobalEnv)
+  on.exit({
+    rm("loglik.spm_a", "loglik.spm_b", "score.spm_a", "score.spm_b",
+       envir = .GlobalEnv)
+  })
+
+  model <- likelihood_contr_model$new(
+    obs_type = function(df) df$type
+  )
+  set.seed(42)
+  df <- data.frame(
+    x = rexp(20, rate = 2),
+    type = rep(c("spm_a", "spm_b"), each = 10)
+  )
+  # This should NOT error (was rowSums bug before fix)
+  score_fn <- score(model)
+  result <- score_fn(df, 2)
+  expect_true(is.numeric(result))
+
+  # Also test R6 method directly
+  r6_result <- model$score(df, 2)
+  expect_true(is.numeric(r6_result))
+  expect_equal(result, r6_result)
+})
+
+test_that("S3 loglik wrapper re-caches when df changes", {
+  loglik.cache_test <- function(df, par, ...) {
+    sum(dnorm(df$x, par[1], par[2], log = TRUE))
+  }
+  assign("loglik.cache_test", loglik.cache_test, envir = .GlobalEnv)
+  on.exit(rm("loglik.cache_test", envir = .GlobalEnv))
+
+  model <- likelihood_contr_model$new(obs_type = function(df) "cache_test")
+  ll <- loglik(model)
+
+  df1 <- data.frame(x = c(1, 2, 3))
+  df2 <- data.frame(x = c(4, 5, 6))
+
+  val1 <- ll(df1, c(0, 1))
+  val2 <- ll(df2, c(0, 1))
+
+  expect_false(val1 == val2)
+  expect_equal(val1, sum(dnorm(c(1, 2, 3), 0, 1, log = TRUE)))
+  expect_equal(val2, sum(dnorm(c(4, 5, 6), 0, 1, log = TRUE)))
+})
+
+test_that("print works for likelihood_contr_model without crashing", {
+  model <- likelihood_contr_model$new(obs_type = function(df) "exact")
+  output <- capture.output(print(model))
+  expect_true(any(grepl("Likelihood model", output)))
+  # Should NOT print "Observation column: " with NULL
+  expect_false(any(grepl("Observation column:", output)))
 })

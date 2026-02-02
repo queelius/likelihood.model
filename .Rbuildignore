@@ -5,3 +5,14 @@
 ^\.Rhistory$
 ^docs$
 ^Meta$
+^vignettes/.*_cache$
+^\.vscode$
+^CLAUDE\.md$
+^data-raw$
+^featured\.png$
+^README\.Rmd$
+^\.claude$
+^CITATION\.cff$
+^\.zenodo\.json$
+^cran-comments\.md$
+^\.github$

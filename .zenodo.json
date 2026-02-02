@@ -1,0 +1,24 @@
+{
+  "title": "likelihood.model: Likelihood-Based Statistical Inference in R",
+  "description": "R package for specifying and using likelihood models in the Fisherian tradition. Provides generic methods for log-likelihood, score, and Hessian functions with support for exact, left-censored, right-censored, and interval-censored observations.",
+  "creators": [
+    {
+      "name": "Towell, Alexander",
+      "orcid": "0000-0001-6443-9897",
+      "affiliation": "Southern Illinois University Edwardsville"
+    }
+  ],
+  "keywords": [
+    "likelihood",
+    "maximum likelihood estimation",
+    "Fisherian inference",
+    "censored data",
+    "R",
+    "statistics"
+  ],
+  "license": {
+    "id": "MIT"
+  },
+  "upload_type": "software",
+  "access_right": "open"
+}

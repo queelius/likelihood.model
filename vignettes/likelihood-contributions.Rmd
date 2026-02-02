@@ -24,25 +24,17 @@ options(digits = 2)
 You can install the development version of `likelihood.model` from
 [GitHub](https://github.com/queelius/likelihood.model) with:
 
-```{r install-likelihood-model, echo = FALSE}
+```{r install-likelihood-model, eval = FALSE}
 if (!require(devtools)) {
     install.packages("devtools")
 }
-if (!require(algebraic.mle)) {
-    install.packages("algebraic.mle")
-}
-if (!require(likelihood.model)) {
-    devtools::install_github("queelius/likelihood.model")
-}
+devtools::install_github("queelius/likelihood.model")
 ```
 
 ```{r load-packages, message=FALSE, warning=FALSE, echo = FALSE}
 library(dplyr)
-library(algebraic.dist)
-library(algebraic.mle)
 library(likelihood.model)
 library(generics)
-library(MASS)
 ```
 
 ## Exponential series system
@@ -219,7 +211,7 @@ optim(rates, fn = loglik(model.observed), df=df, control=list(fnscale=-1))
 
 Note that `likelihood_model` objects have a default method for fitting MLEs, `fit`.
 Internally, this method uses `optim` to maximize the log-likelihood, but it packs in some
-additional information and returns the result as a `mle_numerical` object.
+additional information and returns the result as a `fisher_mle` object.
 ```{r mle-observed-likelihood-model, cache=TRUE}
 rates.hat <- fit(model.observed)(df, par = rates)
 summary(rates.hat)
@@ -236,8 +228,13 @@ hess_loglik.observed <- function(df, rates, ...) {
   }
   H
 }
-observed_fim(rates.hat)
-hess_loglik(model.observed)(df, params(rates.hat))
+# Observed information from MLE (negative Hessian)
+cat("Observed information matrix (from MLE):\n")
+print(-rates.hat$hessian)
+
+# Computed directly via hess_loglik
+cat("\nHessian at MLE:\n")
+print(hess_loglik(model.observed)(df, coef(rates.hat)))
 ```
 
 
@@ -246,11 +243,18 @@ Now, we use the Bootstrap method to estimate the sampling distribution of the ML
 ```{r bootstrap, cache=TRUE}
 model.samp <- sampler(model.observed, df = df, par = rates)
 boot_result <- model.samp(n = 500)
-dist <- empirical_dist(boot_result$t)
-cat("Bootstrap mean:\n")
-print(expectation(dist, function(x) x))
+
+cat("Bootstrap MLE:\n")
+print(coef(boot_result))
+
+cat("\nBootstrap standard errors:\n")
+print(se(boot_result))
+
+cat("\nBootstrap bias:\n")
+print(bias(boot_result))
+
 cat("\nBootstrap covariance:\n")
-print(vcov(dist))
+print(vcov(boot_result))
 ```
 
 ## Case 2: Right-censoring
@@ -294,7 +298,7 @@ df.censored[df.censored[, "censored"], paste0("t", 1:3)] <- rep(NA, 3)
 head(df.censored)
 ```
 
-We cosntruct their censoring functions with:
+We construct their censoring functions with:
 ```{r}
 loglik.censored <- function(df, rates) {
     -sum(rates) * sum(df$t)
@@ -313,14 +317,7 @@ model.censored <- likelihood_contr_model$new(
     }
 )
 
-mle.censored <- mle_numerical(
-    optim(
-        rates,
-        fn = loglik(model.censored),
-        df = df.censored, hessian = TRUE,
-        control = list(fnscale = -1)
-    )
-)
+mle.censored <- fit(model.censored)(df.censored, par = rates)
 summary(mle.censored)
 ```
 
@@ -328,3 +325,163 @@ summary(mle.censored)
 So, recall the true parameters are $\lambda = (`r rates`)'$.
 We can see that the estimates are reasonable, particularly
 for the relatively small sample size.
+
+### Inference on censored estimates
+
+Let's examine the censored estimates more closely and compare them to the
+uncensored case. Censoring reduces information, so we expect wider confidence
+intervals:
+
+```{r case2-inference}
+cat("Uncensored estimates:\n")
+cat("  Estimates:", coef(rates.hat), "\n")
+cat("  Std errors:", se(rates.hat), "\n")
+
+cat("\nCensored estimates:\n")
+cat("  Estimates:", coef(mle.censored), "\n")
+cat("  Std errors:", se(mle.censored), "\n")
+
+cat("\n95% Confidence Intervals (censored):\n")
+print(confint(mle.censored))
+
+cat("\nTrue parameters:", rates, "\n")
+```
+
+We can also use Fisherian likelihood inference to examine the strength of
+evidence for the censored estimates:
+
+```{r case2-fisherian}
+# Support at MLE (should be 0)
+s_at_mle <- support(mle.censored, coef(mle.censored), df.censored,
+                    model.censored)
+cat("Support at MLE:", s_at_mle, "\n")
+
+# Evidence for MLE vs true parameters
+ev <- evidence(model.censored, df.censored, coef(mle.censored), rates)
+cat("Evidence (MLE vs true):", ev, "\n")
+
+# Likelihood interval for rate 1 (first component)
+li <- likelihood_interval(mle.censored, df.censored, model.censored,
+                          k = 8, param = 1)
+cat("\n1/8 likelihood interval for lambda_1:\n")
+print(li)
+```
+
+## Case 3: Single-parameter model (exponential rate)
+
+The `likelihood_contr_model` also works well with single-parameter models.
+Here we estimate a single exponential rate from data where some observations
+are exact and others are right-censored, using separate contribution types
+for each.
+
+This example also demonstrates that the `score` function works correctly
+with scalar parameters (a case that requires careful handling of R's
+dimension-dropping behavior).
+
+```{r single-param}
+# Define contribution types for a single-rate exponential
+loglik.exp_exact <- function(df, par, ...) {
+  lambda <- par[1]
+  sum(log(lambda) - lambda * df$t)
+}
+
+loglik.exp_right <- function(df, par, ...) {
+  lambda <- par[1]
+  -lambda * sum(df$t)
+}
+
+score.exp_exact <- function(df, par, ...) {
+  lambda <- par[1]
+  nrow(df) / lambda - sum(df$t)
+}
+
+score.exp_right <- function(df, par, ...) {
+  lambda <- par[1]
+  -sum(df$t)
+}
+
+# Simulate right-censored exponential data
+set.seed(42)
+lambda_true <- 2.0
+n_single <- 200
+censor_time_single <- 0.4
+
+raw_lifetimes <- rexp(n_single, lambda_true)
+df_single <- data.frame(
+  t = pmin(raw_lifetimes, censor_time_single),
+  type = ifelse(raw_lifetimes > censor_time_single, "exp_right", "exp_exact")
+)
+
+cat("Exact observations:", sum(df_single$type == "exp_exact"), "\n")
+cat("Right-censored:", sum(df_single$type == "exp_right"), "\n")
+
+model_single <- likelihood_contr_model$new(
+  obs_type = function(df) df$type,
+  assumptions = c("exponential lifetimes", "non-informative right censoring")
+)
+
+# Fit and verify
+mle_single <- fit(model_single)(df_single, par = c(lambda = 1))
+cat("\nMLE:", coef(mle_single), "(true:", lambda_true, ")\n")
+
+# Closed-form MLE for comparison: d / T
+d <- sum(df_single$type == "exp_exact")
+total_T <- sum(df_single$t)
+cat("Closed-form MLE:", d / total_T, "\n")
+cat("95% CI:", confint(mle_single)[1, ], "\n")
+```
+
+## Best Practices
+
+### When to use which model type
+
+| Scenario | Recommended approach |
+|----------|---------------------|
+| Standard distribution, possibly censored | `likelihood_name()` |
+| Heterogeneous observation types | `likelihood_contr_model` |
+| Known analytical derivatives | Specialized model (e.g., `weibull_uncensored`) |
+| Closed-form MLE exists | Custom class with `fit` override (e.g., `exponential_lifetime`) |
+| Standard distribution as a contribution | Define `loglik.<type>` using `likelihood_name` internally |
+
+### Providing analytical derivatives
+
+Numerical differentiation (the default fallback) works but is slow --- each
+gradient evaluation requires $2r \times p$ function evaluations (where $r=6$
+and $p$ is the number of parameters). When analytical derivatives are
+available, providing `score.<type>` and `hess_loglik.<type>` functions
+gives 10--100x speedups:
+
+```{r analytical-example, eval=FALSE}
+# Slow (default): numerical differentiation of loglik.my_type
+loglik.my_type <- function(df, par, ...) { ... }
+
+# Fast: provide analytical derivatives
+score.my_type <- function(df, par, ...) { ... }
+hess_loglik.my_type <- function(df, par, ...) { ... }
+```
+
+The `likelihood_contr_model` checks for these functions in order:
+
+1. Functions passed directly via `logliks`, `scores`, `hess_logliks` arguments
+2. Functions found by name in the global environment (`loglik.<type>`, etc.)
+3. Numerical differentiation of the log-likelihood (last resort)
+
+### Performance tip: the S3 cache
+
+The S3 wrappers (`loglik(model)`, `score(model)`, `hess_loglik(model)`) cache
+the data frame split and resolved dispatcher functions. During optimization,
+`optim` calls the returned function hundreds of times with the same `df` but
+varying `par` --- caching eliminates the repeated `split()` and `obs_type()`
+overhead. Always use the S3 interface for optimization:
+
+```{r cache-tip, eval=FALSE}
+# Good: cached S3 wrapper
+ll <- loglik(model)
+result <- optim(par, fn = ll, df = df, control = list(fnscale = -1))
+
+# Also good: using fit() which does this internally
+result <- fit(model)(df, par = par)
+
+# Slower: calling R6 method directly in a loop (no caching)
+# model$loglik(df, par) -- re-splits df every call
+```

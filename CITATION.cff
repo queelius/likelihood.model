@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "likelihood.model"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Towell
+    given-names: Alexander
+    email: lex@metafunctor.com
+    orcid: "https://orcid.org/0000-0001-6443-9897"
+    affiliation: "Southern Illinois University Edwardsville"
+repository-code: "https://github.com/queelius/likelihood.model"
+url: "https://queelius.github.io/likelihood.model/"
+license: MIT
+version: 0.9.1
+date-released: "2026-02-02"
+keywords:
+  - likelihood
+  - maximum-likelihood-estimation
+  - fisherian-inference
+  - censored-data
+  - R
+  - statistics

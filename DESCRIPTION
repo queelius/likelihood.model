@@ -1,32 +1,34 @@
 Package: likelihood.model
 Type: Package
-Title: Likelihood Model
-Version: 0.9.0
+Title: Likelihood-Based Statistical Inference in the Fisherian Tradition
+Version: 0.9.1
 Authors@R: 
     person("Alexander", "Towell", , "lex@metafunctor.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6443-9897"))
-Maintainer: Alexander Towell <lex@metafunctor.com>
-Description: Facilitates building likelihood models. It defines a number of generic methods for working with likelihoods, and a few functions that are strictly functions of these generic methods. It is designed to interoperate well with the algebraic.mle R package. It also comes with a likelihood contributions model, a likelihood model that is composed of multiple likelihood contributions assuming i.i.d. data. 
+Description: Facilitates building likelihood models in the Fisherian tradition.
+    It defines generic methods for working with likelihoods (loglik, score,
+    hess_loglik, fim) and provides functions for pure likelihood-based inference
+    (support, relative_likelihood, likelihood_interval, profile_loglik). Includes
+    a likelihood contributions model for heterogeneous observation types (exact,
+    censored, etc.) assuming i.i.d. data.
 License: MIT + file LICENSE
 Encoding: UTF-8
-ByteCompile: true
-LazyData: true
 Imports:
+    algebraic.mle,
     mvtnorm,
     generics,
-    MASS,
     stats,
     numDeriv,
     boot,
-    dplyr,
-    algebraic.mle
+    R6
 URL: https://github.com/queelius/likelihood.model,
     https://queelius.github.io/likelihood.model/
 BugReports: https://github.com/queelius/likelihood.model/issues
-Suggests: 
+Suggests:
     rmarkdown,
     dplyr,
     knitr,
     tibble,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3

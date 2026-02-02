@@ -37,23 +37,18 @@ This vignette provides a quick introduction to the main features.
 # Install from GitHub
 if (!require(devtools)) install.packages("devtools")
 devtools::install_github("queelius/likelihood.model")
-
-# Also install companion packages for full functionality
-devtools::install_github("queelius/algebraic.mle")
-devtools::install_github("queelius/algebraic.dist")
 ```
 
 ## Loading Packages
 
 ```{r load, message=FALSE, warning=FALSE}
 library(likelihood.model)
-library(algebraic.mle)
 ```
 
 ## Example 1: Basic MLE with Weibull Distribution
 
 Let's start with a simple example: fitting a Weibull distribution to survival
-data using the `likelihood_exact_weibull` model, which provides analytical
+data using the `weibull_uncensored` model, which provides analytical
 derivatives for faster and more accurate estimation.
 
 ```{r weibull-example}
@@ -65,7 +60,7 @@ true_scale <- 3.0
 df <- data.frame(x = rweibull(n, shape = true_shape, scale = true_scale))
 
 # Create the likelihood model
-model <- likelihood_exact_weibull("x")
+model <- weibull_uncensored("x")
 
 # View model assumptions
 assumptions(model)
@@ -83,18 +78,21 @@ summary(mle)
 ```{r weibull-results}
 # Parameter estimates
 cat("Estimated parameters:\n")
-print(params(mle))
+print(coef(mle))
 
-# Confidence intervals
+# Confidence intervals (Wald-based)
 cat("\n95% Confidence Intervals:\n")
 print(confint(mle))
 
 # Standard errors
 cat("\nStandard Errors:\n")
-print(sqrt(diag(vcov(mle))))
+print(se(mle))
 
 # Log-likelihood value
 cat("\nLog-likelihood:", loglik_val(mle), "\n")
+
+# AIC for model selection
+cat("AIC:", aic(mle), "\n")
 ```
 
 ## Example 2: Handling Censored Data
@@ -132,11 +130,11 @@ model_cens <- likelihood_name("norm", ob_col = "x", censor_col = "censor")
 
 # Fit the model
 solver_cens <- fit(model_cens)
-mle_cens <- solver_cens(df_cens, par = c(0, 1))
+mle_cens <- suppressWarnings(solver_cens(df_cens, par = c(0, 1)))
 
 cat("MLE (accounting for censoring):\n")
-cat("  Mean:", params(mle_cens)[1], "(true:", true_mean, ")\n")
-cat("  SD:  ", params(mle_cens)[2], "(true:", true_sd, ")\n")
+cat("  Mean:", coef(mle_cens)[1], "(true:", true_mean, ")\n")
+cat("  SD:  ", coef(mle_cens)[2], "(true:", true_sd, ")\n")
 ```
 
 ### Comparison: Naive vs Proper Estimation
@@ -149,7 +147,7 @@ naive_sd <- sd(df_cens$x)
 cat("\nComparison of estimates:\n")
 cat("                     Mean      SD\n")
 cat(sprintf("True values:      %7.3f   %5.3f\n", true_mean, true_sd))
-cat(sprintf("MLE (correct):    %7.3f   %5.3f\n", params(mle_cens)[1], params(mle_cens)[2]))
+cat(sprintf("MLE (correct):    %7.3f   %5.3f\n", coef(mle_cens)[1], coef(mle_cens)[2]))
 cat(sprintf("Naive (biased):   %7.3f   %5.3f\n", naive_mean, naive_sd))
 cat("\nNote: Naive estimates are biased downward due to censoring!\n")
 ```
@@ -161,7 +159,7 @@ methods to estimate the sampling distribution of the MLE.
 
 ```{r bootstrap-example, cache=TRUE}
 # Using the Weibull example from before
-model <- likelihood_exact_weibull("x")
+model <- weibull_uncensored("x")
 df <- data.frame(x = rweibull(150, shape = 2.5, scale = 3.0))
 
 # Create bootstrap sampler
@@ -172,13 +170,17 @@ boot_result <- boot_sampler(n = 100)
 
 # Compare asymptotic vs bootstrap standard errors
 mle <- fit(model)(df, par = c(1, 1))
-asymp_se <- sqrt(diag(vcov(mle)))
-boot_se <- apply(boot_result$t, 2, sd)
+asymp_se <- se(mle)
+boot_se <- se(boot_result)  # Uses vcov from bootstrap replicates
 
 cat("Standard Error Comparison:\n")
 cat("           Asymptotic  Bootstrap\n")
 cat(sprintf("Shape:     %10.4f  %9.4f\n", asymp_se[1], boot_se[1]))
 cat(sprintf("Scale:     %10.4f  %9.4f\n", asymp_se[2], boot_se[2]))
+
+# Bootstrap bias estimate
+cat("\nBootstrap Bias Estimate:\n")
+print(bias(boot_result))
 ```
 
 ## Example 4: Verifying the Score at MLE
@@ -187,7 +189,7 @@ At the MLE, the score function (gradient of log-likelihood) should be
 approximately zero. This provides a useful diagnostic.
 
 ```{r score-check}
-model <- likelihood_exact_weibull("x")
+model <- weibull_uncensored("x")
 df <- data.frame(x = rweibull(100, 2, 1.5))
 
 # Fit MLE
@@ -195,26 +197,170 @@ mle <- fit(model)(df, par = c(1, 1))
 
 # Evaluate score at MLE
 score_func <- score(model)
-score_at_mle <- score_func(df, params(mle))
+score_at_mle <- score_func(df, coef(mle))
 
 cat("Score at MLE (should be near zero):\n")
 print(score_at_mle)
+
+# The score is also stored in the MLE object
+cat("\nScore stored in MLE object:\n")
+print(score_val(mle))
+```
+
+## Example 5: Fisherian Likelihood Inference
+
+The package supports pure likelihood-based inference in the Fisherian tradition.
+Instead of confidence intervals, we can compute likelihood intervals that make
+no probability statements about parameters.
+
+```{r fisherian-example}
+# Fit a model
+model <- weibull_uncensored("x")
+df <- data.frame(x = rweibull(100, 2.0, 1.5))
+mle <- fit(model)(df, par = c(1, 1))
+
+# Support function: log relative likelihood
+# S(theta) = logL(theta) - logL(theta_hat)
+# Support at MLE is always 0
+s_at_mle <- support(mle, coef(mle), df, model)
+cat("Support at MLE:", s_at_mle, "\n")
+
+# Support at alternative parameter values (negative = less supported)
+s_alt <- support(mle, c(1.5, 1.0), df, model)
+cat("Support at (1.5, 1.0):", s_alt, "\n")
+
+# Relative likelihood = exp(support)
+rl <- relative_likelihood(mle, c(1.5, 1.0), df, model)
+cat("Relative likelihood at (1.5, 1.0):", rl, "\n")
+```
+
+### Likelihood Intervals
+
+```{r likelihood-intervals}
+# Compute 1/8 likelihood interval (roughly equivalent to 95% CI)
+# This is the set of theta where R(theta) >= 1/8
+li <- likelihood_interval(mle, df, model, k = 8)
+print(li)
+
+# Compare with Wald confidence interval
+cat("\nWald 95% CI:\n")
+print(confint(mle))
+```
+
+## Example 6: Closed-Form MLE with Exponential Lifetime Model
+
+The `exponential_lifetime` model demonstrates a key design feature: specialized
+models can override `fit()` to bypass `optim` entirely when the MLE has a
+closed-form solution.
+
+For Exponential(lambda) data, the MLE is simply lambda_hat = d / T, where d
+is the number of uncensored observations and T is the total observation time.
+
+```{r exponential-example}
+# Generate exponential survival data
+set.seed(99)
+df_exp <- data.frame(t = rexp(200, rate = 3.0))
+
+# Create model and fit -- no initial guess needed!
+model_exp <- exponential_lifetime("t")
+mle_exp <- fit(model_exp)(df_exp)
+
+cat("Closed-form MLE (no optim):\n")
+cat("  lambda_hat:", coef(mle_exp), "(true: 3.0)\n")
+cat("  SE:", se(mle_exp), "\n")
+
+# The score at the MLE is exactly zero (by construction)
+cat("  Score at MLE:", score_val(mle_exp), "\n")
+```
+
+### Right-Censored Exponential Data
+
+The model handles right-censoring naturally through the sufficient statistics.
+
+```{r exponential-censored}
+# Generate data with right-censoring at time 0.5
+set.seed(99)
+true_lambda <- 3.0
+x <- rexp(200, rate = true_lambda)
+censored <- x > 0.5
+df_cens_exp <- data.frame(
+  t = pmin(x, 0.5),
+  status = ifelse(censored, "right", "exact")
+)
+
+cat("Censoring rate:", mean(censored) * 100, "%\n")
+
+model_cens_exp <- exponential_lifetime("t", censor_col = "status")
+mle_cens_exp <- fit(model_cens_exp)(df_cens_exp)
+
+cat("MLE (censored):", coef(mle_cens_exp), "(true:", true_lambda, ")\n")
+cat("95% CI:", confint(mle_cens_exp)[1, ], "\n")
+```
+
+### Cross-Validation: Matches `likelihood_name("exp", ...)`
+
+The analytical model produces the same log-likelihood as the generic approach:
+
+```{r exponential-crossval}
+# Compare log-likelihood values at the MLE
+lambda_hat <- coef(mle_exp)
+ll_analytical <- loglik(model_exp)(df_exp, lambda_hat)
+
+# likelihood_name("exp") uses dexp(x, rate), so pass unnamed parameter
+df_exp_name <- data.frame(t = df_exp$t, censor = rep("exact", nrow(df_exp)))
+model_generic <- likelihood_name("exp", ob_col = "t", censor_col = "censor")
+ll_generic <- loglik(model_generic)(df_exp_name, unname(lambda_hat))
+
+cat("Analytical loglik:", ll_analytical, "\n")
+cat("Generic loglik:   ", ll_generic, "\n")
+cat("Match:", all.equal(unname(ll_analytical), ll_generic), "\n")
 ```
 
 ## Summary of Key Functions
 
+### Model Creation
 | Function | Description |
 |----------|-------------|
 | `likelihood_name()` | Create model for standard R distributions |
-| `likelihood_exact_weibull()` | Weibull model with analytical derivatives |
+| `weibull_uncensored()` | Weibull model with analytical derivatives (exact obs.) |
+| `exponential_lifetime()` | Exponential model with closed-form MLE and optional censoring |
 | `likelihood_contr_model$new()` | Custom likelihood contributions |
+
+### Likelihood Calculus
+| Function | Description |
+|----------|-------------|
 | `loglik()` | Get log-likelihood function |
 | `score()` | Get score (gradient) function |
 | `hess_loglik()` | Get Hessian of log-likelihood |
-| `fit()` | Create MLE solver |
-| `sampler()` | Create bootstrap sampler |
-| `assumptions()` | View model assumptions |
+| `fim()` | Fisher information matrix |
+| `observed_info()` | Observed information matrix |
+
+### Estimation and Inference
+| Function | Description |
+|----------|-------------|
+| `fit()` | Create MLE solver (returns `fisher_mle`) |
+| `sampler()` | Create bootstrap sampler (returns `fisher_boot`) |
+| `coef()` | Extract parameter estimates |
+| `vcov()` | Variance-covariance matrix |
+| `confint()` | Confidence intervals |
+| `se()` | Standard errors |
+
+### Fisherian Inference
+| Function | Description |
+|----------|-------------|
+| `support()` | Log relative likelihood: S(θ) = logL(θ) - logL(θ̂) |
+| `relative_likelihood()` | Likelihood ratio: R(θ) = L(θ)/L(θ̂) |
+| `likelihood_interval()` | Interval where R(θ) ≥ 1/k |
+| `profile_loglik()` | Profile log-likelihood |
+| `evidence()` | Evidence for θ₁ vs θ₂ |
+
+### Model Comparison
+| Function | Description |
+|----------|-------------|
 | `lrt()` | Likelihood ratio test |
+| `aic()` | Akaike Information Criterion |
+| `bic()` | Bayesian Information Criterion |
+| `deviance()` | Deviance statistic |
 
 ## Next Steps
 

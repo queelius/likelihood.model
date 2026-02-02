@@ -12,168 +12,424 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
     collapse = TRUE,
-    comment = "#>"
+    comment = "#>",
+    fig.width = 6,
+    fig.height = 4
 )
-options(digits = 2)
+options(digits = 4)
 ```
 
-## Likelihood Named Distributions Model: `likelihood_name_model`
+## Introduction
 
-### Introduction
+The `likelihood_name()` function creates a likelihood model for any standard R
+distribution by name. If R has functions `d<name>` (PDF) and `p<name>` (CDF)
+for a distribution, you can build a likelihood model for it with a single call.
 
-The `likelihood.model` package introduces a flexible framework for working with
-likelihood models in R. Here, we demonstrate a model based on the naming
-conventions of distribution functions in R, making it easy to construct
-likelihood models for a wide range of distributions and handle different types
-of censoring. This vignette provides a brief guide to using the
-`likelihood_name_model` within the `likelihood.model` package.
+This approach is ideal when:
 
-> You can also use these likelihood functions as likelihood contributions in a
-> more complicated likelihood contribution model.
+- You want to quickly fit a standard distribution to data
+- Your data may include exact, left-censored, right-censored, or
+  interval-censored observations
+- You don't need hand-derived analytical derivatives (numerical differentiation
+  is used by default)
 
-### Conceptual Foundation
+For performance-critical applications with known analytical derivatives, see the
+specialized models (`weibull_uncensored`, `exponential_lifetime`) or the
+`likelihood_contr_model` for custom likelihood contributions.
 
-At the heart of many statistical models lies the concept of likelihood, a fundamental tool in estimating parameters and testing hypotheses. The `likelihood.model` package builds on this foundation, providing a way to generate likelihood models based on named distributions (e.g., normal, exponential) and handle data that may be subject to different censoring mechanisms—such as exact, left-censored, right-censored, or interval-censored observations.
+> **Tip:** These models can also serve as building blocks inside a
+> `likelihood_contr_model` for heterogeneous observation types.
 
-### Getting Started
-
-#### Installation
-
-To begin, install the `likelihood.model` package from GitHub:
-
-```{r}
-if (!require(devtools)) {
-  install.packages("devtools")
-}
-devtools::install_github("queelius/likelihood.model")
-```
-
-#### Loading the Package
-
-Load the package along with other necessary libraries:
-
-```{r message=FALSE, warning=FALSE}
+```{r load, message=FALSE, warning=FALSE}
 library(likelihood.model)
-library(algebraic.mle)
-library(algebraic.dist)
-library(dplyr)
 ```
 
-### Creating a Likelihood Model
+## Basic Usage: Normal Distribution
 
-Start by creating a simple likelihood model for a normal distribution:
+The simplest case: all observations are exact (no censoring).
 
-```{r}
-model <- likelihood_name("norm", "x", "censoring")
+```{r basic-normal}
+# Generate data from N(5, 2)
+set.seed(42)
+n <- 200
+df <- data.frame(x = rnorm(n, mean = 5, sd = 2))
+
+# Create model -- no censor_col means all exact
+model <- likelihood_name("norm", ob_col = "x")
 print(model)
+
+# Fit the MLE
+mle <- fit(model)(df, par = c(mean = 0, sd = 1))
+summary(mle)
 ```
 
-This model is based on the normal distribution, with `x` as the observation
-column and `censoring` as the censoring column that indicates the type of
-censoring for the corresponding observation.
+The `fisher_mle` object provides standard inference:
 
-### Detailed Example
-
-Let's simulate some data to apply our model:
-
-```{r}
-set.seed(123)
-
-generate_data <- function(n, right_censoring_quantile, sampler) {
-  df <- data.frame(
-    x = sampler(n),
-    censoring = rep("exact", n)
-  )
-  q <- qnorm(right_censoring_quantile)
-
-  for (i in 1:n) {
-    if (df[i, 1] > q) {
-      df[i, ] <- list(q, "right")
-    }
-  }
-  df
-}
-
-df <- generate_data(n = 100, right_censoring_quantile = .5,
-                    sampler = function(n) rnorm(n, mean = 0, sd = 1))
-```
-
-Now we have a dataset `df` with $n=100$ observations, with
-50% ($`right_censoring_quantile` = 0.5$) expected to be right-censored.
-Now, compute the log-likelihood of the dataset given the parameters:
-
-```{r}
-ll <- loglik(model)
-```
-
-#### Fitting the Model
-
-The `fit` function returns a solver that can be used to find the MLE:
-
-```{r}
-solver <- fit(model)
-mle <- solver(df, par = c(mean = 0, sd = 1))
-print(mle)
-```
-
-The solver accepts control parameters to customize the optimization algorithm, including the method (`"Nelder-Mead"`, `"BFGS"`, `"SANN"`, etc.), convergence tolerance, and maximum iterations.
-
-```{r}
-xs <- seq(-5, 5, 0.1)
-ys <- numeric(length(xs))
-mle_params <- unname(params(mle))  # strip names to avoid parameter name conflicts
-for (i in seq_along(xs)) {
-  ys[i] <- ll(df, par = c(mean = xs[i], sd = mle_params[2]))
-}
-plot(xs, ys, type = "l", xlab = "Mean", ylab = "Log-likelihood")
-points(mle_params[1], ll(df, par = mle_params), col = "blue", pch = 19)
-for (i in seq_along(xs)) {
-  ys[i] <- ll(df, par = c(mean = mle_params[1], sd = xs[i]))
-}
-lines(xs, ys, col = "red")
-points(mle_params[2], ll(df, par = mle_params), col = "blue", pch = 19)
-```
-
-We can show the confidence intervals for the parameters:
-```{r}
+```{r basic-inference}
+cat("Estimates:", coef(mle), "\n")
+cat("Standard errors:", se(mle), "\n")
+cat("AIC:", aic(mle), "\n")
 confint(mle)
 ```
-We can do many other tasks, too, See: [algebraic.mle](https://www.github.com/queelius/algebraic.mle)
-in addition to the functions availabel in this package.
-Since the MLE is itself a distribution, you may also use the [algebraic.dist](https://www.github.com/queelius/algebraic.dist)
-to do other tasks, such as expectations.
 
-### Hypothesis Testing
+## Right-Censored Data
 
-The `likelihood.model` package provides a likelihood ratio test via the `lrt`
-function to compare nested models. For example, we can test whether data from
-a normal distribution fits better than a simpler exponential model:
+Right-censoring is common in survival analysis: we know the event hadn't
+occurred by the censoring time, but not when it actually occurs. The
+likelihood contribution for a right-censored observation at $x$ is
+$\log P(X > x) = \log(1 - F(x))$.
 
-```{r}
-# Generate test data from exponential distribution
+```{r right-censor}
+# Simulate Weibull lifetimes with type-I right-censoring at time 1.2
+set.seed(123)
+n <- 150
+true_shape <- 2
+true_scale <- 1.5
+censor_time <- 1.2
+
+raw_t <- rweibull(n, true_shape, true_scale)
+df_right <- data.frame(
+  x = pmin(raw_t, censor_time),
+  censor = ifelse(raw_t > censor_time, "right", "exact")
+)
+
+cat("Censoring rate:", mean(df_right$censor == "right") * 100, "%\n")
+
+# Fit with proper censoring handling
+model_right <- likelihood_name("weibull", ob_col = "x", censor_col = "censor")
+mle_right <- fit(model_right)(df_right, par = c(shape = 1.5, scale = 1))
+
+cat("\nMLE (with censoring):\n")
+cat("  shape:", coef(mle_right)[1], "(true:", true_shape, ")\n")
+cat("  scale:", coef(mle_right)[2], "(true:", true_scale, ")\n")
+confint(mle_right)
+```
+
+## Left-Censored Data
+
+Left-censoring occurs when observations fall below a detection limit. For
+example, a chemical assay might report "below 0.1 ppm" rather than an exact
+concentration. The likelihood contribution is $\log P(X \le x) = \log F(x)$.
+
+```{r left-censor}
+# Simulate concentrations from a log-normal distribution
+# with detection limit at 0.5
 set.seed(456)
-df.test <- generate_data(n = 100, right_censoring_quantile = .75,
-                         sampler = function(n) rexp(n, rate = 1))
+n <- 100
+true_meanlog <- 0
+true_sdlog <- 0.8
+detect_limit <- 0.5
+
+raw_conc <- rlnorm(n, true_meanlog, true_sdlog)
+df_left <- data.frame(
+  x = ifelse(raw_conc < detect_limit, detect_limit, raw_conc),
+  censor = ifelse(raw_conc < detect_limit, "left", "exact")
+)
+
+cat("Below detection limit:", mean(df_left$censor == "left") * 100, "%\n")
+
+model_left <- likelihood_name("lnorm", ob_col = "x", censor_col = "censor")
+mle_left <- fit(model_left)(df_left, par = c(meanlog = 0, sdlog = 1))
+
+cat("\nMLE (accounting for detection limit):\n")
+cat("  meanlog:", coef(mle_left)[1], "(true:", true_meanlog, ")\n")
+cat("  sdlog:  ", coef(mle_left)[2], "(true:", true_sdlog, ")\n")
+```
+
+## Interval-Censored Data
+
+Interval censoring arises when we only know an observation falls within a range
+$[x_{\text{lower}}, x_{\text{upper}}]$. This is common with grouped data,
+periodic inspections, or binned measurements.
+
+The likelihood contribution is $\log(F(x_{\text{upper}}) - F(x_{\text{lower}}))$.
+
+To use interval censoring, specify `ob_col_upper` for the upper-bound column:
+
+```{r interval-censor}
+# Simulate inspection data: items are checked at fixed intervals
+# and we only know failure occurred between two inspection times
+set.seed(789)
+n <- 120
+true_shape <- 3
+true_scale <- 5
+
+raw_t <- rweibull(n, true_shape, true_scale)
+# Inspection every 1 unit of time
+inspection_lower <- floor(raw_t)
+inspection_upper <- ceiling(raw_t)
+# Ensure lower < upper
+inspection_upper <- ifelse(inspection_lower == inspection_upper,
+                           inspection_upper + 1, inspection_upper)
+
+df_interval <- data.frame(
+  x = inspection_lower,
+  x_upper = inspection_upper,
+  censor = rep("interval", n)
+)
+
+head(df_interval)
+
+model_interval <- likelihood_name("weibull", ob_col = "x",
+                                  censor_col = "censor",
+                                  ob_col_upper = "x_upper")
+mle_interval <- fit(model_interval)(df_interval, par = c(shape = 2, scale = 4))
+
+cat("MLE from interval-censored data:\n")
+cat("  shape:", coef(mle_interval)[1], "(true:", true_shape, ")\n")
+cat("  scale:", coef(mle_interval)[2], "(true:", true_scale, ")\n")
+```
+
+## Mixed Censoring Types
+
+Real datasets often combine multiple censoring mechanisms. The model handles
+all four types simultaneously:
+
+```{r mixed-censor}
+set.seed(101)
+n <- 200
+true_mean <- 10
+true_sd <- 3
+
+raw_x <- rnorm(n, true_mean, true_sd)
+
+# Simulate mixed censoring:
+# - 60% exact observations
+# - 15% right-censored (above upper limit)
+# - 15% left-censored (below detection limit)
+# - 10% interval-censored (binned to nearest integer)
+detect_lower <- 5
+detect_upper <- 14
+
+censor_type <- character(n)
+x_obs <- numeric(n)
+x_upper <- rep(NA_real_, n)
+
+for (i in seq_len(n)) {
+  if (raw_x[i] < detect_lower) {
+    censor_type[i] <- "left"
+    x_obs[i] <- detect_lower
+  } else if (raw_x[i] > detect_upper) {
+    censor_type[i] <- "right"
+    x_obs[i] <- detect_upper
+  } else if (runif(1) < 0.15) {
+    # Some exact observations get binned
+    censor_type[i] <- "interval"
+    x_obs[i] <- floor(raw_x[i])
+    x_upper[i] <- ceiling(raw_x[i])
+    if (x_obs[i] == x_upper[i]) x_upper[i] <- x_upper[i] + 1
+  } else {
+    censor_type[i] <- "exact"
+    x_obs[i] <- raw_x[i]
+  }
+}
+
+df_mixed <- data.frame(x = x_obs, x_upper = x_upper, censor = censor_type)
+cat("Censoring breakdown:\n")
+print(table(df_mixed$censor))
+
+model_mixed <- likelihood_name("norm", ob_col = "x", censor_col = "censor",
+                               ob_col_upper = "x_upper")
+mle_mixed <- fit(model_mixed)(df_mixed, par = c(mean = 8, sd = 2))
+
+cat("\nMLE with mixed censoring:\n")
+cat("  mean:", coef(mle_mixed)[1], "(true:", true_mean, ")\n")
+cat("  sd:  ", coef(mle_mixed)[2], "(true:", true_sd, ")\n")
+confint(mle_mixed)
+```
+
+## Multiple Distributions
+
+The `likelihood_name()` function works with any distribution that follows R's
+naming convention (`d<name>`, `p<name>`). Here are a few examples:
+
+```{r multi-dist}
+set.seed(202)
+
+# Exponential
+df_exp <- data.frame(x = rexp(200, rate = 2.5))
+mle_exp <- fit(likelihood_name("exp", "x"))(df_exp, par = c(rate = 1))
+cat("Exponential: rate =", coef(mle_exp), "(true: 2.5)\n")
+
+# Gamma
+df_gam <- data.frame(x = rgamma(200, shape = 3, rate = 2))
+mle_gam <- fit(likelihood_name("gamma", "x"))(df_gam, par = c(shape = 1, rate = 1))
+cat("Gamma: shape =", coef(mle_gam)[1], "rate =", coef(mle_gam)[2],
+    "(true: 3, 2)\n")
+
+# Log-normal
+df_lnorm <- data.frame(x = rlnorm(200, meanlog = 1, sdlog = 0.5))
+mle_lnorm <- fit(likelihood_name("lnorm", "x"))(df_lnorm,
+                                                  par = c(meanlog = 0, sdlog = 1))
+cat("Log-normal: meanlog =", coef(mle_lnorm)[1], "sdlog =", coef(mle_lnorm)[2],
+    "(true: 1, 0.5)\n")
+```
+
+## Fisherian Inference
+
+The `likelihood.model` package supports pure likelihood-based inference in the
+Fisherian tradition. After fitting a model, we can examine the likelihood
+surface directly without making probability statements about parameters.
+
+```{r fisherian}
+# Fit a normal model
+set.seed(303)
+df <- data.frame(x = rnorm(150, mean = 5, sd = 2))
+model <- likelihood_name("norm", ob_col = "x")
+mle <- fit(model)(df, par = c(0, 1))
+
+# Support function: S(theta) = logL(theta) - logL(theta_hat)
+# At the MLE, support is always 0
+s_mle <- support(mle, coef(mle), df, model)
+cat("Support at MLE:", s_mle, "\n")
+
+# At other values, support is negative
+s_alt <- support(mle, c(4, 3), df, model)
+cat("Support at (4, 3):", s_alt, "\n")
+
+# Relative likelihood: R(theta) = L(theta)/L(theta_hat) = exp(S(theta))
+rl <- relative_likelihood(mle, c(4, 3), df, model)
+cat("Relative likelihood at (4, 3):", rl, "\n")
+```
+
+### Likelihood Intervals
+
+A $1/k$ likelihood interval contains all parameter values whose relative
+likelihood exceeds $1/k$. The $1/8$ interval is roughly analogous to a 95%
+confidence interval but makes no probability statement about the parameter.
+
+```{r likelihood-interval}
+# 1/8 likelihood interval for the mean (parameter 1)
+li <- likelihood_interval(mle, df, model, k = 8, param = 1)
+cat("1/8 likelihood interval for mean:\n")
+print(li)
+
+# Compare with Wald CI
+cat("\nWald 95% CI:\n")
+print(confint(mle))
+```
+
+### Profile Likelihood
+
+The profile likelihood for a single parameter maximizes over all other
+parameters at each fixed value, giving a one-dimensional view of the
+likelihood surface.
+
+```{r profile}
+prof <- profile_loglik(mle, df, model, param = 1, n_grid = 30)
+
+plot(prof[[1]], prof$relative_likelihood, type = "l",
+     xlab = "Mean", ylab = "Relative likelihood",
+     main = "Profile likelihood for mean parameter")
+abline(h = 1/8, lty = 2, col = "gray")
+abline(v = coef(mle)[1], lty = 2, col = "blue")
+legend("topright", legend = c("Profile R(mean)", "1/8 cutoff", "MLE"),
+       lty = c(1, 2, 2), col = c("black", "gray", "blue"), cex = 0.8)
+```
+
+## Comparison with Specialized Models
+
+The generic `likelihood_name("exp", ...)` produces the same log-likelihood as
+the specialized `exponential_lifetime()`, but the latter provides analytical
+derivatives and a closed-form MLE:
+
+```{r comparison}
+set.seed(404)
+x <- rexp(150, rate = 2.0)
+
+# Generic approach
+df_gen <- data.frame(t = x, censor = rep("exact", length(x)))
+model_gen <- likelihood_name("exp", ob_col = "t", censor_col = "censor")
+ll_gen <- loglik(model_gen)(df_gen, 2.0)
+
+# Specialized approach
+df_spec <- data.frame(t = x)
+model_spec <- exponential_lifetime("t")
+ll_spec <- loglik(model_spec)(df_spec, 2.0)
+
+cat("Generic loglik:     ", ll_gen, "\n")
+cat("Specialized loglik: ", ll_spec, "\n")
+cat("Match:", all.equal(ll_gen, ll_spec), "\n")
+```
+
+The specialized model is faster because it bypasses `do.call` overhead
+and provides analytical score and Hessian:
+
+```{r comparison-fit}
+# Generic: uses optim
+mle_gen <- fit(model_gen)(df_gen, par = c(rate = 1))
+
+# Specialized: closed-form MLE, no optimization needed
+mle_spec <- fit(model_spec)(df_spec)
+
+cat("Generic MLE:     ", coef(mle_gen), "\n")
+cat("Specialized MLE: ", coef(mle_spec), "\n")
+```
+
+## Parameter Naming Conventions
+
+The `prepare_args_list()` function (used internally) matches your parameter
+vector to the distribution function's formals. You can pass named or unnamed
+parameters:
+
+```{r param-naming}
+model <- likelihood_name("norm", ob_col = "x")
+ll <- loglik(model)
+df <- data.frame(x = rnorm(50, 5, 2))
+
+# Both produce identical results:
+ll_named <- ll(df, c(mean = 5, sd = 2))
+ll_unnamed <- ll(df, c(5, 2))
+cat("Named:", ll_named, "\n")
+cat("Unnamed:", ll_unnamed, "\n")
+cat("Match:", ll_named == ll_unnamed, "\n")
+```
+
+For distributions with many parameters, naming helps avoid mistakes. The
+function matches by position for unnamed parameters, using the distribution's
+formal arguments (excluding `x`, `log`, `lower.tail`, etc.):
+
+```{r param-formals}
+# Gamma has formals: shape, rate (or scale)
+# dnorm has formals: mean, sd
+cat("dnorm formals:", paste(names(formals(dnorm)), collapse = ", "), "\n")
+cat("dgamma formals:", paste(names(formals(dgamma)), collapse = ", "), "\n")
+cat("dweibull formals:", paste(names(formals(dweibull)), collapse = ", "), "\n")
+```
+
+Passing too many parameters produces a clear error:
+
+```{r param-error, error=TRUE}
+ll(df, c(0, 1, 0.5))  # 3 params for 2-param distribution
+```
+
+## Hypothesis Testing
+
+The likelihood ratio test compares nested models. Here we test whether
+an exponential distribution fits data that was actually generated from
+a Weibull:
+
+```{r lrt}
+set.seed(505)
+df_test <- data.frame(x = rweibull(200, shape = 1.8, scale = 2))
 
 # Fit both models
-model_exp <- likelihood_name("exp", "x", "censoring")
-model_norm <- likelihood_name("norm", "x", "censoring")
+model_exp <- likelihood_name("exp", ob_col = "x")
+model_weib <- likelihood_name("weibull", ob_col = "x")
 
-solver_exp <- fit(model_exp)
-solver_norm <- fit(model_norm)
+mle_exp_test <- fit(model_exp)(df_test, par = c(rate = 0.5))
+mle_weib_test <- fit(model_weib)(df_test, par = c(shape = 1, scale = 1))
 
-mle_exp <- solver_exp(df.test, par = c(rate = 1))
-mle_norm <- solver_norm(df.test, par = c(mean = 1, sd = 1))
+cat("Exponential loglik:", loglik_val(mle_exp_test), "\n")
+cat("Weibull loglik:    ", loglik_val(mle_weib_test), "\n")
 
-# Compare log-likelihoods
-cat("Exponential log-likelihood:", loglik_val(mle_exp), "\n")
-cat("Normal log-likelihood:", loglik_val(mle_norm), "\n")
-
-# Perform LRT (exponential as null, normal as alternative)
-# Note: These aren't truly nested, but we can still compare
-lrt_result <- lrt(model_exp, model_norm, df.test,
-                  null_par = params(mle_exp),
-                  alt_par = params(mle_norm),
-                  dof = 1)  # normal has 1 more parameter
+# LRT: exponential (1 param) vs Weibull (2 params)
+lrt_result <- lrt(model_exp, model_weib, df_test,
+                  null_par = coef(mle_exp_test),
+                  alt_par = coef(mle_weib_test),
+                  dof = 1)
 print(lrt_result)
 ```
+
+A small p-value indicates the Weibull provides a significantly better fit,
+consistent with the true data-generating process having shape $\neq 1$.

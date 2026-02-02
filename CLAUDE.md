@@ -55,6 +55,8 @@ pkgdown::build_site()
 
 ## Architecture
 
+The package is organized in layers, reflected in the file naming convention.
+
 ### Core Concept: Likelihood Model
 
 The package defines `likelihood_model` as a **concept** (not a concrete class) that objects must satisfy. To be a likelihood model, an object must:
@@ -63,7 +65,7 @@ The package defines `likelihood_model` as a **concept** (not a concrete class) t
 - Optionally implement `score(model, ...)` and `hess_loglik(model, ...)` (defaults use numerical differentiation via `numDeriv`)
 
 Generic functions that operate on likelihood models:
-- `fit.likelihood_model()`: MLE solver using `optim`, returns `algebraic.mle::mle_numerical` objects
+- `fit.likelihood_model()`: MLE solver using `optim`, returns `fisher_mle` objects
 - `sampler.likelihood_model()`: Bootstrap sampling distribution via `boot` package
 - `lrt()`: Likelihood ratio test between nested models
 - `fim()`: Fisher information matrix
@@ -71,7 +73,7 @@ Generic functions that operate on likelihood models:
 
 ### Main Implementations
 
-**`likelihood_contr_model`** (R6 class in `R/likelihood_contr_model.R`):
+**`likelihood_contr_model`** (R6 class in `R/model-contr.R`):
 - **Uses R6 classes** (not S3) for object-oriented programming with mutable state
 - Handles heterogeneous observation types (exact, left-censored, right-censored, interval-censored)
 - Uses `obs_type` function to classify rows in data frame
@@ -83,16 +85,27 @@ Generic functions that operate on likelihood models:
 - **Important**: R6 methods are called with `$` (e.g., `model$loglik(df, par)`) not S3 generics
 - S3 wrapper methods exist: `loglik.likelihood_contr_model()` wraps `model$loglik()`
 
-**`likelihood_name_model`** (in `R/likelihood_name.R`):
+**`likelihood_name_model`** (in `R/model-name.R`):
 - Wraps standard R distributions (e.g., "norm", "weibull", "exp")
 - Uses R naming convention: `d<name>` (pdf), `p<name>` (cdf)
 - Handles censoring via `censor_col`: "left", "right", "interval", or "exact"/NA
 - `prepare_args()` utility matches parameters to distribution function arguments
 
-**`likelihood_exact_weibull`** (in `R/likelihood_exact_weibull.R`):
-- Example of a specialized model with analytical derivatives
+### Example Implementations
+
+**`weibull_uncensored`** (in `R/example-weibull.R`):
+- Specialized model for exact Weibull observations with analytical derivatives
 - Demonstrates providing explicit `loglik`, `score`, and `hess_loglik` methods
+- Analytical derivatives 10-100x faster than numerical differentiation
 - Can be used standalone or as a contribution in `likelihood_contr_model`
+- Backward-compatible alias: `likelihood_exact_weibull`
+
+**`exponential_lifetime`** (in `R/example-exponential.R`):
+- Exponential distribution with optional right-censoring support
+- Demonstrates closed-form MLE (`fit()` override bypasses `optim` entirely)
+- Provides analytical score, hessian, and FIM
+- Includes `rdata()` method for Monte Carlo validation
+- Sufficient statistics: d (exact count), T (total time), MLE: lambda_hat = d/T
 
 ### Key Implementation Details
 
@@ -103,20 +116,31 @@ Generic functions that operate on likelihood models:
 
 ### File Structure
 
-- `R/likelihood_model.R`: Core generic framework and default implementations
-- `R/likelihood_contr_model.R`: R6 class for contribution-based models
-- `R/likelihood_name.R`: Named distribution wrapper
-- `R/likelihood_exact_weibull.R`: Example specialized model with analytical derivatives
-- `R/utils.R`: Helper functions (`prepare_args`, `get_params`, `method_exists`)
-- `R/tests.R`: Likelihood ratio test (`lrt()`)
-- `tests/test.R`: Basic unit tests (**incomplete** - has placeholder tests with `...`)
-- `vignettes/likelihood-contributions.Rmd`: Detailed examples with series systems
+**Core layer** (concept + infrastructure):
+- `R/core-generics.R`: Concept definition, generics (`loglik`, `score`, `hess_loglik`, `fim`, etc.), default methods, `print.likelihood_model`
+- `R/core-fit.R`: `fit` re-export, `fit.likelihood_model` (optim-based solver), `sampler.likelihood_model` (bootstrap)
+- `R/core-fisher_mle.R`: `fisher_mle` and `fisher_boot` result objects with S3 methods (`coef`, `vcov`, `confint`, `se`, `aic`, `bic`, `summary`)
+- `R/core-fisherian.R`: Fisherian inference (`support`, `relative_likelihood`, `likelihood_interval`, `profile_loglik`, `evidence`)
+- `R/core-lrt.R`: Likelihood ratio test (`lrt()`)
+
+**Model builders**:
+- `R/model-contr.R`: R6 class `likelihood_contr_model` for contribution-based models
+- `R/model-name.R`: `likelihood_name()` wrapper for standard R distributions
+
+**Example implementations**:
+- `R/example-weibull.R`: `weibull_uncensored` with analytical derivatives
+- `R/example-exponential.R`: `exponential_lifetime` with closed-form MLE and right-censoring
+
+**Tests and vignettes**:
+- `tests/test.R`: 229 unit tests covering all model types and inference methods
+- `vignettes/getting-started.Rmd`: Quick introduction with examples
+- `vignettes/likelihood-contributions.Rmd`: Advanced examples with series systems
 - `vignettes/likelihood-name-model.Rmd`: Examples using named distributions
 
 ## Important Notes
 
 ### Testing and Coverage
-- **Tests are incomplete**: `tests/test.R` contains placeholder tests with `...` that need implementation
+- `tests/test.R` contains 229 tests covering all model types and inference methods
 - When adding new features, write complete tests and run `covr::package_coverage()` to ensure coverage
 - Focus on testing edge cases: censored data, empty data frames, parameter validation
 - See vignettes for realistic examples to base tests on
@@ -129,13 +153,14 @@ When adding new distribution support, choose one of these approaches:
 2. **For custom likelihood contributions**: Create `loglik.<type>`, `score.<type>`, `hess_loglik.<type>` functions
    - Used by `likelihood_contr_model` via dynamic dispatch
    - Provide analytical derivatives when possible (much faster than numerical)
-3. **For specialized models**: Create a new class (like `likelihood_exact_weibull`)
+3. **For specialized models**: Create a new class (like `weibull_uncensored` or `exponential_lifetime`)
    - Define S3 methods: `loglik.<class>`, `score.<class>`, `hess_loglik.<class>`
    - Add `"likelihood_model"` to class vector to inherit default behavior
+   - Optionally override `fit.<class>` for closed-form MLEs (see `exponential_lifetime`)
 
 ### Performance Considerations
 - **Numerical differentiation is expensive**: Default `score` and `hess_loglik` use `numDeriv` with Richardson extrapolation (`r=6`)
-- Provide analytical derivatives whenever possible (see `likelihood_exact_weibull.R` for example)
+- Provide analytical derivatives whenever possible (see `example-weibull.R` for example)
 - For Weibull: analytical derivatives ~10-100x faster than numerical
 - Parameters can be named or unnamed; `prepare_args()` handles both cases
 - Always validate inputs: check for NULL, positive values where required, sufficient sample size
