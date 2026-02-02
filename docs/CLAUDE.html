@@ -32,6 +32,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
+      <a href="articles/algebraic-mle-integration.html">Integration with algebraic.mle and algebraic.dist</a>
+    </li>
+    <li>
       <a href="articles/exponential-lifetime.html">Exponential Lifetime Model</a>
     </li>
     <li>
@@ -204,7 +207,7 @@
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">solver</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>  <span class="co"># initial guess: mean=0, sd=1</span></span>
 <span></span>
 <span><span class="co"># Get parameter estimates</span></span>
-<span><span class="fu">params</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="handling-censored-data">Handling Censored Data<a class="anchor" aria-label="anchor" href="#handling-censored-data"></a></h3>
@@ -259,9 +262,9 @@
 <span>  null <span class="op">=</span> <span class="va">null_model</span>,</span>
 <span>  alt <span class="op">=</span> <span class="va">alt_model</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">df</span>,</span>
-<span>  null_par <span class="op">=</span> <span class="fu">params</span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span>,</span>
-<span>  alt_par <span class="op">=</span> <span class="fu">params</span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span>,</span>
-<span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu">params</span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu">params</span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span><span class="op">)</span></span>
+<span>  null_par <span class="op">=</span> <span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span>,</span>
+<span>  alt_par <span class="op">=</span> <span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span>,</span>
+<span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Check p-value</span></span>

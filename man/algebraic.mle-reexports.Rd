@@ -8,11 +8,17 @@
 \alias{loglik_val}
 \alias{score_val}
 \alias{sampler}
+\alias{params}
+\alias{nparams}
+\alias{observed_fim}
+\alias{obs}
+\alias{mse}
 \title{Generics re-exported from algebraic.mle}
 \description{
-These generics are defined in \pkg{algebraic.mle} and re-exported
-here so that users of \pkg{likelihood.model} can access them
-without explicitly loading \pkg{algebraic.mle}.
+These generics are defined in \pkg{algebraic.mle} (or originate in
+\pkg{algebraic.dist} and are re-exported by \pkg{algebraic.mle}) and
+re-exported here so that users of \pkg{likelihood.model} can access
+them without explicitly loading those packages.
 }
 \details{
 \describe{
@@ -22,5 +28,10 @@ without explicitly loading \pkg{algebraic.mle}.
 \item{\code{\link[algebraic.mle]{loglik_val}}}{Log-likelihood value at the MLE}
 \item{\code{\link[algebraic.mle]{score_val}}}{Score vector at the MLE}
 \item{\code{\link[algebraic.mle]{sampler}}}{Sampling distribution of the estimator}
+\item{\code{\link[algebraic.mle]{params}}}{Parameter estimates}
+\item{\code{\link[algebraic.mle]{nparams}}}{Number of parameters}
+\item{\code{\link[algebraic.mle]{observed_fim}}}{Observed Fisher information matrix}
+\item{\code{\link[algebraic.mle]{obs}}}{Observed data stored in MLE object}
+\item{\code{\link[algebraic.mle]{mse}}}{Mean squared error of the estimator}
 }
 }

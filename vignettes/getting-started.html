@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Getting Started with likelihood.model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting Started with likelihood.model</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#installation" id="toc-installation">Installation</a></li>
+<li><a href="#loading-packages" id="toc-loading-packages">Loading
+Packages</a></li>
+<li><a href="#example-1-basic-mle-with-weibull-distribution" id="toc-example-1-basic-mle-with-weibull-distribution">Example 1: Basic
+MLE with Weibull Distribution</a>
+<ul>
+<li><a href="#extracting-results" id="toc-extracting-results">Extracting
+Results</a></li>
+</ul></li>
+<li><a href="#example-2-handling-censored-data" id="toc-example-2-handling-censored-data">Example 2: Handling Censored
+Data</a>
+<ul>
+<li><a href="#fitting-with-proper-censoring" id="toc-fitting-with-proper-censoring">Fitting with Proper
+Censoring</a></li>
+<li><a href="#comparison-naive-vs-proper-estimation" id="toc-comparison-naive-vs-proper-estimation">Comparison: Naive vs
+Proper Estimation</a></li>
+</ul></li>
+<li><a href="#example-3-bootstrap-sampling-distribution" id="toc-example-3-bootstrap-sampling-distribution">Example 3: Bootstrap
+Sampling Distribution</a></li>
+<li><a href="#example-4-verifying-the-score-at-mle" id="toc-example-4-verifying-the-score-at-mle">Example 4: Verifying the
+Score at MLE</a></li>
+<li><a href="#example-5-fisherian-likelihood-inference" id="toc-example-5-fisherian-likelihood-inference">Example 5: Fisherian
+Likelihood Inference</a>
+<ul>
+<li><a href="#likelihood-intervals" id="toc-likelihood-intervals">Likelihood Intervals</a></li>
+</ul></li>
+<li><a href="#example-6-closed-form-mle-with-exponential-lifetime-model" id="toc-example-6-closed-form-mle-with-exponential-lifetime-model">Example
+6: Closed-Form MLE with Exponential Lifetime Model</a>
+<ul>
+<li><a href="#right-censored-exponential-data" id="toc-right-censored-exponential-data">Right-Censored Exponential
+Data</a></li>
+<li><a href="#cross-validation-matches-likelihood_nameexp-..." id="toc-cross-validation-matches-likelihood_nameexp-...">Cross-Validation:
+Matches <code>likelihood_name(&quot;exp&quot;, ...)</code></a></li>
+</ul></li>
+<li><a href="#summary-of-key-functions" id="toc-summary-of-key-functions">Summary of Key Functions</a>
+<ul>
+<li><a href="#model-creation" id="toc-model-creation">Model
+Creation</a></li>
+<li><a href="#likelihood-calculus" id="toc-likelihood-calculus">Likelihood Calculus</a></li>
+<li><a href="#estimation-and-inference" id="toc-estimation-and-inference">Estimation and Inference</a></li>
+<li><a href="#fisherian-inference" id="toc-fisherian-inference">Fisherian Inference</a></li>
+<li><a href="#model-comparison" id="toc-model-comparison">Model
+Comparison</a></li>
+</ul></li>
+<li><a href="#next-steps" id="toc-next-steps">Next Steps</a></li>
+<li><a href="#session-info" id="toc-session-info">Session Info</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <code>likelihood.model</code> package provides a flexible
+framework for specifying and using likelihood models for statistical
+inference in R. It supports: - Standard R distributions (normal,
+Weibull, exponential, etc.) - Censored data (left, right, and interval
+censoring) - Custom likelihood contributions for complex models -
+Maximum likelihood estimation with confidence intervals - Bootstrap
+sampling distributions</p>
+<p>This vignette provides a quick introduction to the main features.</p>
+</div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Install from GitHub</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(devtools)) <span class="fu">install.packages</span>(<span class="st">&quot;devtools&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;queelius/likelihood.model&quot;</span>)</span></code></pre></div>
+</div>
+<div id="loading-packages" class="section level2">
+<h2>Loading Packages</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(likelihood.model)</span></code></pre></div>
+</div>
+<div id="example-1-basic-mle-with-weibull-distribution" class="section level2">
+<h2>Example 1: Basic MLE with Weibull Distribution</h2>
+<p>Let’s start with a simple example: fitting a Weibull distribution to
+survival data using the <code>weibull_uncensored</code> model, which
+provides analytical derivatives for faster and more accurate
+estimation.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Generate synthetic survival data</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">150</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>true_shape <span class="ot">&lt;-</span> <span class="fl">2.5</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>true_scale <span class="ot">&lt;-</span> <span class="fl">3.0</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rweibull</span>(n, <span class="at">shape =</span> true_shape, <span class="at">scale =</span> true_scale))</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co"># Create the likelihood model</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">weibull_uncensored</span>(<span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co"># View model assumptions</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="fu">assumptions</span>(model)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; [1] &quot;independent&quot;             &quot;identically distributed&quot;</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; [3] &quot;exact observations&quot;</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co"># Fit the MLE</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>solver <span class="ot">&lt;-</span> <span class="fu">fit</span>(model)</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>mle <span class="ot">&lt;-</span> <span class="fu">solver</span>(df, <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))  <span class="co"># initial guess: shape=1, scale=1</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="fu">summary</span>(mle)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; Maximum Likelihood Estimate (Fisherian)</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt;      Estimate Std. Error  2.5% 97.5%</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt; [1,]    2.152      0.131 1.896 2.409</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; [2,]    2.916      0.117 2.686 3.145</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; Log-likelihood: -238.7 </span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; AIC: 481.4 </span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; Number of observations: 150</span></span></code></pre></div>
+<div id="extracting-results" class="section level3">
+<h3>Extracting Results</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Parameter estimates</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Estimated parameters:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Estimated parameters:</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">coef</span>(mle))</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; [1] 2.152 2.916</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co"># Confidence intervals (Wald-based)</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">95% Confidence Intervals:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 95% Confidence Intervals:</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">confint</span>(mle))</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;       2.5% 97.5%</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; [1,] 1.896 2.409</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; [2,] 2.686 3.145</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co"># Standard errors</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standard Errors:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; Standard Errors:</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">se</span>(mle))</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; [1] 0.131 0.117</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co"># Log-likelihood value</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Log-likelihood:&quot;</span>, <span class="fu">loglik_val</span>(mle), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; Log-likelihood: -238.7</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co"># AIC for model selection</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;AIC:&quot;</span>, <span class="fu">aic</span>(mle), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; AIC: 481.4</span></span></code></pre></div>
+</div>
+</div>
+<div id="example-2-handling-censored-data" class="section level2">
+<h2>Example 2: Handling Censored Data</h2>
+<p>A key feature of <code>likelihood.model</code> is proper handling of
+censored data. Let’s simulate data with right-censoring and show how
+ignoring censoring leads to biased estimates.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Generate normal data with right-censoring</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>true_mean <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>true_sd <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>censor_time <span class="ot">&lt;-</span> <span class="dv">11</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co"># Generate latent (true) values</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>x_latent <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n, true_mean, true_sd)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co"># Apply censoring</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>censored <span class="ot">&lt;-</span> x_latent <span class="sc">&gt;</span> censor_time</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>df_cens <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">ifelse</span>(censored, censor_time, x_latent),</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="at">censor =</span> <span class="fu">ifelse</span>(censored, <span class="st">&quot;right&quot;</span>, <span class="st">&quot;exact&quot;</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Censoring rate:&quot;</span>, <span class="fu">mean</span>(censored) <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&quot;%</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Censoring rate: 27.5 %</span></span></code></pre></div>
+<div id="fitting-with-proper-censoring" class="section level3">
+<h3>Fitting with Proper Censoring</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Create model that handles censoring</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>model_cens <span class="ot">&lt;-</span> <span class="fu">likelihood_name</span>(<span class="st">&quot;norm&quot;</span>, <span class="at">ob_col =</span> <span class="st">&quot;x&quot;</span>, <span class="at">censor_col =</span> <span class="st">&quot;censor&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Fit the model</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>solver_cens <span class="ot">&lt;-</span> <span class="fu">fit</span>(model_cens)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>mle_cens <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(<span class="fu">solver_cens</span>(df_cens, <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)))</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;MLE (accounting for censoring):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; MLE (accounting for censoring):</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;  Mean:&quot;</span>, <span class="fu">coef</span>(mle_cens)[<span class="dv">1</span>], <span class="st">&quot;(true:&quot;</span>, true_mean, <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   Mean: 9.912 (true: 10 )</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;  SD:  &quot;</span>, <span class="fu">coef</span>(mle_cens)[<span class="dv">2</span>], <span class="st">&quot;(true:&quot;</span>, true_sd, <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt;   SD:   1.754 (true: 2 )</span></span></code></pre></div>
+</div>
+<div id="comparison-naive-vs-proper-estimation" class="section level3">
+<h3>Comparison: Naive vs Proper Estimation</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Naive estimates (ignoring censoring)</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>naive_mean <span class="ot">&lt;-</span> <span class="fu">mean</span>(df_cens<span class="sc">$</span>x)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>naive_sd <span class="ot">&lt;-</span> <span class="fu">sd</span>(df_cens<span class="sc">$</span>x)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Comparison of estimates:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; Comparison of estimates:</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;                     Mean      SD</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;                      Mean      SD</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;True values:      %7.3f   %5.3f</span><span class="sc">\n</span><span class="st">&quot;</span>, true_mean, true_sd))</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; True values:       10.000   2.000</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;MLE (correct):    %7.3f   %5.3f</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">coef</span>(mle_cens)[<span class="dv">1</span>], <span class="fu">coef</span>(mle_cens)[<span class="dv">2</span>]))</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; MLE (correct):      9.912   1.754</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;Naive (biased):   %7.3f   %5.3f</span><span class="sc">\n</span><span class="st">&quot;</span>, naive_mean, naive_sd))</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; Naive (biased):     9.617   1.353</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Note: Naive estimates are biased downward due to censoring!</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; Note: Naive estimates are biased downward due to censoring!</span></span></code></pre></div>
+</div>
+</div>
+<div id="example-3-bootstrap-sampling-distribution" class="section level2">
+<h2>Example 3: Bootstrap Sampling Distribution</h2>
+<p>For more robust inference, especially with small samples, we can use
+bootstrap methods to estimate the sampling distribution of the MLE.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Using the Weibull example from before</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">weibull_uncensored</span>(<span class="st">&quot;x&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rweibull</span>(<span class="dv">150</span>, <span class="at">shape =</span> <span class="fl">2.5</span>, <span class="at">scale =</span> <span class="fl">3.0</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co"># Create bootstrap sampler</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>boot_sampler <span class="ot">&lt;-</span> <span class="fu">sampler</span>(model, <span class="at">df =</span> df, <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co"># Generate bootstrap samples (100 replicates for speed)</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>boot_result <span class="ot">&lt;-</span> <span class="fu">boot_sampler</span>(<span class="at">n =</span> <span class="dv">100</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co"># Compare asymptotic vs bootstrap standard errors</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>mle <span class="ot">&lt;-</span> <span class="fu">fit</span>(model)(df, <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>asymp_se <span class="ot">&lt;-</span> <span class="fu">se</span>(mle)</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>boot_se <span class="ot">&lt;-</span> <span class="fu">se</span>(boot_result)  <span class="co"># Uses vcov from bootstrap replicates</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Standard Error Comparison:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; Standard Error Comparison:</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;           Asymptotic  Bootstrap</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt;            Asymptotic  Bootstrap</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;Shape:     %10.4f  %9.4f</span><span class="sc">\n</span><span class="st">&quot;</span>, asymp_se[<span class="dv">1</span>], boot_se[<span class="dv">1</span>]))</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; Shape:         0.1623     0.2150</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;Scale:     %10.4f  %9.4f</span><span class="sc">\n</span><span class="st">&quot;</span>, asymp_se[<span class="dv">2</span>], boot_se[<span class="dv">2</span>]))</span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; Scale:         0.1026     0.0989</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co"># Bootstrap bias estimate</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Bootstrap Bias Estimate:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt; Bootstrap Bias Estimate:</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">bias</span>(boot_result))</span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a><span class="co">#&gt; [1] 0.031600 0.007698</span></span></code></pre></div>
+</div>
+<div id="example-4-verifying-the-score-at-mle" class="section level2">
+<h2>Example 4: Verifying the Score at MLE</h2>
+<p>At the MLE, the score function (gradient of log-likelihood) should be
+approximately zero. This provides a useful diagnostic.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">weibull_uncensored</span>(<span class="st">&quot;x&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rweibull</span>(<span class="dv">100</span>, <span class="dv">2</span>, <span class="fl">1.5</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># Fit MLE</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>mle <span class="ot">&lt;-</span> <span class="fu">fit</span>(model)(df, <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Evaluate score at MLE</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>score_func <span class="ot">&lt;-</span> <span class="fu">score</span>(model)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>score_at_mle <span class="ot">&lt;-</span> <span class="fu">score_func</span>(df, <span class="fu">coef</span>(mle))</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Score at MLE (should be near zero):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; Score at MLE (should be near zero):</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="fu">print</span>(score_at_mle)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt;    shape    scale </span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt; -0.00338  0.01183</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co"># The score is also stored in the MLE object</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Score stored in MLE object:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt; Score stored in MLE object:</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">score_val</span>(mle))</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt;    shape    scale </span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt; -0.00338  0.01183</span></span></code></pre></div>
+<p>The score values are very close to zero, confirming that the
+optimizer successfully found the MLE (a stationary point of the
+log-likelihood).</p>
+</div>
+<div id="example-5-fisherian-likelihood-inference" class="section level2">
+<h2>Example 5: Fisherian Likelihood Inference</h2>
+<p>The package supports pure likelihood-based inference in the Fisherian
+tradition. Instead of confidence intervals, we can compute likelihood
+intervals that make no probability statements about parameters.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Fit a model</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">weibull_uncensored</span>(<span class="st">&quot;x&quot;</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rweibull</span>(<span class="dv">100</span>, <span class="fl">2.0</span>, <span class="fl">1.5</span>))</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>mle <span class="ot">&lt;-</span> <span class="fu">fit</span>(model)(df, <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co"># Support function: log relative likelihood</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co"># S(theta) = logL(theta) - logL(theta_hat)</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co"># Support at MLE is always 0</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>s_at_mle <span class="ot">&lt;-</span> <span class="fu">support</span>(mle, <span class="fu">coef</span>(mle), df, model)</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Support at MLE:&quot;</span>, s_at_mle, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; Support at MLE: 0</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co"># Support at alternative parameter values (negative = less supported)</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>s_alt <span class="ot">&lt;-</span> <span class="fu">support</span>(mle, <span class="fu">c</span>(<span class="fl">1.5</span>, <span class="fl">1.0</span>), df, model)</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Support at (1.5, 1.0):&quot;</span>, s_alt, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; Support at (1.5, 1.0): -18.64</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co"># Relative likelihood = exp(support)</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>rl <span class="ot">&lt;-</span> <span class="fu">relative_likelihood</span>(mle, <span class="fu">c</span>(<span class="fl">1.5</span>, <span class="fl">1.0</span>), df, model)</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Relative likelihood at (1.5, 1.0):&quot;</span>, rl, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt; Relative likelihood at (1.5, 1.0): 8.011e-09</span></span></code></pre></div>
+<p>Negative support and a very small relative likelihood indicate that
+the alternative parameter values <span class="math inline">\((1.5,
+1.0)\)</span> are poorly supported by the data compared to the MLE.</p>
+<div id="likelihood-intervals" class="section level3">
+<h3>Likelihood Intervals</h3>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Compute 1/8 likelihood interval (roughly equivalent to 95% CI)</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co"># This is the set of theta where R(theta) &gt;= 1/8</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>li <span class="ot">&lt;-</span> <span class="fu">likelihood_interval</span>(mle, df, model, <span class="at">k =</span> <span class="dv">8</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="fu">print</span>(li)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 1/8 Likelihood Interval (R &gt;= 0.125)</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; -----------------------------------</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;      lower upper</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; [1,] 1.646 2.281</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; [2,] 1.299 1.623</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;k&quot;)</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; [1] 8</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;relative_likelihood_cutoff&quot;)</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; [1] 0.125</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co"># Compare with Wald confidence interval</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Wald 95% CI:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="co">#&gt; Wald 95% CI:</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">confint</span>(mle))</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt;       2.5% 97.5%</span></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; [1,] 1.644 2.255</span></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co">#&gt; [2,] 1.301 1.608</span></span></code></pre></div>
+</div>
+</div>
+<div id="example-6-closed-form-mle-with-exponential-lifetime-model" class="section level2">
+<h2>Example 6: Closed-Form MLE with Exponential Lifetime Model</h2>
+<p>The <code>exponential_lifetime</code> model demonstrates a key design
+feature: specialized models can override <code>fit()</code> to bypass
+<code>optim</code> entirely when the MLE has a closed-form solution.</p>
+<p>For Exponential(lambda) data, the MLE is simply lambda_hat = d / T,
+where d is the number of uncensored observations and T is the total
+observation time.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Generate exponential survival data</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">99</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>df_exp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">t =</span> <span class="fu">rexp</span>(<span class="dv">200</span>, <span class="at">rate =</span> <span class="fl">3.0</span>))</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co"># Create model and fit -- no initial guess needed!</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>model_exp <span class="ot">&lt;-</span> <span class="fu">exponential_lifetime</span>(<span class="st">&quot;t&quot;</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>mle_exp <span class="ot">&lt;-</span> <span class="fu">fit</span>(model_exp)(df_exp)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Closed-form MLE (no optim):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; Closed-form MLE (no optim):</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;  lambda_hat:&quot;</span>, <span class="fu">coef</span>(mle_exp), <span class="st">&quot;(true: 3.0)</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;   lambda_hat: 3.137 (true: 3.0)</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;  SE:&quot;</span>, <span class="fu">se</span>(mle_exp), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;   SE: 0.2218</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co"># The score at the MLE is exactly zero (by construction)</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;  Score at MLE:&quot;</span>, <span class="fu">score_val</span>(mle_exp), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt;   Score at MLE: 0</span></span></code></pre></div>
+<div id="right-censored-exponential-data" class="section level3">
+<h3>Right-Censored Exponential Data</h3>
+<p>The model handles right-censoring naturally through the sufficient
+statistics.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Generate data with right-censoring at time 0.5</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">99</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>true_lambda <span class="ot">&lt;-</span> <span class="fl">3.0</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rexp</span>(<span class="dv">200</span>, <span class="at">rate =</span> true_lambda)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>censored <span class="ot">&lt;-</span> x <span class="sc">&gt;</span> <span class="fl">0.5</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>df_cens_exp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">t =</span> <span class="fu">pmin</span>(x, <span class="fl">0.5</span>),</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">status =</span> <span class="fu">ifelse</span>(censored, <span class="st">&quot;right&quot;</span>, <span class="st">&quot;exact&quot;</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Censoring rate:&quot;</span>, <span class="fu">mean</span>(censored) <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&quot;%</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; Censoring rate: 20.5 %</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>model_cens_exp <span class="ot">&lt;-</span> <span class="fu">exponential_lifetime</span>(<span class="st">&quot;t&quot;</span>, <span class="at">censor_col =</span> <span class="st">&quot;status&quot;</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>mle_cens_exp <span class="ot">&lt;-</span> <span class="fu">fit</span>(model_cens_exp)(df_cens_exp)</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;MLE (censored):&quot;</span>, <span class="fu">coef</span>(mle_cens_exp), <span class="st">&quot;(true:&quot;</span>, true_lambda, <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; MLE (censored): 3.336 (true: 3 )</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;95% CI:&quot;</span>, <span class="fu">confint</span>(mle_cens_exp)[<span class="dv">1</span>, ], <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt; 95% CI: 2.817 3.854</span></span></code></pre></div>
+</div>
+<div id="cross-validation-matches-likelihood_nameexp-..." class="section level3">
+<h3>Cross-Validation: Matches
+<code>likelihood_name(&quot;exp&quot;, ...)</code></h3>
+<p>The analytical model produces the same log-likelihood as the generic
+approach:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Compare log-likelihood values at the MLE</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>lambda_hat <span class="ot">&lt;-</span> <span class="fu">coef</span>(mle_exp)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>ll_analytical <span class="ot">&lt;-</span> <span class="fu">loglik</span>(model_exp)(df_exp, lambda_hat)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co"># likelihood_name(&quot;exp&quot;) uses dexp(x, rate), so pass unnamed parameter</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>df_exp_name <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">t =</span> df_exp<span class="sc">$</span>t, <span class="at">censor =</span> <span class="fu">rep</span>(<span class="st">&quot;exact&quot;</span>, <span class="fu">nrow</span>(df_exp)))</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>model_generic <span class="ot">&lt;-</span> <span class="fu">likelihood_name</span>(<span class="st">&quot;exp&quot;</span>, <span class="at">ob_col =</span> <span class="st">&quot;t&quot;</span>, <span class="at">censor_col =</span> <span class="st">&quot;censor&quot;</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>ll_generic <span class="ot">&lt;-</span> <span class="fu">loglik</span>(model_generic)(df_exp_name, <span class="fu">unname</span>(lambda_hat))</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Analytical loglik:&quot;</span>, ll_analytical, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; Analytical loglik: 28.66</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Generic loglik:   &quot;</span>, ll_generic, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; Generic loglik:    28.66</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Match:&quot;</span>, <span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(<span class="fu">unname</span>(ll_analytical), ll_generic, <span class="at">tolerance =</span> <span class="fl">1e-6</span>)), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; Match: TRUE</span></span></code></pre></div>
+</div>
+</div>
+<div id="summary-of-key-functions" class="section level2">
+<h2>Summary of Key Functions</h2>
+<div id="model-creation" class="section level3">
+<h3>Model Creation</h3>
+<table>
+<colgroup>
+<col width="43%" />
+<col width="56%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>likelihood_name()</code></td>
+<td>Create model for standard R distributions</td>
+</tr>
+<tr class="even">
+<td><code>weibull_uncensored()</code></td>
+<td>Weibull model with analytical derivatives (exact obs.)</td>
+</tr>
+<tr class="odd">
+<td><code>exponential_lifetime()</code></td>
+<td>Exponential model with closed-form MLE and optional censoring</td>
+</tr>
+<tr class="even">
+<td><code>likelihood_contr_model$new()</code></td>
+<td>Custom likelihood contributions</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="likelihood-calculus" class="section level3">
+<h3>Likelihood Calculus</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>loglik()</code></td>
+<td>Get log-likelihood function</td>
+</tr>
+<tr class="even">
+<td><code>score()</code></td>
+<td>Get score (gradient) function</td>
+</tr>
+<tr class="odd">
+<td><code>hess_loglik()</code></td>
+<td>Get Hessian of log-likelihood</td>
+</tr>
+<tr class="even">
+<td><code>fim()</code></td>
+<td>Fisher information matrix</td>
+</tr>
+<tr class="odd">
+<td><code>observed_info()</code></td>
+<td>Observed information matrix</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="estimation-and-inference" class="section level3">
+<h3>Estimation and Inference</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>fit()</code></td>
+<td>Create MLE solver (returns <code>fisher_mle</code>)</td>
+</tr>
+<tr class="even">
+<td><code>sampler()</code></td>
+<td>Create bootstrap sampler (returns <code>fisher_boot</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>coef()</code></td>
+<td>Extract parameter estimates</td>
+</tr>
+<tr class="even">
+<td><code>vcov()</code></td>
+<td>Variance-covariance matrix</td>
+</tr>
+<tr class="odd">
+<td><code>confint()</code></td>
+<td>Confidence intervals</td>
+</tr>
+<tr class="even">
+<td><code>se()</code></td>
+<td>Standard errors</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="fisherian-inference" class="section level3">
+<h3>Fisherian Inference</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>support()</code></td>
+<td>Log relative likelihood: S(θ) = logL(θ) - logL(θ̂)</td>
+</tr>
+<tr class="even">
+<td><code>relative_likelihood()</code></td>
+<td>Likelihood ratio: R(θ) = L(θ)/L(θ̂)</td>
+</tr>
+<tr class="odd">
+<td><code>likelihood_interval()</code></td>
+<td>Interval where R(θ) ≥ 1/k</td>
+</tr>
+<tr class="even">
+<td><code>profile_loglik()</code></td>
+<td>Profile log-likelihood</td>
+</tr>
+<tr class="odd">
+<td><code>evidence()</code></td>
+<td>Evidence for θ₁ vs θ₂</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="model-comparison" class="section level3">
+<h3>Model Comparison</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>lrt()</code></td>
+<td>Likelihood ratio test</td>
+</tr>
+<tr class="even">
+<td><code>aic()</code></td>
+<td>Akaike Information Criterion</td>
+</tr>
+<tr class="odd">
+<td><code>bic()</code></td>
+<td>Bayesian Information Criterion</td>
+</tr>
+<tr class="even">
+<td><code>deviance()</code></td>
+<td>Deviance statistic</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="next-steps" class="section level2">
+<h2>Next Steps</h2>
+<p>For more advanced usage, see the other vignettes:</p>
+<ul>
+<li><strong>Likelihood Named Distributions Model</strong>: Detailed
+coverage of <code>likelihood_name</code> with various censoring
+types</li>
+<li><strong>Likelihood Contributions Model</strong>: Building custom
+models for complex scenarios like series systems with component
+failures</li>
+</ul>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session Info</h2>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; R version 4.3.3 (2024-02-29)</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-pc-linux-gnu (64-bit)</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.12.0 </span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.0</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="co">#&gt; time zone: America/Chicago</span></span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; [1] algebraic.dist_0.1.0   algebraic.mle_0.9.0    likelihood.model_0.9.1</span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a><span class="co">#&gt;  [1] vctrs_0.6.5         cli_3.6.5           knitr_1.50         </span></span>
+<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a><span class="co">#&gt;  [4] rlang_1.1.7         xfun_0.54           generics_0.1.4     </span></span>
+<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a><span class="co">#&gt;  [7] jsonlite_2.0.0      glue_1.8.0          htmltools_0.5.8.1  </span></span>
+<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a><span class="co">#&gt; [10] sass_0.4.10         rmarkdown_2.30      evaluate_1.0.5     </span></span>
+<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a><span class="co">#&gt; [13] jquerylib_0.1.4     MASS_7.3-60.0.1     fastmap_1.2.0      </span></span>
+<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a><span class="co">#&gt; [16] yaml_2.3.11         mvtnorm_1.3-3       lifecycle_1.0.5    </span></span>
+<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a><span class="co">#&gt; [19] numDeriv_2016.8-1.1 compiler_4.3.3      codetools_0.2-19   </span></span>
+<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a><span class="co">#&gt; [22] digest_0.6.39       R6_2.6.1            pillar_1.11.1      </span></span>
+<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a><span class="co">#&gt; [25] bslib_0.9.0         tools_4.3.3         boot_1.3-32        </span></span>
+<span id="cb15-35"><a href="#cb15-35" tabindex="-1"></a><span class="co">#&gt; [28] cachem_1.1.0</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

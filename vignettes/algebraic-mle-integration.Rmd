@@ -1,0 +1,388 @@
+---
+title: "Integration with algebraic.mle and algebraic.dist"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+vignette: >
+  %\VignetteIndexEntry{Integration with algebraic.mle and algebraic.dist}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>",
+    fig.width = 6,
+    fig.height = 4
+)
+options(digits = 4)
+```
+
+## The Three-Package Ecosystem
+
+The `likelihood.model` package is part of an ecosystem of three interoperable
+packages:
+
+- **`algebraic.dist`** — probability distribution objects with a common interface
+  (`params`, `sampler`, `expectation`, etc.)
+- **`algebraic.mle`** — maximum likelihood estimation infrastructure, defining
+  the `mle` class and generics like `params`, `nparams`, `observed_fim`, `rmap`,
+  `marginal`, and `expectation`
+- **`likelihood.model`** — likelihood model specification and Fisherian inference
+
+When you fit a model with `likelihood.model`, the result is a `fisher_mle`
+object that inherits from `algebraic.mle::mle`. This means all of the
+`algebraic.mle` generics work on it directly:
+
+```{r load, message=FALSE, warning=FALSE}
+library(likelihood.model)
+library(algebraic.mle)
+```
+
+## Basic Interface: `params`, `nparams`, `observed_fim`
+
+Let's fit a Weibull model and explore the MLE through the `algebraic.mle`
+interface:
+
+```{r basic-fit}
+set.seed(42)
+true_shape <- 2.5
+true_scale <- 3.0
+n <- 200
+df <- data.frame(x = rweibull(n, shape = true_shape, scale = true_scale))
+
+model <- weibull_uncensored("x")
+mle_result <- fit(model)(df, par = c(1, 1))
+
+# algebraic.mle generics — these work because fisher_mle inherits from mle
+params(mle_result)
+nparams(mle_result)
+```
+
+The MLE estimates (roughly 2.29 for shape, 2.96 for scale) are close to the
+true values (2.5, 3.0), demonstrating good recovery with $n = 200$
+observations. The `params()` and `nparams()` generics work identically to how
+they work on native `algebraic.mle::mle` objects — because `fisher_mle`
+inherits from that class, the entire `algebraic.mle` interface is available
+without any adapter code.
+
+The `observed_fim()` function returns the observed Fisher information matrix,
+computed as the negative Hessian of the log-likelihood at the MLE:
+
+```{r observed-fim}
+observed_fim(mle_result)
+```
+
+The off-diagonal element (roughly $-31$) reveals a negative correlation between
+the shape and scale estimators — when one is overestimated, the other tends to
+be underestimated. This is a common feature of location-scale families: the
+parameters trade off against each other in explaining the data.
+
+This should be positive definite at the MLE — we can verify:
+
+```{r fim-pd}
+eigen(observed_fim(mle_result))$values
+```
+
+Both eigenvalues are positive, confirming the MLE sits at a proper maximum of
+the log-likelihood. The ratio of the eigenvalues (roughly 2.3:1) tells us the
+likelihood surface is moderately elongated — the curvature is steeper in one
+direction than the other, meaning one linear combination of the parameters is
+better determined than the other.
+
+For comparison, `vcov()` is the inverse of the observed FIM:
+
+```{r vcov-vs-fim}
+vcov(mle_result)
+solve(observed_fim(mle_result))
+```
+
+The numerical equality confirms that `vcov()` is computed as
+`solve(observed_fim())`, the classical relationship $\widehat{\text{Var}}(\hat\theta) = I(\hat\theta)^{-1}$.
+This is worth noting because the two matrices carry different conceptual
+meaning — the FIM measures *information content* (how much the data tell us
+about the parameters), while the variance-covariance matrix measures *estimation
+uncertainty* — yet they are matrix inverses of each other.
+
+## Parameter Transformations via `rmap`
+
+One powerful feature of `algebraic.mle` is the `rmap()` function, which
+transforms MLE parameters using the delta method. This propagates uncertainty
+through nonlinear transformations.
+
+For a Weibull distribution with shape $k$ and scale $\lambda$, the mean
+lifetime is:
+$$E[T] = \lambda \, \Gamma\!\left(1 + \tfrac{1}{k}\right)$$
+
+We can transform our (shape, scale) MLE to get an MLE for the mean lifetime:
+
+```{r rmap}
+# Transform Weibull (shape, scale) -> mean lifetime
+mean_life_mle <- rmap(mle_result, function(p) {
+  c(mean_lifetime = p[2] * gamma(1 + 1 / p[1]))
+})
+
+params(mean_life_mle)
+se(mean_life_mle)
+```
+
+The delta method gives an estimated mean lifetime of roughly 2.62 with an SE
+of about 0.085. This propagates the joint uncertainty in (shape, scale) through
+the nonlinear $\Gamma$-function transformation — something not possible with
+simple error propagation formulas that treat parameters independently. The
+off-diagonal covariance we saw earlier is correctly accounted for.
+
+Compare to the true mean lifetime:
+
+```{r rmap-compare}
+true_mean <- true_scale * gamma(1 + 1 / true_shape)
+cat("True mean lifetime:", true_mean, "\n")
+cat("Estimated mean lifetime:", params(mean_life_mle), "\n")
+cat("95% CI:", confint(mean_life_mle), "\n")
+```
+
+The true mean lifetime (about 2.66) falls within the 95% confidence interval,
+as expected. The estimate slightly undershoots because our shape estimate
+(roughly 2.29) is below the true 2.5 — and the mean lifetime
+$\lambda\,\Gamma(1 + 1/k)$ is sensitive to shape through the $\Gamma$
+function.
+
+We can also transform to multiple derived quantities at once:
+
+```{r rmap-multi}
+# Derive mean, variance, and median of the Weibull distribution
+derived_mle <- rmap(mle_result, function(p) {
+  k <- p[1]; lam <- p[2]
+  c(
+    mean   = lam * gamma(1 + 1/k),
+    var    = lam^2 * (gamma(1 + 2/k) - gamma(1 + 1/k)^2),
+    median = lam * log(2)^(1/k)
+  )
+})
+
+params(derived_mle)
+se(derived_mle)
+```
+
+Notice that the variance has the largest SE (roughly 0.15) relative to its
+estimate — second moments are inherently harder to estimate than first moments
+like the mean and median. This is a general phenomenon: higher-order moments
+amplify estimation uncertainty because they involve larger powers of the data.
+
+## Marginal Distributions
+
+The `marginal()` function extracts the sampling distribution of a single
+parameter from a multivariate MLE:
+
+```{r marginal}
+# Marginal for shape parameter
+shape_mle <- marginal(mle_result, 1)
+params(shape_mle)
+se(shape_mle)
+confint(shape_mle)
+
+# Marginal for scale parameter
+scale_mle <- marginal(mle_result, 2)
+params(scale_mle)
+se(scale_mle)
+confint(scale_mle)
+```
+
+Both 95% CIs contain the true values (shape: 2.5; scale: 3.0). The marginal
+distributions are useful for reporting single-parameter uncertainties, though
+they discard the correlation between parameters. For inference that respects
+the joint structure — such as a confidence region for (shape, scale)
+simultaneously — you would use the full multivariate MLE object.
+
+## Monte Carlo Expectations
+
+The `expectation()` function computes Monte Carlo expectations over the MLE's
+asymptotic sampling distribution. This is useful for computing quantities that
+are nonlinear functions of the parameters.
+
+```{r expectation}
+set.seed(123)
+# E[shape^2] under the asymptotic distribution
+e_shape_sq <- expectation(mle_result, function(p) p[1]^2,
+                          control = list(n = 10000L))
+cat("E[shape^2]:", e_shape_sq, "\n")
+cat("shape^2 at MLE:", params(mle_result)[1]^2, "\n")
+
+# Probability that shape > 2 (under asymptotic distribution)
+pr_shape_gt_2 <- expectation(mle_result, function(p) as.numeric(p[1] > 2),
+                             control = list(n = 10000L))
+cat("P(shape > 2):", pr_shape_gt_2, "\n")
+```
+
+$E[\hat k^2] \approx 5.25$ versus the plug-in value $\hat k^2 \approx 5.24$.
+The small difference (roughly 0.01) equals $\text{Var}(\hat k)$, as expected
+from the identity $E[X^2] = \text{Var}(X) + (E[X])^2$. The probability
+$P(\hat k > 2) \approx 0.99$ gives strong evidence that the true shape exceeds
+2, which would be useful in practice to confirm the hazard rate is increasing
+(a Weibull shape $> 1$ implies increasing hazard; $> 2$ implies the hazard rate
+itself is accelerating).
+
+## Mean Squared Error
+
+Under standard MLE asymptotics, bias is zero and MSE equals the
+variance-covariance matrix:
+
+```{r mse}
+mse(mle_result)
+all.equal(mse(mle_result), vcov(mle_result))
+```
+
+The `TRUE` result confirms that MSE = Vcov under the assumption of zero
+asymptotic bias. In finite samples (especially small $n$), a bootstrap-based
+`mse()` can differ from `vcov()` because the bias component
+$\text{bias}^2$ is no longer negligible.
+
+## Bootstrap Integration
+
+The `sampler()` generic creates a bootstrap sampling distribution. The resulting
+`fisher_boot` object also satisfies the `mle` interface:
+
+```{r bootstrap, cache=TRUE}
+set.seed(42)
+boot_sampler <- sampler(model, df = df, par = c(1, 1))
+boot_result <- boot_sampler(n = 200)
+
+# Same algebraic.mle generics work
+params(boot_result)
+nparams(boot_result)
+se(boot_result)
+bias(boot_result)
+```
+
+The bootstrap bias (roughly 0.006 for shape, $-0.006$ for scale) is negligible
+compared to the standard errors, consistent with the MLE being asymptotically
+unbiased. The bootstrap SEs are slightly smaller than the asymptotic SEs — both
+methods agree well with $n = 200$ observations, but they need not agree exactly
+because they estimate the sampling variability in different ways (resampling vs
+the curvature of the log-likelihood).
+
+The bootstrap provides an alternative (non-parametric) estimate of the sampling
+distribution. Compare bootstrap and asymptotic confidence intervals:
+
+```{r boot-compare}
+cat("Asymptotic 95% CI:\n")
+confint(mle_result)
+
+cat("\nBootstrap percentile 95% CI:\n")
+confint(boot_result, type = "perc")
+```
+
+The asymptotic and bootstrap CIs are close but not identical. The bootstrap
+percentile intervals are slightly asymmetric (the upper tails extend a bit
+further), capturing the mild skewness in the finite-sample distribution that the
+symmetric Wald intervals miss. For well-behaved likelihoods with moderate $n$,
+the practical difference is small — but in small-sample or non-regular problems,
+the bootstrap can be substantially more accurate.
+
+## Using `algebraic.dist` Distributions
+
+```{r dist-check, include=FALSE}
+has_dist <- requireNamespace("algebraic.dist", quietly = TRUE)
+```
+
+```{r dist-section, eval=has_dist}
+library(algebraic.dist)
+```
+
+The `algebraic.dist` package provides distribution objects with a consistent
+interface. We can compare the MLE's asymptotic sampling distribution to
+theoretical distribution objects.
+
+For example, the MLE of an exponential rate parameter $\hat\lambda$ is
+asymptotically normal with variance $\lambda^2/n$. We can create this
+theoretical distribution:
+
+```{r dist-compare, eval=has_dist}
+set.seed(42)
+lambda_true <- 2.0
+n_exp <- 200
+df_exp <- data.frame(t = rexp(n_exp, rate = lambda_true))
+
+model_exp <- exponential_lifetime("t")
+mle_exp <- fit(model_exp)(df_exp)
+
+cat("MLE:", params(mle_exp), "\n")
+cat("SE:", se(mle_exp), "\n")
+
+# Theoretical asymptotic distribution of the MLE
+asymp_var <- lambda_true^2 / n_exp
+asymp_dist <- normal(mu = lambda_true, var = asymp_var)
+cat("\nTheoretical asymptotic distribution:\n")
+cat("  Mean:", params(asymp_dist)[1], "\n")
+cat("  Variance:", params(asymp_dist)[2], "\n")
+
+# Compare: sample from the MLE's estimated distribution
+mle_sampler <- sampler(mle_exp)
+set.seed(1)
+mle_samples <- mle_sampler(5000)
+
+# vs. sample from the theoretical distribution
+dist_sampler <- sampler(asymp_dist)
+set.seed(1)
+dist_samples <- dist_sampler(5000)
+
+cat("\nMLE sampler mean:", mean(mle_samples), "\n")
+cat("Theoretical sampler mean:", mean(dist_samples), "\n")
+cat("MLE sampler sd:", sd(mle_samples), "\n")
+cat("Theoretical sampler sd:", sd(dist_samples), "\n")
+```
+
+The MLE sampler is centered at $\hat\lambda$ (the estimate from our data),
+while the theoretical distribution is centered at the true $\lambda = 2.0$.
+The gap between these centers reflects sampling variability — our particular
+data set yielded a rate estimate somewhat different from the truth. The standard
+deviations are comparable, with the MLE-based SE slightly smaller because it
+uses the estimated (smaller) rate rather than the true rate in the variance
+formula $\lambda^2/n$.
+
+Distribution objects from `algebraic.dist` also support computing exact
+expectations via numerical integration, which we can compare to our Monte Carlo
+estimates:
+
+```{r dist-expect, eval=has_dist}
+# Exact E[X^2] for the asymptotic distribution
+exact_e_x2 <- expectation(asymp_dist, function(x) x^2)
+cat("Exact E[lambda_hat^2]:", exact_e_x2, "\n")
+
+# Compare to Monte Carlo estimate from the MLE
+set.seed(42)
+mc_e_x2 <- expectation(mle_exp, function(p) p[1]^2,
+                        control = list(n = 50000L))
+cat("Monte Carlo E[lambda_hat^2]:", mc_e_x2, "\n")
+```
+
+The exact $E[\hat\lambda^2]$ (from the theoretical distribution centered at
+$\lambda = 2$) differs noticeably from the Monte Carlo estimate based on the
+MLE. This is not an error — they are expectations under *different*
+distributions. The theoretical distribution uses the true parameter, while the
+MLE-based distribution is centered at $\hat\lambda$. This distinction is
+important in practice: the MLE-based quantities are what you can compute from
+data alone, while the theoretical ones require knowing the true parameter
+(which is usually unknown).
+
+## Summary
+
+The `fisher_mle` objects returned by `likelihood.model` are fully compatible
+with the `algebraic.mle` interface:
+
+| Generic | What it does on `fisher_mle` |
+|---------|------------------------------|
+| `params()` | Parameter estimates (same as `coef()`) |
+| `nparams()` | Number of parameters |
+| `se()` | Standard errors |
+| `vcov()` | Variance-covariance matrix |
+| `observed_fim()` | Observed Fisher information ($-H$) |
+| `bias()` | Asymptotic bias (zero) |
+| `mse()` | Mean squared error (equals `vcov` asymptotically) |
+| `aic()` | Akaike information criterion |
+| `confint()` | Wald confidence intervals |
+| `rmap()` | Delta method parameter transformations |
+| `marginal()` | Marginal sampling distributions |
+| `expectation()` | Monte Carlo expectations over sampling distribution |
+| `sampler()` | Asymptotic or bootstrap sampling function |

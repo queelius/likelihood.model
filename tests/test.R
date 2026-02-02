@@ -1822,3 +1822,183 @@ test_that("print works for likelihood_contr_model without crashing", {
   # Should NOT print "Observation column: " with NULL
   expect_false(any(grepl("Observation column:", output)))
 })
+
+# =============================================================================
+# ALGEBRAIC.MLE INTERFACE COMPATIBILITY TESTS
+# =============================================================================
+
+test_that("params() returns same as coef() on fisher_mle", {
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    loglik_val = -50,
+    hessian = matrix(c(-100, 0, 0, -50), 2, 2),
+    nobs = 100
+  )
+
+  expect_equal(params(result), coef(result))
+  expect_equal(params(result), c(shape = 2.0, scale = 1.5))
+})
+
+test_that("nparams() returns correct count", {
+  # Multivariate
+  result2 <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    loglik_val = -50,
+    nobs = 100
+  )
+  expect_equal(nparams(result2), 2L)
+
+  # Univariate
+  result1 <- fisher_mle(
+    par = c(lambda = 3.0),
+    loglik_val = -30,
+    nobs = 50
+  )
+  expect_equal(nparams(result1), 1L)
+})
+
+test_that("observed_fim() returns -hessian (positive definite)", {
+  H <- matrix(c(-100, -5, -5, -50), 2, 2)
+  result <- fisher_mle(
+    par = c(a = 1, b = 2),
+    loglik_val = -50,
+    hessian = H,
+    nobs = 100
+  )
+
+  fim_mat <- observed_fim(result)
+  expect_equal(fim_mat, -H)
+
+  # Should be positive definite (all eigenvalues > 0)
+  evals <- eigen(fim_mat)$values
+  expect_true(all(evals > 0))
+})
+
+test_that("observed_fim() returns NULL when hessian is NULL", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    loglik_val = -50,
+    nobs = 100
+    # hessian and vcov both NULL
+  )
+
+  expect_null(observed_fim(result))
+})
+
+test_that("obs() returns NULL for fisher_mle (by design)", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    loglik_val = -50,
+    nobs = 100
+  )
+  expect_null(obs(result))
+})
+
+test_that("mse() equals vcov under zero asymptotic bias", {
+  V <- matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2)
+  result <- fisher_mle(
+    par = c(a = 1, b = 2),
+    vcov = V,
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  # Bias is zero for fisher_mle, so MSE = vcov
+  expect_equal(mse(result), V)
+})
+
+test_that("mse() works for univariate fisher_mle", {
+  result <- fisher_mle(
+    par = c(lambda = 2.0),
+    vcov = matrix(0.04, 1, 1),
+    loglik_val = -30,
+    nobs = 50
+  )
+
+  # Scalar case: MSE = var + 0^2 = var
+  expect_equal(mse(result), matrix(0.04, 1, 1))
+})
+
+test_that("params()/nparams() work on fit() output from real models", {
+  set.seed(5001)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  result <- fit(model)(df, par = c(1.5, 0.8))
+
+  p <- params(result)
+  expect_equal(length(p), 2)
+  expect_equal(p, coef(result))
+  expect_equal(nparams(result), 2L)
+})
+
+test_that("observed_fim() is positive definite on real fit output", {
+  set.seed(5002)
+  df <- data.frame(x = rweibull(200, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  result <- fit(model)(df, par = c(1.5, 0.8))
+
+  fim_mat <- observed_fim(result)
+  expect_true(!is.null(fim_mat))
+  expect_true(is.matrix(fim_mat))
+
+  evals <- eigen(fim_mat)$values
+  expect_true(all(evals > 0),
+              info = "Observed FIM should be positive definite at MLE")
+})
+
+test_that("rmap() fallthrough works on fisher_mle", {
+  skip_if_not_installed("algebraic.mle")
+
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    vcov = matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  # rmap transforms parameters via delta method
+  # Transform: mean lifetime = scale * gamma(1 + 1/shape)
+  mapped <- algebraic.mle::rmap(result, function(p) {
+    c(mean_life = p[2] * gamma(1 + 1 / p[1]))
+  })
+
+  expect_true(inherits(mapped, "mle"))
+  expect_equal(length(params(mapped)), 1)
+  expect_true(params(mapped) > 0)
+})
+
+test_that("marginal() fallthrough works on fisher_mle", {
+  skip_if_not_installed("algebraic.mle")
+
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    vcov = matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  # Extract marginal for first parameter
+  m <- algebraic.mle::marginal(result, 1)
+  expect_true(inherits(m, "mle"))
+  expect_equal(nparams(m), 1L)
+  expect_equal(unname(params(m)), 2.0)
+})
+
+test_that("expectation() fallthrough works on fisher_mle", {
+  skip_if_not_installed("algebraic.mle")
+
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    vcov = matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  set.seed(5003)
+  # Monte Carlo expectation of shape parameter
+  # Use qualified name to avoid conflict with testthat::expectation
+  # n goes in control list per algebraic.mle API
+  e <- algebraic.mle::expectation(result, function(p) p[1],
+                                  control = list(n = 5000L))
+  expect_equal(e, 2.0, tolerance = 0.1)
+})

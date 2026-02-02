@@ -4,9 +4,10 @@
 
 #' Generics re-exported from algebraic.mle
 #'
-#' These generics are defined in \pkg{algebraic.mle} and re-exported
-#' here so that users of \pkg{likelihood.model} can access them
-#' without explicitly loading \pkg{algebraic.mle}.
+#' These generics are defined in \pkg{algebraic.mle} (or originate in
+#' \pkg{algebraic.dist} and are re-exported by \pkg{algebraic.mle}) and
+#' re-exported here so that users of \pkg{likelihood.model} can access
+#' them without explicitly loading those packages.
 #'
 #' \describe{
 #'   \item{\code{\link[algebraic.mle]{se}}}{Standard errors of parameter estimates}
@@ -15,16 +16,26 @@
 #'   \item{\code{\link[algebraic.mle]{loglik_val}}}{Log-likelihood value at the MLE}
 #'   \item{\code{\link[algebraic.mle]{score_val}}}{Score vector at the MLE}
 #'   \item{\code{\link[algebraic.mle]{sampler}}}{Sampling distribution of the estimator}
+#'   \item{\code{\link[algebraic.mle]{params}}}{Parameter estimates}
+#'   \item{\code{\link[algebraic.mle]{nparams}}}{Number of parameters}
+#'   \item{\code{\link[algebraic.mle]{observed_fim}}}{Observed Fisher information matrix}
+#'   \item{\code{\link[algebraic.mle]{obs}}}{Observed data stored in MLE object}
+#'   \item{\code{\link[algebraic.mle]{mse}}}{Mean squared error of the estimator}
 #' }
 #'
-#' @importFrom algebraic.mle se bias aic loglik_val score_val sampler
-#' @aliases se bias aic loglik_val score_val sampler
+#' @importFrom algebraic.mle se bias aic loglik_val score_val sampler params nparams observed_fim obs mse
+#' @aliases se bias aic loglik_val score_val sampler params nparams observed_fim obs mse
 #' @export se
 #' @export bias
 #' @export aic
 #' @export loglik_val
 #' @export score_val
 #' @export sampler
+#' @export params
+#' @export nparams
+#' @export observed_fim
+#' @export obs
+#' @export mse
 #' @name algebraic.mle-reexports
 NULL
 
@@ -320,6 +331,78 @@ bic.fisher_mle <- function(x, ...) {
 #' @export
 bias.fisher_mle <- function(x, theta = NULL, ...) {
   rep(0, length(x$par))
+}
+
+
+# --------------------------------------------------------------------------
+# algebraic.mle interface compatibility
+#
+# fisher_mle inherits from "mle" but uses different field names (e.g.,
+# $par instead of $theta.hat, $hessian instead of $info). These methods
+# ensure that algebraic.mle generics dispatch correctly to fisher_mle
+# objects without falling through to *.mle methods that access the
+# wrong fields.
+# --------------------------------------------------------------------------
+
+#' Extract parameter estimates from fisher_mle
+#'
+#' @param x A fisher_mle object
+#' @return Named numeric vector of parameter estimates
+#' @export
+params.fisher_mle <- function(x) {
+  x$par
+}
+
+#' Number of parameters in fisher_mle
+#'
+#' @param x A fisher_mle object
+#' @return Integer count of parameters
+#' @export
+nparams.fisher_mle <- function(x) {
+  length(x$par)
+}
+
+#' Observed Fisher information matrix from fisher_mle
+#'
+#' Returns the negative Hessian of the log-likelihood evaluated at the
+#' MLE, which estimates the Fisher information matrix.
+#'
+#' @param x A fisher_mle object
+#' @param ... Additional arguments (ignored)
+#' @return A matrix, or NULL if the Hessian was not computed
+#' @export
+observed_fim.fisher_mle <- function(x, ...) {
+  if (is.null(x$hessian)) return(NULL)
+  -x$hessian
+}
+
+#' Extract observed data from fisher_mle
+#'
+#' `fisher_mle` objects do not store observed data by design, so this
+#' always returns NULL.
+#'
+#' @param x A fisher_mle object
+#' @return NULL
+#' @export
+obs.fisher_mle <- function(x) {
+  x$obs  # NULL by design
+}
+
+#' Mean squared error for fisher_mle
+#'
+#' Computes MSE = Var + Bias^2 (scalar) or Vcov + bias %*% t(bias) (matrix).
+#' Under regularity conditions, asymptotic bias is zero, so MSE equals the
+#' variance-covariance matrix.
+#'
+#' @param x A fisher_mle object
+#' @param theta True parameter value (for simulation studies)
+#' @return MSE matrix or scalar
+#' @importFrom stats vcov
+#' @export
+mse.fisher_mle <- function(x, theta = NULL) {
+  b <- bias(x, theta)
+  V <- vcov(x)
+  if (length(x$par) == 1L) V + b^2 else V + b %*% t(b)
 }
 
 

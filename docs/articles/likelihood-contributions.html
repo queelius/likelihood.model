@@ -49,6 +49,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/algebraic-mle-integration.html">Integration with algebraic.mle and algebraic.dist</a>
+    </li>
+    <li>
       <a href="../articles/exponential-lifetime.html">Exponential Lifetime Model</a>
     </li>
     <li>
@@ -394,10 +397,10 @@ observations.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Hessian at MLE:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/hess_loglik.html">hess_loglik</a></span><span class="op">(</span><span class="va">model.observed</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">rates.hat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          [,1]     [,2]     [,3]</span></span>
-<span><span class="co">#&gt; [1,] -2.8e+01  9.9e-11  1.5e-09</span></span>
-<span><span class="co">#&gt; [2,]  9.9e-11 -3.1e+01 -1.0e-09</span></span>
-<span><span class="co">#&gt; [3,]  1.5e-09 -1.0e-09 -3.1e+01</span></span></code></pre></div>
+<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
+<span><span class="co">#&gt; [1,]  -28    0    0</span></span>
+<span><span class="co">#&gt; [2,]    0  -31    0</span></span>
+<span><span class="co">#&gt; [3,]    0    0  -31</span></span></code></pre></div>
 <p>The two matrices agree, confirming that our analytical
 <code>hess_loglik.observed</code> implementation is correct.</p>
 <p>Now, we use the Bootstrap method to estimate the sampling

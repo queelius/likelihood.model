@@ -2,6 +2,7 @@
 <url><loc>/404.html</loc></url>
 <url><loc>/CLAUDE.html</loc></url>
 <url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/articles/algebraic-mle-integration.html</loc></url>
 <url><loc>/articles/exponential-lifetime.html</loc></url>
 <url><loc>/articles/getting-started.html</loc></url>
 <url><loc>/articles/index.html</loc></url>
@@ -82,9 +83,14 @@
 <url><loc>/reference/lrt.html</loc></url>
 <url><loc>/reference/mle.html</loc></url>
 <url><loc>/reference/mle.likelihood_model.html</loc></url>
+<url><loc>/reference/mse.fisher_mle.html</loc></url>
 <url><loc>/reference/nobs.fisher_mle.html</loc></url>
+<url><loc>/reference/nparams.fisher_mle.html</loc></url>
+<url><loc>/reference/obs.fisher_mle.html</loc></url>
+<url><loc>/reference/observed_fim.fisher_mle.html</loc></url>
 <url><loc>/reference/observed_info.html</loc></url>
 <url><loc>/reference/observed_info.likelihood_model.html</loc></url>
+<url><loc>/reference/params.fisher_mle.html</loc></url>
 <url><loc>/reference/prepare_args_list.html</loc></url>
 <url><loc>/reference/print.fisher_boot.html</loc></url>
 <url><loc>/reference/print.fisher_mle.html</loc></url>
