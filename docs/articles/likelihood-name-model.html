@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
       </span>
     </div>
 
@@ -61,6 +61,9 @@
       <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
@@ -384,8 +387,6 @@ examples:</p>
 <span><span class="co"># Exponential</span></span>
 <span><span class="va">df_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">200</span>, rate <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mle_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="fu"><a href="../reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"exp"</span>, <span class="st">"x"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="va">df_exp</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in optim(par = par, fn = function(par) ll(df, par, ...), gr = if (method == : one-dimensional optimization by Nelder-Mead is unreliable:</span></span>
-<span><span class="co">#&gt; use "Brent" or optimize() directly</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Exponential: rate ="</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span>, <span class="st">"(true: 2.5)\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Exponential: rate = 2.345 (true: 2.5)</span></span>
 <span></span>
@@ -521,8 +522,6 @@ Hessian:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Generic: uses optim</span></span>
 <span><span class="va">mle_gen</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_gen</span><span class="op">)</span><span class="op">(</span><span class="va">df_gen</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in optim(par = par, fn = function(par) ll(df, par, ...), gr = if (method == : one-dimensional optimization by Nelder-Mead is unreliable:</span></span>
-<span><span class="co">#&gt; use "Brent" or optimize() directly</span></span>
 <span></span>
 <span><span class="co"># Specialized: closed-form MLE, no optimization needed</span></span>
 <span><span class="va">mle_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_spec</span><span class="op">)</span><span class="op">(</span><span class="va">df_spec</span><span class="op">)</span></span>
@@ -585,8 +584,6 @@ generated from a Weibull:</p>
 <span><span class="va">model_weib</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"weibull"</span>, ob_col <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mle_exp_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_exp</span><span class="op">)</span><span class="op">(</span><span class="va">df_test</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rate <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in optim(par = par, fn = function(par) ll(df, par, ...), gr = if (method == : one-dimensional optimization by Nelder-Mead is unreliable:</span></span>
-<span><span class="co">#&gt; use "Brent" or optimize() directly</span></span>
 <span><span class="va">mle_weib_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_weib</span><span class="op">)</span><span class="op">(</span><span class="va">df_test</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Exponential loglik:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">loglik_val</a></span><span class="op">(</span><span class="va">mle_exp_test</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>

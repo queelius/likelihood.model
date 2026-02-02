@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
       </span>
     </div>
 
@@ -61,6 +61,9 @@
       <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
@@ -230,10 +233,7 @@ ignoring censoring leads to biased estimates.</p>
 <span></span>
 <span><span class="co"># Fit the model</span></span>
 <span><span class="va">solver_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_cens</span><span class="op">)</span></span>
-<span><span class="va">mle_cens</span> <span class="op">&lt;-</span> <span class="fu">solver_cens</span><span class="op">(</span><span class="va">df_cens</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in (function (x, mean = 0, sd = 1, log = FALSE) : NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in (function (q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE) :</span></span>
-<span><span class="co">#&gt; NaNs produced</span></span>
+<span><span class="va">mle_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu">solver_cens</span><span class="op">(</span><span class="va">df_cens</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"MLE (accounting for censoring):\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MLE (accounting for censoring):</span></span>
@@ -332,6 +332,9 @@ approximately zero. This provides a useful diagnostic.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/algebraic.mle-reexports.html">score_val</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    shape    scale </span></span>
 <span><span class="co">#&gt; -0.00338  0.01183</span></span></code></pre></div>
+<p>The score values are very close to zero, confirming that the
+optimizer successfully found the MLE (a stationary point of the
+log-likelihood).</p>
 </div>
 <div class="section level2">
 <h2 id="example-5-fisherian-likelihood-inference">Example 5: Fisherian Likelihood Inference<a class="anchor" aria-label="anchor" href="#example-5-fisherian-likelihood-inference"></a>
@@ -361,6 +364,10 @@ intervals that make no probability statements about parameters.</p>
 <span><span class="va">rl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/relative_likelihood.html">relative_likelihood</a></span><span class="op">(</span><span class="va">mle</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">1.0</span><span class="op">)</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Relative likelihood at (1.5, 1.0):"</span>, <span class="va">rl</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Relative likelihood at (1.5, 1.0): 8.011e-09</span></span></code></pre></div>
+<p>Negative support and a very small relative likelihood indicate that
+the alternative parameter values
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mn>1.5</mn><mo>,</mo><mn>1.0</mn><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(1.5, 1.0)</annotation></semantics></math>
+are poorly supported by the data compared to the MLE.</p>
 <div class="section level3">
 <h3 id="likelihood-intervals">Likelihood Intervals<a class="anchor" aria-label="anchor" href="#likelihood-intervals"></a>
 </h3>
@@ -464,8 +471,8 @@ approach:</p>
 <span><span class="co">#&gt; Analytical loglik: 28.66</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Generic loglik:   "</span>, <span class="va">ll_generic</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Generic loglik:    28.66</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Match:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">ll_analytical</span>, <span class="va">ll_generic</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Match: names for target but not for current</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Match:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">ll_analytical</span><span class="op">)</span>, <span class="va">ll_generic</span>, tolerance <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Match: TRUE</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -673,7 +680,7 @@ failures</li>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] likelihood.model_0.9.0</span></span>
+<span><span class="co">#&gt; [1] likelihood.model_0.9.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] cli_3.6.5            knitr_1.50           rlang_1.1.7         </span></span>

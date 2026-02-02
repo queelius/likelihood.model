@@ -209,6 +209,9 @@ standard errors of the estimates.
 optim(rates, fn = loglik(model.observed), df=df, control=list(fnscale=-1))
 ```
 
+The estimates are close to the true rates $\lambda = (1.1, 1.2, 1.3)$, and
+convergence code 0 indicates successful optimization.
+
 Note that `likelihood_model` objects have a default method for fitting MLEs, `fit`.
 Internally, this method uses `optim` to maximize the log-likelihood, but it packs in some
 additional information and returns the result as a `fisher_mle` object.
@@ -216,6 +219,10 @@ additional information and returns the result as a `fisher_mle` object.
 rates.hat <- fit(model.observed)(df, par = rates)
 summary(rates.hat)
 ```
+
+The 95% confidence intervals all contain the true parameter values, and the
+standard errors are small relative to the estimates, reflecting the
+information in $n=150$ observations.
 
 We implement `hess_loglik.observed` for completeness.
 ```{r hess-loglike}
@@ -237,6 +244,8 @@ cat("\nHessian at MLE:\n")
 print(hess_loglik(model.observed)(df, coef(rates.hat)))
 ```
 
+The two matrices agree, confirming that our analytical `hess_loglik.observed`
+implementation is correct.
 
 Now, we use the Bootstrap method to estimate the sampling distribution of the MLE.
 
@@ -355,6 +364,10 @@ print(confint(mle.censored))
 cat("\nTrue parameters:", rates, "\n")
 ```
 
+As expected, censoring inflates the standard errors and widens the confidence
+intervals because the censored observations carry less information than exact
+ones. Both sets of intervals still contain the true parameter values.
+
 We can also use Fisherian likelihood inference to examine the strength of
 evidence for the censored estimates:
 
@@ -444,6 +457,11 @@ total_T <- sum(df_single$t)
 cat("Closed-form MLE:", d / total_T, "\n")
 cat("95% CI:", confint(mle_single)[1, ], "\n")
 ```
+
+The `optim`-based MLE matches the closed-form estimate
+$\hat\lambda = d/T$ (number of exact observations divided by total
+observation time), and the 95% confidence interval contains the true value
+$\lambda = 2$.
 
 ## Best Practices
 
