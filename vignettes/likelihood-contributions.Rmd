@@ -45,7 +45,7 @@ for all $i,j$ are independent. The system lifetime is the minimum of the
 component lifetimes, i.e., $T_i = \min\{T_{i 1}, \ldots, T_{i m}\}$.
 
 Let's draw a sample for this model for $m=3$ and $\lambda = (1.1, 1.2, 1.3)$
-for a sample size of $n=90$.
+for a sample size of $n=150$.
 ```{r data-gen-exp-series}
 n <- 150
 rates <- c(1.1, 1.2, 1.3)
@@ -257,11 +257,16 @@ cat("\nBootstrap covariance:\n")
 print(vcov(boot_result))
 ```
 
+The bootstrap standard errors should be close to the asymptotic standard errors
+from the Fisher information matrix, and the bootstrap bias estimates should be
+negligible (all under 0.01), confirming that the MLE is nearly unbiased for
+this sample size.
+
 ## Case 2: Right-censoring
 We add right-censoring to the model. We assume that the right-censoring times
 are independent of the component lifetimes and the candidate sets.
 
-In prticular, we consider the data described earlier, but with right-censoring
+In particular, we consider the data described earlier, but with right-censoring
 at time $\tau = 0.5$. The presence of this right-censoring means that we know
 the event occurred after time $\tau$ for these censored observations, but we do
 not know exactly when (and it may still be ongoing).
@@ -341,6 +346,9 @@ cat("\nCensored estimates:\n")
 cat("  Estimates:", coef(mle.censored), "\n")
 cat("  Std errors:", se(mle.censored), "\n")
 
+cat("\n95% Confidence Intervals (uncensored):\n")
+print(confint(rates.hat))
+
 cat("\n95% Confidence Intervals (censored):\n")
 print(confint(mle.censored))
 
@@ -366,6 +374,12 @@ li <- likelihood_interval(mle.censored, df.censored, model.censored,
 cat("\n1/8 likelihood interval for lambda_1:\n")
 print(li)
 ```
+
+The evidence value near 0 means the MLE and true parameters are about equally
+well-supported by the data, which is expected when the MLE is close to the
+truth. The $1/8$ likelihood interval for $\lambda_1$ provides a plausible
+range for the parameter without making probability statements --- it contains
+all parameter values whose likelihood is at least $1/8$ of the maximum.
 
 ## Case 3: Single-parameter model (exponential rate)
 

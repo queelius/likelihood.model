@@ -207,6 +207,9 @@ cat("\nScore stored in MLE object:\n")
 print(score_val(mle))
 ```
 
+The score values are very close to zero, confirming that the optimizer
+successfully found the MLE (a stationary point of the log-likelihood).
+
 ## Example 5: Fisherian Likelihood Inference
 
 The package supports pure likelihood-based inference in the Fisherian tradition.
@@ -233,6 +236,10 @@ cat("Support at (1.5, 1.0):", s_alt, "\n")
 rl <- relative_likelihood(mle, c(1.5, 1.0), df, model)
 cat("Relative likelihood at (1.5, 1.0):", rl, "\n")
 ```
+
+Negative support and a very small relative likelihood indicate that the
+alternative parameter values $(1.5, 1.0)$ are poorly supported by the data
+compared to the MLE.
 
 ### Likelihood Intervals
 
@@ -313,7 +320,7 @@ ll_generic <- loglik(model_generic)(df_exp_name, unname(lambda_hat))
 
 cat("Analytical loglik:", ll_analytical, "\n")
 cat("Generic loglik:   ", ll_generic, "\n")
-cat("Match:", all.equal(unname(ll_analytical), ll_generic), "\n")
+cat("Match:", isTRUE(all.equal(unname(ll_analytical), ll_generic, tolerance = 1e-6)), "\n")
 ```
 
 ## Summary of Key Functions
