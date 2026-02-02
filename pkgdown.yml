@@ -1,0 +1,9 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  exponential-lifetime: exponential-lifetime.html
+  getting-started: getting-started.html
+  likelihood-contributions: likelihood-contributions.html
+  likelihood-name-model: likelihood-name-model.html
+last_built: 2026-02-02T12:42Z
