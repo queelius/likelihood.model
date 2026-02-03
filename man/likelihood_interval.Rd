@@ -27,7 +27,7 @@ Matrix with lower and upper bounds for each parameter
 }
 \description{
 Computes the likelihood interval for a parameter:
-LI(k) = {theta : R(theta) >= 1/k} = {theta : S(theta) >= -log(k)}
+\code{LI(k) = \{theta : R(theta) >= 1/k\} = \{theta : S(theta) >= -log(k)\}}
 }
 \details{
 Unlike confidence intervals, likelihood intervals make no probability

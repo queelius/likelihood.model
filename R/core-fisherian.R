@@ -69,7 +69,7 @@ relative_likelihood.fisher_mle <- function(x, theta, data, model, ...) {
 #' Likelihood Interval
 #'
 #' Computes the likelihood interval for a parameter:
-#' LI(k) = {theta : R(theta) >= 1/k} = {theta : S(theta) >= -log(k)}
+#' \code{LI(k) = \{theta : R(theta) >= 1/k\} = \{theta : S(theta) >= -log(k)\}}
 #'
 #' Unlike confidence intervals, likelihood intervals make no probability
 #' statements about the parameter. They simply identify the set of

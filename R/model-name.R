@@ -1,12 +1,12 @@
 #' Likelihood model generator for standard R distributions
 #'
 #' Creates a likelihood model based on R's distribution naming convention,
-#' where distributions have functions named `d<name>` (PDF), `p<name>` (CDF),
-#' `q<name>` (quantile), and `r<name>` (random generation).
+#' where distributions have functions named \code{d<name>} (PDF), \code{p<name>} (CDF),
+#' \code{q<name>} (quantile), and \code{r<name>} (random generation).
 #'
 #' The model automatically handles exact and censored observations:
-#' - Exact: uses PDF (d<name>)
-#' - Left-censored: uses CDF (p<name>)
+#' - Exact: uses PDF (\code{d<name>})
+#' - Left-censored: uses CDF (\code{p<name>})
 #' - Right-censored: uses survival function (1 - CDF)
 #'
 #' @param dist_name The name of the distribution (e.g., "norm", "weibull", "exp")

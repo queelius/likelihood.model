@@ -24,14 +24,14 @@ A likelihood model object
 }
 \description{
 Creates a likelihood model based on R's distribution naming convention,
-where distributions have functions named \verb{d<name>} (PDF), \verb{p<name>} (CDF),
-\verb{q<name>} (quantile), and \verb{r<name>} (random generation).
+where distributions have functions named \code{d<name>} (PDF), \code{p<name>} (CDF),
+\code{q<name>} (quantile), and \code{r<name>} (random generation).
 }
 \details{
 The model automatically handles exact and censored observations:
 \itemize{
-\item Exact: uses PDF (d\if{html}{\out{<name>}})
-\item Left-censored: uses CDF (p\if{html}{\out{<name>}})
+\item Exact: uses PDF (\code{d<name>})
+\item Left-censored: uses CDF (\code{p<name>})
 \item Right-censored: uses survival function (1 - CDF)
 }
 }
