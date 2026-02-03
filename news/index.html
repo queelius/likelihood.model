@@ -32,6 +32,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/algebraic-mle-integration.html">Integration with algebraic.mle and algebraic.dist</a>
+    </li>
+    <li>
       <a href="../articles/exponential-lifetime.html">Exponential Lifetime Model</a>
     </li>
     <li>
@@ -86,9 +89,16 @@
 <li>Fixed <code>print.likelihood_model</code> crash when <code>ob_col</code> is NULL (e.g., for contr models)</li>
 </ul></div>
 <div class="section level3">
+<h3 id="algebraicmle-integration-0-9-1">algebraic.mle Integration<a class="anchor" aria-label="anchor" href="#algebraicmle-integration-0-9-1"></a></h3>
+<ul><li>New re-exported generics from <code>algebraic.mle</code>: <code><a href="../reference/algebraic.mle-reexports.html">params()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">nparams()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">observed_fim()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">obs()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">mse()</a></code>
+</li>
+<li>Methods for <code>fisher_mle</code> objects provide a unified interface across the likelihood ecosystem</li>
+</ul></div>
+<div class="section level3">
 <h3 id="documentation-0-9-1">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-9-1"></a></h3>
-<ul><li>Expanded <code>likelihood-name-model</code> vignette: left-censoring, interval censoring, mixed types, Fisherian inference, multiple distributions</li>
-<li>Expanded <code>likelihood-contributions</code> vignette: Case 2 inference, single-parameter example, best practices</li>
+<ul><li>New <code>algebraic-mle-integration</code> vignette demonstrating the three-package ecosystem (<code>likelihood.model</code> + <code>algebraic.mle</code> + <code>algebraic.dist</code>)</li>
+<li>Expanded <code>likelihood-name-model</code> vignette: left-censoring, interval censoring, mixed types, Fisherian inference, multiple distributions</li>
+<li>Expanded <code>likelihood-contributions</code> vignette: Case 2 inference, single-parameter example, best practices, interpretive prose for computed results</li>
 <li>New <code>getting-started</code> vignette with comprehensive introduction</li>
 <li>New <code>exponential-lifetime</code> vignette</li>
 </ul></div>
