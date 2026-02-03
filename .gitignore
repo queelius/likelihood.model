@@ -2,3 +2,7 @@
 /doc/
 /Meta/
 *_cache/
+
+# Vignette build artifacts (knitr tangle + render output)
+vignettes/*.html
+vignettes/*.R

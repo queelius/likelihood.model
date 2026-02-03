@@ -2002,3 +2002,398 @@ test_that("expectation() fallthrough works on fisher_mle", {
                                   control = list(n = 5000L))
   expect_equal(e, 2.0, tolerance = 0.1)
 })
+
+
+# =============================================================================
+# FISHER_MLE PRINT AND SUMMARY COVERAGE TESTS
+# =============================================================================
+
+test_that("print.fisher_mle outputs expected text", {
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    vcov = matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  out <- capture.output(print(result))
+  expect_true(any(grepl("Maximum Likelihood Estimate", out)))
+  expect_true(any(grepl("Log-likelihood", out)))
+  expect_true(any(grepl("Observations:", out)))
+})
+
+test_that("print.fisher_mle shows warning when not converged", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    vcov = matrix(0.1, 1, 1),
+    loglik_val = -50,
+    nobs = 10,
+    converged = FALSE
+  )
+
+  out <- capture.output(print(result))
+  expect_true(any(grepl("WARNING.*converge", out)))
+})
+
+test_that("print.fisher_mle works without nobs", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    vcov = matrix(0.1, 1, 1),
+    loglik_val = -50
+  )
+
+  out <- capture.output(print(result))
+  expect_false(any(grepl("Observations:", out)))
+})
+
+test_that("print.summary_fisher_mle outputs expected text", {
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    vcov = matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  out <- capture.output(print(summary(result)))
+  expect_true(any(grepl("Maximum Likelihood Estimate", out)))
+  expect_true(any(grepl("AIC", out)))
+  expect_true(any(grepl("Log-likelihood", out)))
+  expect_true(any(grepl("Number of observations", out)))
+})
+
+test_that("print.summary_fisher_mle shows warning when not converged", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    vcov = matrix(0.1, 1, 1),
+    loglik_val = -50,
+    nobs = 10,
+    converged = FALSE
+  )
+
+  out <- capture.output(print(summary(result)))
+  expect_true(any(grepl("WARNING.*converge", out)))
+})
+
+test_that("print.summary_fisher_mle works without nobs", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    vcov = matrix(0.1, 1, 1),
+    loglik_val = -50
+  )
+
+  out <- capture.output(print(summary(result)))
+  expect_false(any(grepl("Number of observations", out)))
+})
+
+
+# =============================================================================
+# FISHER_MLE ACCESSOR COVERAGE TESTS
+# =============================================================================
+
+test_that("loglik_val.fisher_mle returns the log-likelihood value", {
+  result <- fisher_mle(
+    par = c(a = 1, b = 2),
+    vcov = matrix(c(0.04, 0, 0, 0.02), 2, 2),
+    loglik_val = -123.45,
+    nobs = 50
+  )
+  expect_equal(loglik_val(result), -123.45)
+})
+
+test_that("confint.fisher_mle works with character parm", {
+  result <- fisher_mle(
+    par = c(shape = 2.0, scale = 1.5),
+    vcov = matrix(c(0.04, 0.01, 0.01, 0.02), 2, 2),
+    loglik_val = -50,
+    nobs = 100
+  )
+
+  ci_all <- confint(result)
+  ci_shape <- confint(result, parm = "shape")
+  expect_equal(nrow(ci_shape), 1)
+  expect_equal(ci_shape[1, ], ci_all["shape", ])
+})
+
+test_that("fisher_mle warns when hessian is singular", {
+  # Singular hessian: second row is a multiple of first
+  H <- matrix(c(-1, -2, -2, -4), 2, 2)
+  expect_warning(
+    result <- fisher_mle(
+      par = c(a = 1, b = 2),
+      loglik_val = -50,
+      hessian = H,
+      nobs = 100
+    ),
+    "not invertible"
+  )
+  expect_null(result$vcov)
+})
+
+test_that("bic errors when nobs is NULL", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    vcov = matrix(0.1, 1, 1),
+    loglik_val = -50
+  )
+  expect_error(bic(result), "nobs")
+})
+
+
+# =============================================================================
+# FISHER_BOOT TESTS
+# =============================================================================
+
+test_that("confint.fisher_boot computes percentile CI", {
+  skip_if_not_installed("boot")
+  set.seed(6001)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_obj <- model_sampler(n = 200)
+
+  ci <- confint(boot_obj, level = 0.95, type = "perc")
+  expect_equal(nrow(ci), 2)
+  expect_equal(ncol(ci), 2)
+  expect_true(ci[1, 1] < ci[1, 2])  # lower < upper
+})
+
+test_that("confint.fisher_boot computes basic CI", {
+  skip_if_not_installed("boot")
+  set.seed(6002)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_obj <- model_sampler(n = 200)
+
+  ci <- confint(boot_obj, level = 0.95, type = "basic")
+  expect_equal(nrow(ci), 2)
+  expect_equal(ncol(ci), 2)
+})
+
+test_that("confint.fisher_boot computes norm CI", {
+  skip_if_not_installed("boot")
+  set.seed(6003)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_obj <- model_sampler(n = 200)
+
+  ci <- confint(boot_obj, level = 0.95, type = "norm")
+  expect_equal(nrow(ci), 2)
+  expect_equal(ncol(ci), 2)
+})
+
+test_that("confint.fisher_boot with integer parm", {
+  skip_if_not_installed("boot")
+  set.seed(6004)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_obj <- model_sampler(n = 200)
+
+  ci <- confint(boot_obj, parm = 1, level = 0.95, type = "perc")
+  expect_equal(nrow(ci), 1)
+})
+
+test_that("print.fisher_boot outputs expected text", {
+  skip_if_not_installed("boot")
+  set.seed(6005)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_obj <- model_sampler(n = 50)
+
+  out <- capture.output(print(boot_obj))
+  expect_true(any(grepl("Bootstrap MLE", out)))
+  expect_true(any(grepl("Bootstrap replicates:", out)))
+  expect_true(any(grepl("Bootstrap SE:", out)))
+})
+
+test_that("sampler.fisher_boot resamples from bootstrap distribution", {
+  skip_if_not_installed("boot")
+  set.seed(6006)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  model_sampler <- sampler(model, df = df, par = c(2, 1))
+  boot_obj <- model_sampler(n = 200)
+
+  samp_fn <- sampler(boot_obj)
+  samples <- samp_fn(100)
+  expect_equal(nrow(samples), 100)
+  expect_equal(ncol(samples), 2)
+  expect_true(all(is.finite(samples)))
+})
+
+
+# =============================================================================
+# SAMPLER.FISHER_MLE UNIVARIATE COVERAGE
+# =============================================================================
+
+test_that("sampler.fisher_mle works for univariate case", {
+  result <- fisher_mle(
+    par = c(rate = 2.0),
+    vcov = matrix(0.04, 1, 1),
+    loglik_val = -30,
+    nobs = 50
+  )
+
+  samp_fn <- sampler(result)
+  set.seed(6007)
+  samples <- samp_fn(500)
+  expect_equal(ncol(samples), 1)
+  expect_equal(nrow(samples), 500)
+  expect_equal(mean(samples), 2.0, tolerance = 0.1)
+})
+
+test_that("sampler.fisher_mle errors when vcov is NULL", {
+  result <- fisher_mle(
+    par = c(rate = 2.0),
+    loglik_val = -30,
+    nobs = 50
+  )
+  expect_error(sampler(result), "vcov is NULL")
+})
+
+
+# =============================================================================
+# FISHERIAN INFERENCE COVERAGE TESTS
+# =============================================================================
+
+test_that("likelihood_interval works with character param", {
+  set.seed(6008)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  result <- fit(model)(df, par = c(shape = 1.5, scale = 0.8))
+
+  li <- likelihood_interval(result, data = df, model = model,
+                            k = 8, param = "shape")
+  expect_true(is.matrix(li) || is.data.frame(li))
+})
+
+test_that("likelihood_interval works for single parameter model", {
+  set.seed(6009)
+  df <- data.frame(x = rexp(100, rate = 2))
+  model <- exponential_lifetime("x")
+  result <- fit(model)(df, par = c(rate = 1))
+
+  li <- likelihood_interval(result, data = df, model = model, k = 8)
+  expect_true(!is.null(li))
+})
+
+test_that("print.likelihood_interval outputs expected text", {
+  set.seed(6010)
+  df <- data.frame(x = rexp(100, rate = 2))
+  model <- exponential_lifetime("x")
+  result <- fit(model)(df, par = c(rate = 1))
+
+  li <- likelihood_interval(result, data = df, model = model, k = 8)
+  out <- capture.output(print(li))
+  expect_true(any(grepl("Likelihood Interval", out)))
+})
+
+test_that("profile_loglik works with character param", {
+  set.seed(6011)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  result <- fit(model)(df, par = c(shape = 1.5, scale = 0.8))
+
+  pl <- profile_loglik(result, data = df, model = model,
+                       param = "shape", n_grid = 10)
+  expect_s3_class(pl, "profile_loglik")
+  expect_true("shape" %in% names(pl))
+})
+
+test_that("profile_loglik errors for > 2 parameters", {
+  result <- fisher_mle(
+    par = c(a = 1, b = 2, c = 3),
+    vcov = diag(3) * 0.01,
+    loglik_val = -50,
+    nobs = 100
+  )
+  model <- weibull_uncensored("x")
+  df <- data.frame(x = 1:10)
+  expect_error(
+    profile_loglik(result, data = df, model = model, param = 1:3),
+    "1 or 2 parameters"
+  )
+})
+
+test_that("profile_loglik 2D works", {
+  set.seed(6012)
+  df <- data.frame(x = rweibull(100, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  result <- fit(model)(df, par = c(shape = 1.5, scale = 0.8))
+
+  pl <- profile_loglik(result, data = df, model = model,
+                       param = 1:2, n_grid = 5)
+  expect_s3_class(pl, "profile_loglik")
+  expect_equal(nrow(pl), 25)  # 5x5 grid
+})
+
+test_that("print.profile_loglik outputs expected text", {
+  set.seed(6013)
+  df <- data.frame(x = rweibull(50, shape = 2, scale = 1))
+  model <- weibull_uncensored("x")
+  result <- fit(model)(df, par = c(shape = 1.5, scale = 0.8))
+
+  pl <- profile_loglik(result, data = df, model = model,
+                       param = 1, n_grid = 10)
+  out <- capture.output(print(pl))
+  expect_true(any(grepl("Profile Log-Likelihood", out)))
+  expect_true(any(grepl("Grid points:", out)))
+})
+
+test_that("deviance.fisher_mle errors on non-fisher_mle null model", {
+  result <- fisher_mle(
+    par = c(a = 1),
+    vcov = matrix(0.1, 1, 1),
+    loglik_val = -50,
+    nobs = 100
+  )
+  expect_error(deviance(result, null_model = list(loglik = -60)),
+               "fisher_mle")
+})
+
+
+# =============================================================================
+# FIM AND OBSERVED_INFO COVERAGE TESTS
+# =============================================================================
+
+test_that("fim.likelihood_model computes FIM via Monte Carlo", {
+  # Create a minimal model that falls through to fim.likelihood_model.
+  # exponential_lifetime has its own fim method, so we use a mock.
+  mock_model <- structure(list(), class = c("mock_exp", "likelihood_model"))
+
+  score.mock_exp <<- function(model, ...) {
+    function(df, par) {
+      c(nrow(df) / par[1] - sum(df$x))
+    }
+  }
+
+  rdata.mock_exp <<- function(model, ...) {
+    function(theta, n, ...) {
+      data.frame(x = rexp(n, rate = theta[1]))
+    }
+  }
+
+  set.seed(6014)
+  fim_fn <- fim(mock_model)
+  # True FIM for exp(rate=2) with n=50 is n/rate^2 = 50/4 = 12.5
+  fim_mat <- fim_fn(theta = c(2), n_obs = 50, n_samples = 500)
+  expect_true(is.matrix(fim_mat))
+  expect_equal(nrow(fim_mat), 1)
+  expect_equal(ncol(fim_mat), 1)
+  expect_equal(fim_mat[1, 1], 12.5, tolerance = 2)
+
+  rm(score.mock_exp, rdata.mock_exp, envir = .GlobalEnv)
+})
+
+test_that("observed_info.likelihood_model computes -hessian", {
+  set.seed(6015)
+  df <- data.frame(x = rexp(50, rate = 2))
+  model <- exponential_lifetime("x")
+  oi_fn <- observed_info(model)
+  oi <- oi_fn(df, c(rate = 2))
+  expect_true(is.matrix(oi))
+  expect_true(oi[1, 1] > 0)  # positive definite
+})

@@ -14,9 +14,14 @@
 * Fixed `rowSums` error in `likelihood_contr_model` score for single-parameter models
 * Fixed `print.likelihood_model` crash when `ob_col` is NULL (e.g., for contr models)
 
+## algebraic.mle Integration
+* New re-exported generics from `algebraic.mle`: `params()`, `nparams()`, `observed_fim()`, `obs()`, `mse()`
+* Methods for `fisher_mle` objects provide a unified interface across the likelihood ecosystem
+
 ## Documentation
+* New `algebraic-mle-integration` vignette demonstrating the three-package ecosystem (`likelihood.model` + `algebraic.mle` + `algebraic.dist`)
 * Expanded `likelihood-name-model` vignette: left-censoring, interval censoring, mixed types, Fisherian inference, multiple distributions
-* Expanded `likelihood-contributions` vignette: Case 2 inference, single-parameter example, best practices
+* Expanded `likelihood-contributions` vignette: Case 2 inference, single-parameter example, best practices, interpretive prose for computed results
 * New `getting-started` vignette with comprehensive introduction
 * New `exponential-lifetime` vignette
 
