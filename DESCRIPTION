@@ -5,7 +5,7 @@ Version: 0.9.1
 Authors@R: 
     person("Alexander", "Towell", , "lex@metafunctor.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6443-9897"))
 Description: Facilitates building likelihood models in the Fisherian tradition
-    following Royall (1997, ISBN:978-0412044113) "Statistical Evidence: A
+    following Richard Royall (1997, ISBN:978-0412044113) "Statistical Evidence: A
     Likelihood Paradigm". Defines generic methods for working with likelihoods
     (loglik(), score(), hess_loglik(), fim()) and provides functions for pure
     likelihood-based inference (support(), relative_likelihood(),
