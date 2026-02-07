@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
     fig.width = 6,
     fig.height = 4
 )
-options(digits = 4)
+old_opts <- options(digits = 4)
 ```
 
 ## Introduction
@@ -433,3 +433,7 @@ print(lrt_result)
 
 A small p-value indicates the Weibull provides a significantly better fit,
 consistent with the true data-generating process having shape $\neq 1$.
+
+```{r cleanup, include=FALSE}
+options(old_opts)
+```

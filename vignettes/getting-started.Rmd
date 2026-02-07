@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
     fig.width = 6,
     fig.height = 4
 )
-options(digits = 4)
+old_opts <- options(digits = 4)
 ```
 
 ## Introduction
@@ -382,4 +382,8 @@ For more advanced usage, see the other vignettes:
 
 ```{r session}
 sessionInfo()
+```
+
+```{r cleanup, include=FALSE}
+options(old_opts)
 ```

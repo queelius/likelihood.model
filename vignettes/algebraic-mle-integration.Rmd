@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
     fig.width = 6,
     fig.height = 4
 )
-options(digits = 4)
+old_opts <- options(digits = 4)
 ```
 
 ## The Three-Package Ecosystem
@@ -386,3 +386,7 @@ with the `algebraic.mle` interface:
 | `marginal()` | Marginal sampling distributions |
 | `expectation()` | Monte Carlo expectations over sampling distribution |
 | `sampler()` | Asymptotic or bootstrap sampling function |
+
+```{r cleanup, include=FALSE}
+options(old_opts)
+```

@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
     fig.width = 6,
     fig.height = 4
 )
-options(digits = 4)
+old_opts <- options(digits = 4)
 ```
 
 ## Introduction
@@ -330,4 +330,8 @@ example with analytical derivatives (but without a closed-form MLE).
 
 ```{r session}
 sessionInfo()
+```
+
+```{r cleanup, include=FALSE}
+options(old_opts)
 ```

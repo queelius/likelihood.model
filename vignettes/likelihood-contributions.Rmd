@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>"
 )
-options(digits = 2)
+old_opts <- options(digits = 2)
 ```
 
 
@@ -516,4 +516,8 @@ result <- fit(model)(df, par = par)
 
 # Slower: calling R6 method directly in a loop (no caching)
 # model$loglik(df, par) -- re-splits df every call
+```
+
+```{r cleanup, include=FALSE}
+options(old_opts)
 ```
