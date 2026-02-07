@@ -4,7 +4,7 @@ This is a resubmission addressing feedback from Konstanze Lauseker (2026-02-03):
 
 1. **DESCRIPTION**: Removed single quotes around non-package/software terms.
 2. **DESCRIPTION**: Added `()` after all function names (loglik(), score(), etc.).
-3. **DESCRIPTION**: Added reference in proper CRAN format: Royall (1997) <ISBN:978-0412044113>.
+3. **DESCRIPTION**: Added reference in proper CRAN format: Royall (1997, ISBN:978-0412044113).
 4. **Vignettes**: All five vignettes now save and restore `options()` via `old_opts <- options(...); ...; options(old_opts)`.
 5. **Rd files**: Added missing `\value` tags to `hess_loglik.likelihood_model` and `obs.fisher_mle`.
 
