@@ -14,7 +14,11 @@ Previous NOTEs from incoming pre-tests have also been addressed:
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
+* CRAN incoming feasibility: "Possibly misspelled words: Fisherian, Royall"
+  - Fisherian: standard adjective referring to R.A. Fisher's school of inference
+  - Royall: surname of Richard Royall, author of the cited reference
 
 ## Test environments
 * local: Ubuntu 24.04.3 LTS, R 4.3.3 (2024-02-29)
