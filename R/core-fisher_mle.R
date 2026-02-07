@@ -382,7 +382,7 @@ observed_fim.fisher_mle <- function(x, ...) {
 #' always returns NULL.
 #'
 #' @param x A fisher_mle object
-#' @return NULL
+#' @return Always `NULL`. `fisher_mle` objects do not store the observed data.
 #' @export
 obs.fisher_mle <- function(x) {
   x$obs  # NULL by design

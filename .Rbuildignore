@@ -16,3 +16,4 @@
 ^\.zenodo\.json$
 ^cran-comments\.md$
 ^\.github$
+^CRAN-SUBMISSION$

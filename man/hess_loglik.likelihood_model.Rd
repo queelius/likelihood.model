@@ -13,6 +13,10 @@
 
 \item{...}{Additional arguments (to pass into \code{loglik})}
 }
+\value{
+A function(df, par, ...) that computes the Hessian matrix of the
+log-likelihood evaluated at \code{par} given data \code{df}.
+}
 \description{
 In case a \code{hess_loglik} method is not provided, this function will be
 used.

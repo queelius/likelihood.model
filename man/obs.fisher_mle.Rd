@@ -9,6 +9,9 @@
 \arguments{
 \item{x}{A fisher_mle object}
 }
+\value{
+Always \code{NULL}. \code{fisher_mle} objects do not store the observed data.
+}
 \description{
 \code{fisher_mle} objects do not store observed data by design, so this
 always returns NULL.

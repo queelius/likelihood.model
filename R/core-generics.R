@@ -140,6 +140,8 @@ hess_loglik <- function(model, ...) {
 #' @param model The likelihood model
 #' @param ... Additional arguments (to pass into `loglik`)
 #' @param control Custom arguments to pass to `numDeriv::hessian`.
+#' @return A function(df, par, ...) that computes the Hessian matrix of the
+#'   log-likelihood evaluated at `par` given data `df`.
 #' @importFrom numDeriv hessian
 #' @export
 hess_loglik.likelihood_model <- function(model, control = list(), ...) {
