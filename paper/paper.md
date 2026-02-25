@@ -14,7 +14,6 @@ affiliations:
   - name: Department of Computer Science, Southern Illinois University Edwardsville
     index: 1
 date: 24 February 2026
-doi: 10.5281/zenodo.18463604
 bibliography: paper.bib
 ---
 
@@ -86,14 +85,16 @@ Newton-Raphson) with automatic gradient and Hessian computation, but its
 focus is on the optimization step rather than on defining a reusable
 likelihood model concept that downstream packages can extend.
 
-For censored data specifically, `flexsurv` [@flexsurv] provides flexible
-parametric survival models with user-definable hazard functions and
-supports multiple censoring types, but it is oriented toward regression
-modeling rather than providing a generic likelihood interface.
-`fitdistrplus` [@fitdistrplus] fits univariate distributions to censored
-data via several methods (MLE, moment matching, quantile matching) but
-does not expose score functions, Fisher information, or Fisherian
-inference tools.
+For censored data specifically, the `survival` package [@survival]
+provides the most widely used infrastructure for survival analysis in R,
+including Cox proportional hazards and parametric models via `survreg()`,
+but is oriented toward regression modeling rather than exposing a generic
+likelihood interface. `flexsurv` [@flexsurv] extends this with flexible
+parametric survival models and user-definable hazard functions but shares
+the same regression orientation. `fitdistrplus` [@fitdistrplus] fits
+univariate distributions to censored data via several methods (MLE,
+moment matching, quantile matching) but does not expose score functions,
+Fisher information, or Fisherian inference tools.
 
 `likelihood.model` differs from these packages in three ways. First, it
 defines a composable *likelihood model concept* with S3 generics that
