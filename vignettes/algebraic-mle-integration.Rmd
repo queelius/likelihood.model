@@ -380,7 +380,7 @@ with the `algebraic.mle` interface:
 | `observed_fim()` | Observed Fisher information ($-H$) |
 | `bias()` | Asymptotic bias (zero) |
 | `mse()` | Mean squared error (equals `vcov` asymptotically) |
-| `aic()` | Akaike information criterion |
+| `AIC()` | Akaike information criterion |
 | `confint()` | Wald confidence intervals |
 | `rmap()` | Delta method parameter transformations |
 | `marginal()` | Marginal sampling distributions |

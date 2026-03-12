@@ -1058,7 +1058,7 @@ test_that("fisher_mle creates object with correct structure", {
   )
 
   expect_true(inherits(result, "fisher_mle"))
-  expect_true(inherits(result, "mle"))
+  expect_true(inherits(result, "mle_fit"))
 
   # Test base R generic methods
 
@@ -1103,7 +1103,7 @@ test_that("fisher_mle se returns standard errors", {
   expect_equal(se_vals, c(0.5, 0.4))
 })
 
-test_that("fisher_mle aic and bic compute correctly", {
+test_that("fisher_mle AIC and BIC compute correctly via stats generics", {
   result <- fisher_mle(
     par = c(a = 1, b = 2),
     loglik_val = -100,
@@ -1111,11 +1111,11 @@ test_that("fisher_mle aic and bic compute correctly", {
   )
 
   # AIC = -2*logL + 2*k = -2*(-100) + 2*2 = 204
-  expect_equal(aic(result), 204)
+  expect_equal(stats::AIC(result), 204)
 
   # BIC = -2*logL + k*log(n) = 200 + 2*log(50)
   expected_bic <- 200 + 2 * log(50)
-  expect_equal(bic(result), expected_bic)
+  expect_equal(stats::BIC(result), expected_bic)
 })
 
 test_that("fisher_mle summary produces correct output", {
@@ -1142,7 +1142,7 @@ test_that("fit.likelihood_model returns fisher_mle object", {
   result <- solver(df, par = c(0, 1))
 
   expect_true(inherits(result, "fisher_mle"))
-  expect_true(inherits(result, "mle"))
+  expect_true(inherits(result, "mle_fit"))
   expect_true(result$converged)
   expect_equal(result$nobs, 100)
 })
@@ -1279,7 +1279,7 @@ test_that("fisher_boot inherits from fisher_mle", {
 
   expect_true(inherits(boot_result, "fisher_boot"))
   expect_true(inherits(boot_result, "fisher_mle"))
-  expect_true(inherits(boot_result, "mle"))
+  expect_true(inherits(boot_result, "mle_fit"))
 
   # Base methods should work
   expect_equal(length(coef(boot_result)), 2)
@@ -1962,7 +1962,7 @@ test_that("rmap() fallthrough works on fisher_mle", {
     c(mean_life = p[2] * gamma(1 + 1 / p[1]))
   })
 
-  expect_true(inherits(mapped, "mle"))
+  expect_true(inherits(mapped, "mle_fit"))
   expect_equal(length(params(mapped)), 1)
   expect_true(params(mapped) > 0)
 })
@@ -1979,7 +1979,7 @@ test_that("marginal() fallthrough works on fisher_mle", {
 
   # Extract marginal for first parameter
   m <- algebraic.mle::marginal(result, 1)
-  expect_true(inherits(m, "mle"))
+  expect_true(inherits(m, "mle_fit"))
   expect_equal(nparams(m), 1L)
   expect_equal(unname(params(m)), 2.0)
 })
@@ -2090,14 +2090,14 @@ test_that("print.summary_fisher_mle works without nobs", {
 # FISHER_MLE ACCESSOR COVERAGE TESTS
 # =============================================================================
 
-test_that("loglik_val.fisher_mle returns the log-likelihood value", {
+test_that("logLik.fisher_mle returns the log-likelihood value", {
   result <- fisher_mle(
     par = c(a = 1, b = 2),
     vcov = matrix(c(0.04, 0, 0, 0.02), 2, 2),
     loglik_val = -123.45,
     nobs = 50
   )
-  expect_equal(loglik_val(result), -123.45)
+  expect_equal(as.numeric(logLik(result)), -123.45)
 })
 
 test_that("confint.fisher_mle works with character parm", {
@@ -2129,13 +2129,15 @@ test_that("fisher_mle warns when hessian is singular", {
   expect_null(result$vcov)
 })
 
-test_that("bic errors when nobs is NULL", {
+test_that("BIC works via stats::BIC when nobs is available", {
   result <- fisher_mle(
     par = c(a = 1),
     vcov = matrix(0.1, 1, 1),
-    loglik_val = -50
+    loglik_val = -50,
+    nobs = 100
   )
-  expect_error(bic(result), "nobs")
+  # BIC = -2*logL + k*log(n) = 100 + 1*log(100)
+  expect_equal(stats::BIC(result), 100 + log(100))
 })
 
 

@@ -33,7 +33,7 @@ fisher_mle(
 \item{optim_result}{Raw result from optim() for diagnostics}
 }
 \value{
-An object of class \code{c("fisher_mle", "mle")}
+An object of class \code{c("fisher_mle", "mle_fit")}
 }
 \description{
 Creates a \code{fisher_mle} object representing a maximum likelihood estimate

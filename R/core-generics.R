@@ -12,7 +12,7 @@
 #' **Core Infrastructure**:
 #' \itemize{
 #'   \item [fisher_mle] / [fisher_boot]: Result objects from MLE fitting, with
-#'     methods for [coef()], [vcov()], [confint()], [se()], [aic()], [bic()],
+#'     methods for [coef()], [vcov()], [confint()], [se()], [stats::AIC()], [stats::BIC()],
 #'     [summary()].
 #'   \item [fit()]: Default MLE solver using [optim()]. Models can override this
 #'     with closed-form solutions (see [exponential_lifetime] for an example).

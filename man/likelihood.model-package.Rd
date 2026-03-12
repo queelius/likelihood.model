@@ -18,7 +18,7 @@ numerical differentiation via \code{numDeriv}.
 \strong{Core Infrastructure}:
 \itemize{
 \item \link{fisher_mle} / \link{fisher_boot}: Result objects from MLE fitting, with
-methods for \code{\link[=coef]{coef()}}, \code{\link[=vcov]{vcov()}}, \code{\link[=confint]{confint()}}, \code{\link[=se]{se()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}},
+methods for \code{\link[=coef]{coef()}}, \code{\link[=vcov]{vcov()}}, \code{\link[=confint]{confint()}}, \code{\link[=se]{se()}}, \code{\link[stats:AIC]{stats::AIC()}}, \code{\link[stats:AIC]{stats::BIC()}},
 \code{\link[=summary]{summary()}}.
 \item \code{\link[=fit]{fit()}}: Default MLE solver using \code{\link[=optim]{optim()}}. Models can override this
 with closed-form solutions (see \link{exponential_lifetime} for an example).

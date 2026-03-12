@@ -12,7 +12,7 @@ fisher_boot(boot_result, original_mle)
 \item{original_mle}{The original fisher_mle object}
 }
 \value{
-An object of class \code{c("fisher_boot", "fisher_mle", "mle", "boot")}
+An object of class \code{c("fisher_boot", "fisher_mle", "mle_fit", "boot")}
 }
 \description{
 Creates a \code{fisher_boot} object representing bootstrap-based inference

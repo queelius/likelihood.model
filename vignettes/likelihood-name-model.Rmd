@@ -68,7 +68,7 @@ The `fisher_mle` object provides standard inference:
 ```{r basic-inference}
 cat("Estimates:", coef(mle), "\n")
 cat("Standard errors:", se(mle), "\n")
-cat("AIC:", aic(mle), "\n")
+cat("AIC:", AIC(mle), "\n")
 confint(mle)
 ```
 
@@ -420,8 +420,8 @@ model_weib <- likelihood_name("weibull", ob_col = "x")
 mle_exp_test <- fit(model_exp)(df_test, par = c(rate = 0.5))
 mle_weib_test <- fit(model_weib)(df_test, par = c(shape = 1, scale = 1))
 
-cat("Exponential loglik:", loglik_val(mle_exp_test), "\n")
-cat("Weibull loglik:    ", loglik_val(mle_weib_test), "\n")
+cat("Exponential loglik:", as.numeric(logLik(mle_exp_test)), "\n")
+cat("Weibull loglik:    ", as.numeric(logLik(mle_weib_test)), "\n")
 
 # LRT: exponential (1 param) vs Weibull (2 params)
 lrt_result <- lrt(model_exp, model_weib, df_test,

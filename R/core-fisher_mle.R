@@ -12,8 +12,6 @@
 #' \describe{
 #'   \item{\code{\link[algebraic.mle]{se}}}{Standard errors of parameter estimates}
 #'   \item{\code{\link[algebraic.mle]{bias}}}{Bias of parameter estimates}
-#'   \item{\code{\link[algebraic.mle]{aic}}}{Akaike Information Criterion}
-#'   \item{\code{\link[algebraic.mle]{loglik_val}}}{Log-likelihood value at the MLE}
 #'   \item{\code{\link[algebraic.mle]{score_val}}}{Score vector at the MLE}
 #'   \item{\code{\link[algebraic.mle]{sampler}}}{Sampling distribution of the estimator}
 #'   \item{\code{\link[algebraic.mle]{params}}}{Parameter estimates}
@@ -23,12 +21,10 @@
 #'   \item{\code{\link[algebraic.mle]{mse}}}{Mean squared error of the estimator}
 #' }
 #'
-#' @importFrom algebraic.mle se bias aic loglik_val score_val sampler params nparams observed_fim obs mse
-#' @aliases se bias aic loglik_val score_val sampler params nparams observed_fim obs mse
+#' @importFrom algebraic.mle se bias score_val sampler params nparams observed_fim obs mse
+#' @aliases se bias score_val sampler params nparams observed_fim obs mse
 #' @export se
 #' @export bias
-#' @export aic
-#' @export loglik_val
 #' @export score_val
 #' @export sampler
 #' @export params
@@ -54,7 +50,7 @@ NULL
 #' @param nobs Number of observations used in estimation
 #' @param converged Logical indicating if optimization converged
 #' @param optim_result Raw result from optim() for diagnostics
-#' @return An object of class `c("fisher_mle", "mle")`
+#' @return An object of class `c("fisher_mle", "mle_fit")`
 #' @importFrom stats coef confint cov printCoefmat qnorm rnorm
 #' @export
 fisher_mle <- function(par, vcov = NULL, loglik_val, hessian = NULL,
@@ -83,7 +79,7 @@ fisher_mle <- function(par, vcov = NULL, loglik_val, hessian = NULL,
       converged = converged,
       optim = optim_result
     ),
-    class = c("fisher_mle", "mle")
+    class = c("fisher_mle", "mle_fit")
   )
 }
 
@@ -214,7 +210,7 @@ summary.fisher_mle <- function(object, ...) {
       loglik = object$loglik,
       nobs = object$nobs,
       converged = object$converged,
-      aic = aic(object)
+      aic = stats::AIC(object)
     ),
     class = "summary_fisher_mle"
   )
@@ -247,16 +243,6 @@ print.summary_fisher_mle <- function(x, ...) {
 # Custom accessors for fisher_mle
 # --------------------------------------------------------------------------
 
-#' Extract log-likelihood value from fisher_mle
-#'
-#' @param x A fisher_mle object
-#' @param ... Additional arguments (ignored)
-#' @return The log-likelihood value at the MLE
-#' @export
-loglik_val.fisher_mle <- function(x, ...) {
-  x$loglik
-}
-
 #' Extract score vector from fisher_mle
 #'
 #' @param x A fisher_mle object
@@ -283,43 +269,6 @@ se.fisher_mle <- function(x, ...) {
   sqrt(diag(x$vcov))
 }
 
-#' Compute AIC for fisher_mle
-#'
-#' Returns the Akaike Information Criterion:
-#' AIC = -2 * logL + 2 * k
-#' where k is the number of parameters.
-#'
-#' @param x A fisher_mle object
-#' @param ... Additional arguments (ignored)
-#' @return AIC value
-#' @export
-aic.fisher_mle <- function(x, ...) {
-  -2 * x$loglik + 2 * length(x$par)
-}
-
-#' Compute BIC
-#'
-#' Returns the Bayesian Information Criterion:
-#' BIC = -2 * logL + k * log(n)
-#' where k is the number of parameters and n is the sample size.
-#'
-#' @param x A fisher_mle object
-#' @param ... Additional arguments (ignored)
-#' @return BIC value
-#' @export
-bic <- function(x, ...) {
-  UseMethod("bic")
-}
-
-#' @rdname bic
-#' @export
-bic.fisher_mle <- function(x, ...) {
-  if (is.null(x$nobs)) {
-    stop("Cannot compute BIC: nobs not available")
-  }
-  -2 * x$loglik + length(x$par) * log(x$nobs)
-}
-
 #' Bias for fisher_mle (asymptotic)
 #'
 #' Under regularity conditions, asymptotic bias of the MLE is zero.
@@ -337,10 +286,10 @@ bias.fisher_mle <- function(x, theta = NULL, ...) {
 # --------------------------------------------------------------------------
 # algebraic.mle interface compatibility
 #
-# fisher_mle inherits from "mle" but uses different field names (e.g.,
+# fisher_mle inherits from "mle_fit" but uses different field names (e.g.,
 # $par instead of $theta.hat, $hessian instead of $info). These methods
 # ensure that algebraic.mle generics dispatch correctly to fisher_mle
-# objects without falling through to *.mle methods that access the
+# objects without falling through to *.mle_fit methods that access the
 # wrong fields.
 # --------------------------------------------------------------------------
 
@@ -417,7 +366,7 @@ mse.fisher_mle <- function(x, theta = NULL) {
 #'
 #' @param boot_result Result from boot::boot()
 #' @param original_mle The original fisher_mle object
-#' @return An object of class `c("fisher_boot", "fisher_mle", "mle", "boot")`
+#' @return An object of class `c("fisher_boot", "fisher_mle", "mle_fit", "boot")`
 #' @export
 fisher_boot <- function(boot_result, original_mle) {
   structure(
@@ -432,7 +381,7 @@ fisher_boot <- function(boot_result, original_mle) {
       boot = boot_result,
       converged = TRUE
     ),
-    class = c("fisher_boot", "fisher_mle", "mle", "boot")
+    class = c("fisher_boot", "fisher_mle", "mle_fit", "boot")
   )
 }
 

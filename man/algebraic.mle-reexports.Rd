@@ -4,8 +4,6 @@
 \alias{algebraic.mle-reexports}
 \alias{se}
 \alias{bias}
-\alias{aic}
-\alias{loglik_val}
 \alias{score_val}
 \alias{sampler}
 \alias{params}
@@ -24,8 +22,6 @@ them without explicitly loading those packages.
 \describe{
 \item{\code{\link[algebraic.mle]{se}}}{Standard errors of parameter estimates}
 \item{\code{\link[algebraic.mle]{bias}}}{Bias of parameter estimates}
-\item{\code{\link[algebraic.mle]{aic}}}{Akaike Information Criterion}
-\item{\code{\link[algebraic.mle]{loglik_val}}}{Log-likelihood value at the MLE}
 \item{\code{\link[algebraic.mle]{score_val}}}{Score vector at the MLE}
 \item{\code{\link[algebraic.mle]{sampler}}}{Sampling distribution of the estimator}
 \item{\code{\link[algebraic.mle]{params}}}{Parameter estimates}

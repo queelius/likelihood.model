@@ -15,7 +15,7 @@ Description: Facilitates building likelihood models in the Fisherian tradition
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
-    algebraic.mle,
+    algebraic.mle (>= 2.0.0),
     mvtnorm,
     generics,
     stats,

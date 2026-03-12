@@ -89,10 +89,10 @@ cat("\nStandard Errors:\n")
 print(se(mle))
 
 # Log-likelihood value
-cat("\nLog-likelihood:", loglik_val(mle), "\n")
+cat("\nLog-likelihood:", as.numeric(logLik(mle)), "\n")
 
 # AIC for model selection
-cat("AIC:", aic(mle), "\n")
+cat("AIC:", AIC(mle), "\n")
 ```
 
 ## Example 2: Handling Censored Data
@@ -365,8 +365,8 @@ cat("Match:", isTRUE(all.equal(unname(ll_analytical), ll_generic, tolerance = 1e
 | Function | Description |
 |----------|-------------|
 | `lrt()` | Likelihood ratio test |
-| `aic()` | Akaike Information Criterion |
-| `bic()` | Bayesian Information Criterion |
+| `AIC()` | Akaike Information Criterion |
+| `BIC()` | Bayesian Information Criterion |
 | `deviance()` | Deviance statistic |
 
 ## Next Steps
