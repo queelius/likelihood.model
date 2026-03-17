@@ -1,38 +1,9 @@
 # ==========================================================================
-# Re-export generics from algebraic.mle
+# Import generics from algebraic.mle for S3 method registration.
+# The generics themselves are available to users via Depends: algebraic.mle.
 # ==========================================================================
-
-#' Generics re-exported from algebraic.mle
-#'
-#' These generics are defined in \pkg{algebraic.mle} (or originate in
-#' \pkg{algebraic.dist} and are re-exported by \pkg{algebraic.mle}) and
-#' re-exported here so that users of \pkg{likelihood.model} can access
-#' them without explicitly loading those packages.
-#'
-#' \describe{
-#'   \item{\code{\link[algebraic.mle]{se}}}{Standard errors of parameter estimates}
-#'   \item{\code{\link[algebraic.mle]{bias}}}{Bias of parameter estimates}
-#'   \item{\code{\link[algebraic.mle]{score_val}}}{Score vector at the MLE}
-#'   \item{\code{\link[algebraic.mle]{sampler}}}{Sampling distribution of the estimator}
-#'   \item{\code{\link[algebraic.mle]{params}}}{Parameter estimates}
-#'   \item{\code{\link[algebraic.mle]{nparams}}}{Number of parameters}
-#'   \item{\code{\link[algebraic.mle]{observed_fim}}}{Observed Fisher information matrix}
-#'   \item{\code{\link[algebraic.mle]{obs}}}{Observed data stored in MLE object}
-#'   \item{\code{\link[algebraic.mle]{mse}}}{Mean squared error of the estimator}
-#' }
-#'
-#' @importFrom algebraic.mle se bias score_val sampler params nparams observed_fim obs mse
-#' @aliases se bias score_val sampler params nparams observed_fim obs mse
-#' @export se
-#' @export bias
-#' @export score_val
-#' @export sampler
-#' @export params
-#' @export nparams
-#' @export observed_fim
-#' @export obs
-#' @export mse
-#' @name algebraic.mle-reexports
+#' @importFrom algebraic.mle se bias score_val observed_fim mse
+#' @importFrom algebraic.dist sampler params nparams obs
 NULL
 
 

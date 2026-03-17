@@ -12,8 +12,10 @@ Description: Facilitates building likelihood models in the Fisherian tradition
     likelihood_interval(), profile_loglik()).
 License: MIT + file LICENSE
 Encoding: UTF-8
+Depends:
+    algebraic.mle (>= 2.0.0)
 Imports:
-    algebraic.mle (>= 2.0.0),
+    algebraic.dist,
     generics,
     stats,
     numDeriv,
@@ -23,7 +25,6 @@ URL: https://github.com/queelius/likelihood.model,
 BugReports: https://github.com/queelius/likelihood.model/issues
 Suggests:
     mvtnorm,
-    algebraic.dist,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown
