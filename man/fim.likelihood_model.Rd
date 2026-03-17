@@ -15,9 +15,13 @@
 Function that takes (theta, n_obs, n_samples, ...) and returns FIM matrix
 }
 \description{
-Computes the Fisher information matrix by Monte Carlo simulation.
-Uses the outer product of scores.
+Computes the Fisher information matrix by Monte Carlo simulation using
+the negative expected Hessian approach. For each of \code{n_samples} replicates,
+generates a single-observation dataset via \code{rdata}, computes
+\code{-hess_loglik(single_obs, theta)}, and averages. The result is
+\code{n_obs * I_1(theta)} where \code{I_1(theta)} is the per-observation FIM.
 }
 \details{
-This default requires the model to implement \code{rdata} and \code{score} methods.
+This default requires the model to implement \code{rdata} and \code{hess_loglik}
+(or \code{loglik}, since \code{hess_loglik} falls back to numerical differentiation).
 }

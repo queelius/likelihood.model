@@ -28,25 +28,13 @@ likelihood-based inference without probability statements.
 \item \code{\link[=lrt]{lrt()}}: Likelihood ratio test for nested models.
 }
 
-\strong{Model Builders}:
-\itemize{
-\item \link{likelihood_contr_model}: R6 class for building models from
-heterogeneous observation types (exact, censored, etc.) with
-dynamic dispatch to type-specific functions.
-\item \code{\link[=likelihood_name]{likelihood_name()}}: Wraps any standard R distribution (norm, weibull,
-exp, ...) with automatic censoring support.
-}
-
-\strong{Example Implementations}:
-Reference implementations showing how to satisfy the \code{likelihood_model}
-concept with hand-derived analytical solutions:
-\itemize{
-\item \link{weibull_uncensored}: Weibull with exact observations only.
-Demonstrates analytical score and hessian (10-100x faster than numerical).
-\item \link{exponential_lifetime}: Exponential with right-censoring support.
+\strong{Example Implementation}:
+\link{exponential_lifetime}: Exponential with right-censoring support.
 Demonstrates closed-form MLE (no optim needed), analytical FIM,
 and \code{\link[=rdata]{rdata()}} for Monte Carlo validation.
-}
+
+For contribution-based models with heterogeneous observation types,
+see the companion package \pkg{likelihood.contr}.
 }
 \seealso{
 Useful links:

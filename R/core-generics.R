@@ -22,25 +22,13 @@
 #'   \item [lrt()]: Likelihood ratio test for nested models.
 #' }
 #'
-#' **Model Builders**:
-#' \itemize{
-#'   \item [likelihood_contr_model]: R6 class for building models from
-#'     heterogeneous observation types (exact, censored, etc.) with
-#'     dynamic dispatch to type-specific functions.
-#'   \item [likelihood_name()]: Wraps any standard R distribution (norm, weibull,
-#'     exp, ...) with automatic censoring support.
-#' }
+#' **Example Implementation**:
+#' [exponential_lifetime]: Exponential with right-censoring support.
+#' Demonstrates closed-form MLE (no optim needed), analytical FIM,
+#' and [rdata()] for Monte Carlo validation.
 #'
-#' **Example Implementations**:
-#' Reference implementations showing how to satisfy the `likelihood_model`
-#' concept with hand-derived analytical solutions:
-#' \itemize{
-#'   \item [weibull_uncensored]: Weibull with exact observations only.
-#'     Demonstrates analytical score and hessian (10-100x faster than numerical).
-#'   \item [exponential_lifetime]: Exponential with right-censoring support.
-#'     Demonstrates closed-form MLE (no optim needed), analytical FIM,
-#'     and [rdata()] for Monte Carlo validation.
-#' }
+#' For contribution-based models with heterogeneous observation types,
+#' see the companion package \pkg{likelihood.contr}.
 #'
 "_PACKAGE"
 
@@ -69,6 +57,21 @@ is_likelihood_model <- function(x) {
 #' @export
 loglik <- function(model, ...) {
   UseMethod("loglik")
+}
+
+#' Default loglik method
+#'
+#' Provides a clear error when a model class does not implement `loglik`.
+#'
+#' @param model A likelihood model
+#' @param ... Additional arguments
+#' @return Never returns; always errors.
+#' @export
+loglik.likelihood_model <- function(model, ...) {
+  stop(sprintf(
+    "Class '%s' must implement loglik() to satisfy the likelihood_model concept",
+    class(model)[1]
+  ))
 }
 
 #' Score method
@@ -205,60 +208,54 @@ fim <- function(model, ...) {
 
 #' Default FIM method using Monte Carlo estimation
 #'
-#' Computes the Fisher information matrix by Monte Carlo simulation.
-#' Uses the outer product of scores.
+#' Computes the Fisher information matrix by Monte Carlo simulation using
+#' the negative expected Hessian approach. For each of `n_samples` replicates,
+#' generates a single-observation dataset via `rdata`, computes
+#' `-hess_loglik(single_obs, theta)`, and averages. The result is
+#' `n_obs * I_1(theta)` where `I_1(theta)` is the per-observation FIM.
 #'
-#' This default requires the model to implement `rdata` and `score` methods.
+#' This default requires the model to implement `rdata` and `hess_loglik`
+#' (or `loglik`, since `hess_loglik` falls back to numerical differentiation).
 #'
 #' @param model A likelihood model
 #' @param ... Additional arguments passed to rdata
 #' @return Function that takes (theta, n_obs, n_samples, ...) and returns FIM matrix
 #' @export
 fim.likelihood_model <- function(model, ...) {
-  score_fn <- score(model)
+  hess_fn <- hess_loglik(model, ...)
   rdata_fn <- rdata(model)
 
   function(theta, n_obs, n_samples = 1000, ...) {
     p <- length(theta)
     fim_sum <- matrix(0, nrow = p, ncol = p)
+    n_ok <- 0L
 
     for (b in seq_len(n_samples)) {
-      data_b <- rdata_fn(theta, n = n_obs, ...)
-      s <- score_fn(data_b, theta)
-      fim_sum <- fim_sum + outer(s, s)
+      sample <- tryCatch({
+        data_b <- rdata_fn(theta, n = 1, ...)
+        H <- -hess_fn(data_b, theta, ...)
+        if (any(!is.finite(H))) list(ok = FALSE) else list(ok = TRUE, val = H)
+      }, error = function(e) list(ok = FALSE))
+
+      if (sample$ok) {
+        fim_sum <- fim_sum + sample$val
+        n_ok <- n_ok + 1L
+      }
     }
-    fim_sum / n_samples
-  }
-}
 
-#' Observed information matrix method
-#'
-#' Returns the observed information matrix, which is the negative Hessian
-#' of the log-likelihood evaluated at the data and parameter values.
-#'
-#' At the MLE, the observed information is a consistent estimator of the
-#' Fisher information matrix.
-#'
-#' @param model A likelihood model
-#' @param ... Additional arguments
-#' @return Function that computes -hess_loglik(df, par)
-#' @export
-observed_info <- function(model, ...) {
-  UseMethod("observed_info")
-}
+    if (n_ok == 0L) {
+      stop("All Monte Carlo samples failed in FIM estimation")
+    }
+    if (n_ok < n_samples) {
+      warning(sprintf("FIM estimation: %d of %d samples failed",
+                      n_samples - n_ok, n_samples))
+    }
 
-#' Default observed information method
-#'
-#' Returns a function that computes -hess_loglik(df, par).
-#'
-#' @param model A likelihood model
-#' @param ... Additional arguments passed to hess_loglik
-#' @return Function that takes (df, par, ...) and returns observed information matrix
-#' @export
-observed_info.likelihood_model <- function(model, ...) {
-  H_fn <- hess_loglik(model, ...)
-  function(df, par, ...) {
-    -H_fn(df, par, ...)
+    fim_mat <- n_obs * fim_sum / n_ok
+    if (!is.null(names(theta))) {
+      dimnames(fim_mat) <- list(names(theta), names(theta))
+    }
+    fim_mat
   }
 }
 
@@ -276,6 +273,23 @@ observed_info.likelihood_model <- function(model, ...) {
 #' @export
 rdata <- function(model, ...) {
   UseMethod("rdata")
+}
+
+#' Default rdata method
+#'
+#' Provides a clear error when a model class does not implement `rdata`.
+#' The `rdata` method is required by the default [fim.likelihood_model()]
+#' for Monte Carlo FIM estimation.
+#'
+#' @param model A likelihood model
+#' @param ... Additional arguments
+#' @return Never returns; always errors.
+#' @export
+rdata.likelihood_model <- function(model, ...) {
+  stop(sprintf(
+    "Class '%s' does not implement rdata(); needed by fim() for Monte Carlo estimation",
+    class(model)[1]
+  ))
 }
 
 #' Retrieve the assumptions the likelihood model makes about the data.

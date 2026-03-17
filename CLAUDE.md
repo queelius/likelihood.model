@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-`likelihood.model` is an R package for specifying and using likelihood models for statistical inference. It defines a generic framework where likelihood models implement key methods (`loglik`, `score`, `hess_loglik`) and provides two main implementations: `likelihood_contr_model` (for likelihood contributions with different observation types) and `likelihood_name_model` (for standard R distributions).
+`likelihood.model` is an R package providing the core framework for likelihood-based statistical inference in the Fisherian tradition. It defines the `likelihood_model` concept (generic interface) with methods `loglik`, `score`, `hess_loglik`, `fim`, and provides infrastructure for MLE fitting, Fisherian inference, likelihood ratio tests, and bootstrap sampling.
+
+The contribution-based model builder (`likelihood_contr_model`) and the named distribution wrapper (`likelihood_name`) have been extracted to the separate `likelihood.contr` package.
 
 The package is designed to interoperate with the `algebraic.mle` package for maximum likelihood estimation and the `algebraic.dist` package for distributions.
 
@@ -13,7 +15,7 @@ The package is designed to interoperate with the `algebraic.mle` package for max
 ### Building and Testing
 ```r
 # Install dependencies (core + suggested)
-install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown", "dplyr", "tibble"))
+install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown"))
 
 # Install companion packages (needed for full functionality)
 devtools::install_github("queelius/algebraic.mle")
@@ -25,7 +27,7 @@ devtools::load_all()
 # Run tests
 testthat::test_file("tests/test.R")
 
-# Run test coverage analysis (important - tests are incomplete)
+# Run test coverage analysis
 covr::package_coverage()
 
 # Build documentation from roxygen2 comments
@@ -71,34 +73,7 @@ Generic functions that operate on likelihood models:
 - `fim()`: Fisher information matrix
 - `assumptions()`: Retrieve model assumptions
 
-### Main Implementations
-
-**`likelihood_contr_model`** (R6 class in `R/model-contr.R`):
-- **Uses R6 classes** (not S3) for object-oriented programming with mutable state
-- Handles heterogeneous observation types (exact, left-censored, right-censored, interval-censored)
-- Uses `obs_type` function to classify rows in data frame
-- Splits data by type and sums likelihood contributions (assumes i.i.d.)
-- Dynamically dispatches to type-specific functions:
-  - Looks for `loglik.<type>`, `score.<type>`, `hess_loglik.<type>` functions
-  - Falls back to numerical differentiation if analytical methods not found
-- Stores dispatchers in lists: `$logliks`, `$scores`, `$hess_logliks`
-- **Important**: R6 methods are called with `$` (e.g., `model$loglik(df, par)`) not S3 generics
-- S3 wrapper methods exist: `loglik.likelihood_contr_model()` wraps `model$loglik()`
-
-**`likelihood_name_model`** (in `R/model-name.R`):
-- Wraps standard R distributions (e.g., "norm", "weibull", "exp")
-- Uses R naming convention: `d<name>` (pdf), `p<name>` (cdf)
-- Handles censoring via `censor_col`: "left", "right", "interval", or "exact"/NA
-- `prepare_args()` utility matches parameters to distribution function arguments
-
-### Example Implementations
-
-**`weibull_uncensored`** (in `R/example-weibull.R`):
-- Specialized model for exact Weibull observations with analytical derivatives
-- Demonstrates providing explicit `loglik`, `score`, and `hess_loglik` methods
-- Analytical derivatives 10-100x faster than numerical differentiation
-- Can be used standalone or as a contribution in `likelihood_contr_model`
-- Backward-compatible alias: `likelihood_exact_weibull`
+### Example Implementation
 
 **`exponential_lifetime`** (in `R/example-exponential.R`):
 - Exponential distribution with optional right-censoring support
@@ -123,116 +98,73 @@ Generic functions that operate on likelihood models:
 - `R/core-fisherian.R`: Fisherian inference (`support`, `relative_likelihood`, `likelihood_interval`, `profile_loglik`, `evidence`)
 - `R/core-lrt.R`: Likelihood ratio test (`lrt()`)
 
-**Model builders**:
-- `R/model-contr.R`: R6 class `likelihood_contr_model` for contribution-based models
-- `R/model-name.R`: `likelihood_name()` wrapper for standard R distributions
-
-**Example implementations**:
-- `R/example-weibull.R`: `weibull_uncensored` with analytical derivatives
+**Example implementation**:
 - `R/example-exponential.R`: `exponential_lifetime` with closed-form MLE and right-censoring
 
 **Tests and vignettes**:
-- `tests/test.R`: 229 unit tests covering all model types and inference methods
+- `tests/test.R`: ~236 unit tests covering core framework and exponential_lifetime
 - `vignettes/getting-started.Rmd`: Quick introduction with examples
-- `vignettes/likelihood-contributions.Rmd`: Advanced examples with series systems
-- `vignettes/likelihood-name-model.Rmd`: Examples using named distributions
+- `vignettes/exponential-lifetime.Rmd`: Detailed exponential model coverage
+- `vignettes/algebraic-mle-integration.Rmd`: Three-package ecosystem demonstration
 
 ## Important Notes
 
 ### Testing and Coverage
-- `tests/test.R` contains 229 tests covering all model types and inference methods
+- `tests/test.R` contains ~236 tests covering all core infrastructure and the exponential_lifetime model
 - When adding new features, write complete tests and run `covr::package_coverage()` to ensure coverage
 - Focus on testing edge cases: censored data, empty data frames, parameter validation
 - See vignettes for realistic examples to base tests on
 
-### Adding New Distributions
-When adding new distribution support, choose one of these approaches:
-1. **For standard R distributions**: Use `likelihood_name("dist_name", ob_col, censor_col)`
-   - Works with any distribution that has `d<name>` and `p<name>` functions
-   - Automatically handles censoring types
-2. **For custom likelihood contributions**: Create `loglik.<type>`, `score.<type>`, `hess_loglik.<type>` functions
-   - Used by `likelihood_contr_model` via dynamic dispatch
-   - Provide analytical derivatives when possible (much faster than numerical)
-3. **For specialized models**: Create a new class (like `weibull_uncensored` or `exponential_lifetime`)
-   - Define S3 methods: `loglik.<class>`, `score.<class>`, `hess_loglik.<class>`
-   - Add `"likelihood_model"` to class vector to inherit default behavior
-   - Optionally override `fit.<class>` for closed-form MLEs (see `exponential_lifetime`)
+### Adding New Specialized Models
+Create a new class (like `exponential_lifetime`):
+- Define S3 methods: `loglik.<class>`, `score.<class>`, `hess_loglik.<class>`
+- Add `"likelihood_model"` to class vector to inherit default behavior
+- Optionally override `fit.<class>` for closed-form MLEs (see `exponential_lifetime`)
+- Optionally implement `fim.<class>` for analytical FIM
+- Optionally implement `rdata.<class>` for Monte Carlo validation
+
+For contribution-based models and standard distribution wrappers, use the `likelihood.contr` package.
 
 ### Performance Considerations
 - **Numerical differentiation is expensive**: Default `score` and `hess_loglik` use `numDeriv` with Richardson extrapolation (`r=6`)
-- Provide analytical derivatives whenever possible (see `example-weibull.R` for example)
-- For Weibull: analytical derivatives ~10-100x faster than numerical
-- Parameters can be named or unnamed; `prepare_args()` handles both cases
+- Provide analytical derivatives whenever possible (see `example-exponential.R`)
 - Always validate inputs: check for NULL, positive values where required, sufficient sample size
 
 ### Package Dependencies
-- **Required**: `mvtnorm`, `generics`, `MASS`, `stats`, `numDeriv`, `boot`, `dplyr`
-- **Companion packages**: `algebraic.mle` (MLE objects), `algebraic.dist` (distributions)
-- **Roxygen2**: Version 7.3.1 for documentation generation
+- **Required**: `algebraic.mle` (>= 2.0.0), `generics`, `stats`, `numDeriv`, `boot`
+- **Suggested**: `mvtnorm`, `algebraic.dist`, `testthat` (>= 3.0.0), `knitr`, `rmarkdown`
+- **Roxygen2**: Version 7.3.3 for documentation generation
 
 ## Common Workflows
 
-### Using a Standard Distribution (Simple Case)
+### Using the Exponential Lifetime Model
 ```r
-# Create model for normal distribution
-model <- likelihood_name("norm", ob_col = "x", censor_col = NULL)
+# Create model
+model <- exponential_lifetime("t")
 
-# Fit the model
-solver <- fit(model)
-result <- solver(df, par = c(0, 1))  # initial guess: mean=0, sd=1
+# Fit (closed-form, no initial guess needed)
+mle <- fit(model)(df)
+coef(mle)
+se(mle)
+confint(mle)
 
-# Get parameter estimates
-params(result)
+# With right-censoring
+model_c <- exponential_lifetime("t", censor_col = "status")
+mle_c <- fit(model_c)(df_censored)
 ```
 
-### Handling Censored Data
+### Fisherian Inference
 ```r
-# Data with censoring column ("exact", "left", "right", "interval")
-df <- data.frame(
-  x = c(1.2, 3.4, 2.1),
-  censor = c("exact", "right", "left")
-)
-
-model <- likelihood_name("weibull", ob_col = "x", censor_col = "censor")
-solver <- fit(model)
-result <- solver(df, par = c(shape = 2, scale = 1))
-```
-
-### Using Likelihood Contributions (Advanced Case)
-```r
-# Define observation type function
-obs_type <- function(df) {
-  # Returns "exact", "censored", etc. for each row
-  df$type
-}
-
-# Define type-specific log-likelihood functions
-loglik.exact <- function(df, par) {
-  # Implementation for exact observations
-}
-
-loglik.censored <- function(df, par) {
-  # Implementation for censored observations
-}
-
-# Create contribution model
-model <- likelihood_contr_model$new(
-  obs_type = obs_type,
-  assumptions = c("iid", "exponential components")
-)
-
-# Fit as usual
-solver <- fit(model)
-result <- solver(df, par = initial_params)
+# Support, relative likelihood, likelihood intervals
+s <- support(mle, theta, df, model)
+rl <- relative_likelihood(mle, theta, df, model)
+li <- likelihood_interval(mle, df, model, k = 8)
+prof <- profile_loglik(mle, df, model, param = 1)
+ev <- evidence(model, df, theta1, theta2)
 ```
 
 ### Likelihood Ratio Test
 ```r
-# Nested models (null is subset of alternative)
-null_result <- fit(null_model)(df, par_null)
-alt_result <- fit(alt_model)(df, par_alt)
-
-# Perform LRT
 lrt_result <- lrt(
   null = null_model,
   alt = alt_model,
@@ -241,7 +173,5 @@ lrt_result <- lrt(
   alt_par = params(alt_result),
   dof = length(params(alt_result)) - length(params(null_result))
 )
-
-# Check p-value
 lrt_result$p.value
 ```

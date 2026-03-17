@@ -112,15 +112,16 @@ fit.likelihood_model <- function(object, ...) {
 sampler.likelihood_model <- function(x, df, par, ..., nthreads = 1L) {
   solver <- fit(x, ...)
   sol <- solver(df, par, ...)
-  function(n, ...) {
+  init_par <- coef(sol)
+  function(n) {
     boot_result <- boot(
       data = df,
       statistic = function(df, ind) {
-        coef(solver(df[ind, , drop = FALSE], par = coef(sol), ...))
+        coef(solver(df[ind, , drop = FALSE], par = init_par))
       },
       R = n,
       parallel = "multicore",
-      ncpus = nthreads, ...
+      ncpus = nthreads
     )
     fisher_boot(boot_result, sol)
   }

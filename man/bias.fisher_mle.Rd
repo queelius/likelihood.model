@@ -2,20 +2,27 @@
 % Please edit documentation in R/core-fisher_mle.R
 \name{bias.fisher_mle}
 \alias{bias.fisher_mle}
-\title{Bias for fisher_mle (asymptotic)}
+\title{Bias for fisher_mle}
 \usage{
-\method{bias}{fisher_mle}(x, theta = NULL, ...)
+\method{bias}{fisher_mle}(x, theta = NULL, model = NULL, n_sim = 1000, ...)
 }
 \arguments{
 \item{x}{A fisher_mle object}
 
 \item{theta}{True parameter value (for simulation studies)}
 
+\item{model}{A likelihood model with \code{rdata} and \code{fit} methods (optional)}
+
+\item{n_sim}{Number of Monte Carlo replicates (default 1000)}
+
 \item{...}{Additional arguments (ignored)}
 }
 \value{
-Bias estimate (vector of zeros)
+Bias estimate vector
 }
 \description{
-Under regularity conditions, asymptotic bias of the MLE is zero.
+Estimates the bias of the MLE. Without a model and true parameter value,
+returns zeros (asymptotic bias is zero under regularity conditions).
+When both \code{theta} and \code{model} are provided, performs a Monte Carlo
+simulation study to estimate finite-sample bias.
 }

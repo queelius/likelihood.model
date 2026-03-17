@@ -283,32 +283,6 @@ cat("  Theoretical SE:    ", true_lambda / sqrt(n_obs), "\n")
 cat("  (SE = lambda/sqrt(n) from Fisher information)\n")
 ```
 
-## Cross-Validation with `likelihood_name("exp")`
-
-The analytical model should produce the same log-likelihood as the generic
-distribution-wrapping approach:
-
-```{r crossval}
-set.seed(42)
-df_cv <- data.frame(t = rexp(100, rate = 2.0))
-
-model_analytical <- exponential_lifetime("t")
-model_generic <- likelihood_name("exp", ob_col = "t",
-                                  censor_col = "censor")
-
-# Need a censor column for likelihood_name
-df_cv_generic <- data.frame(t = df_cv$t, censor = rep("exact", 100))
-
-lambda_test <- 2.3
-ll_analytical <- loglik(model_analytical)(df_cv, lambda_test)
-ll_generic <- loglik(model_generic)(df_cv_generic, lambda_test)
-
-cat("Log-likelihood at lambda =", lambda_test, ":\n")
-cat("  Analytical model:", ll_analytical, "\n")
-cat("  Generic model:   ", ll_generic, "\n")
-cat("  Match:", all.equal(ll_analytical, ll_generic), "\n")
-```
-
 ## Summary
 
 The `exponential_lifetime` model demonstrates several design patterns
@@ -323,8 +297,8 @@ available in the `likelihood.model` framework:
 | Fisherian inference | Works out of the box via `support()`, `likelihood_interval()`, etc. |
 
 These patterns apply to any distribution where you want tighter integration
-than `likelihood_name()` provides. See `weibull_uncensored` for another
-example with analytical derivatives (but without a closed-form MLE).
+than a generic wrapper provides. For contribution-based models with
+heterogeneous observation types, see the `likelihood.contr` package.
 
 ## Session Info
 

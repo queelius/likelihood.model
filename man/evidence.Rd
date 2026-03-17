@@ -2,20 +2,23 @@
 % Please edit documentation in R/core-fisherian.R
 \name{evidence}
 \alias{evidence}
+\alias{evidence.likelihood_model}
 \title{Likelihood-Based Evidence}
 \usage{
-evidence(model, data, theta1, theta2, ...)
+evidence(model, ...)
+
+\method{evidence}{likelihood_model}(model, data, theta1, theta2, ...)
 }
 \arguments{
 \item{model}{The likelihood model}
+
+\item{...}{Additional arguments}
 
 \item{data}{Data frame for likelihood computation}
 
 \item{theta1}{First parameter value}
 
 \item{theta2}{Second parameter value}
-
-\item{...}{Additional arguments passed to loglik}
 }
 \value{
 Evidence value (log likelihood ratio)

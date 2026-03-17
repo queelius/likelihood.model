@@ -425,13 +425,19 @@ deviance.fisher_mle <- function(object, null_model = NULL, ...) {
 #' - |E| > log(32) ~ 3.47: Very strong evidence
 #'
 #' @param model The likelihood model
+#' @param ... Additional arguments
+#' @return Evidence value (log likelihood ratio)
+#' @export
+evidence <- function(model, ...) {
+  UseMethod("evidence")
+}
+
+#' @rdname evidence
 #' @param data Data frame for likelihood computation
 #' @param theta1 First parameter value
 #' @param theta2 Second parameter value
-#' @param ... Additional arguments passed to loglik
-#' @return Evidence value (log likelihood ratio)
 #' @export
-evidence <- function(model, data, theta1, theta2, ...) {
+evidence.likelihood_model <- function(model, data, theta1, theta2, ...) {
   ll <- loglik(model, ...)
   ll(data, theta1, ...) - ll(data, theta2, ...)
 }

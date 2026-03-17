@@ -269,17 +269,55 @@ se.fisher_mle <- function(x, ...) {
   sqrt(diag(x$vcov))
 }
 
-#' Bias for fisher_mle (asymptotic)
+#' Bias for fisher_mle
 #'
-#' Under regularity conditions, asymptotic bias of the MLE is zero.
+#' Estimates the bias of the MLE. Without a model and true parameter value,
+#' returns zeros (asymptotic bias is zero under regularity conditions).
+#' When both `theta` and `model` are provided, performs a Monte Carlo
+#' simulation study to estimate finite-sample bias.
 #'
 #' @param x A fisher_mle object
 #' @param theta True parameter value (for simulation studies)
+#' @param model A likelihood model with `rdata` and `fit` methods (optional)
+#' @param n_sim Number of Monte Carlo replicates (default 1000)
 #' @param ... Additional arguments (ignored)
-#' @return Bias estimate (vector of zeros)
+#' @return Bias estimate vector
 #' @export
-bias.fisher_mle <- function(x, theta = NULL, ...) {
-  rep(0, length(x$par))
+bias.fisher_mle <- function(x, theta = NULL, model = NULL, n_sim = 1000, ...) {
+  p <- length(x$par)
+
+  if (is.null(theta) || is.null(model)) {
+    return(rep(0, p))
+  }
+
+  if (is.null(x$nobs)) {
+    stop("Cannot estimate MC bias: nobs not available in fisher_mle object")
+  }
+
+  rdata_fn <- rdata(model)
+  fit_fn <- fit(model)
+  estimates <- matrix(NA_real_, nrow = n_sim, ncol = p)
+  n_ok <- 0L
+
+  for (i in seq_len(n_sim)) {
+    est <- tryCatch({
+      sim_data <- rdata_fn(theta, n = x$nobs)
+      coef(fit_fn(sim_data, par = theta))
+    }, error = function(e) NULL)
+
+    if (!is.null(est) && length(est) == p) {
+      n_ok <- n_ok + 1L
+      estimates[n_ok, ] <- est
+    }
+  }
+
+  if (n_ok < 10L) {
+    warning(sprintf("Only %d of %d MC replicates succeeded; bias estimate unreliable",
+                    n_ok, n_sim))
+    if (n_ok == 0L) return(rep(NA_real_, p))
+  }
+
+  colMeans(estimates[seq_len(n_ok), , drop = FALSE]) - theta
 }
 
 
@@ -341,15 +379,19 @@ obs.fisher_mle <- function(x) {
 #'
 #' Computes MSE = Var + Bias^2 (scalar) or Vcov + bias %*% t(bias) (matrix).
 #' Under regularity conditions, asymptotic bias is zero, so MSE equals the
-#' variance-covariance matrix.
+#' variance-covariance matrix. When `model` is provided, uses Monte Carlo
+#' bias estimation via [bias.fisher_mle()].
 #'
 #' @param x A fisher_mle object
 #' @param theta True parameter value (for simulation studies)
+#' @param model A likelihood model (optional, enables MC bias estimation)
+#' @param n_sim Number of MC replicates for bias estimation (default 1000)
+#' @param ... Additional arguments (ignored)
 #' @return MSE matrix or scalar
 #' @importFrom stats vcov
 #' @export
-mse.fisher_mle <- function(x, theta = NULL) {
-  b <- bias(x, theta)
+mse.fisher_mle <- function(x, theta = NULL, ..., model = NULL, n_sim = 1000) {
+  b <- bias(x, theta, model = model, n_sim = n_sim)
   V <- vcov(x)
   if (length(x$par) == 1L) V + b^2 else V + b %*% t(b)
 }
@@ -478,7 +520,6 @@ print.fisher_boot <- function(x, ...) {
 #' @param x A fisher_mle object
 #' @param ... Additional arguments (ignored)
 #' @return Function that takes n and returns n x p matrix of samples
-#' @importFrom mvtnorm rmvnorm
 #' @export
 sampler.fisher_mle <- function(x, ...) {
   mu <- x$par
@@ -490,11 +531,16 @@ sampler.fisher_mle <- function(x, ...) {
 
   p <- length(mu)
 
+  if (p > 1 && !requireNamespace("mvtnorm", quietly = TRUE)) {
+    stop("Package 'mvtnorm' is required for multivariate sampling. ",
+         "Install it with: install.packages('mvtnorm')")
+  }
+
   function(n) {
     if (p == 1) {
       matrix(rnorm(n, mean = mu, sd = sqrt(sigma)), ncol = 1)
     } else {
-      rmvnorm(n, mean = mu, sigma = sigma)
+      mvtnorm::rmvnorm(n, mean = mu, sigma = sigma)
     }
   }
 }

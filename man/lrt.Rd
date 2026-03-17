@@ -24,8 +24,9 @@ hypothesis}
 \item{...}{additional arguments passed to loglik}
 }
 \value{
-likelihood ratio test
+An \code{lrt_result} object with components \code{stat}, \code{p.value}, and \code{dof}
 }
 \description{
-Likelihood ratio test
+Computes the likelihood ratio test statistic and p-value for
+nested models.
 }

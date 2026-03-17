@@ -4,12 +4,18 @@
 \alias{mse.fisher_mle}
 \title{Mean squared error for fisher_mle}
 \usage{
-\method{mse}{fisher_mle}(x, theta = NULL)
+\method{mse}{fisher_mle}(x, theta = NULL, ..., model = NULL, n_sim = 1000)
 }
 \arguments{
 \item{x}{A fisher_mle object}
 
 \item{theta}{True parameter value (for simulation studies)}
+
+\item{...}{Additional arguments (ignored)}
+
+\item{model}{A likelihood model (optional, enables MC bias estimation)}
+
+\item{n_sim}{Number of MC replicates for bias estimation (default 1000)}
 }
 \value{
 MSE matrix or scalar
@@ -17,5 +23,6 @@ MSE matrix or scalar
 \description{
 Computes MSE = Var + Bias^2 (scalar) or Vcov + bias \%*\% t(bias) (matrix).
 Under regularity conditions, asymptotic bias is zero, so MSE equals the
-variance-covariance matrix.
+variance-covariance matrix. When \code{model} is provided, uses Monte Carlo
+bias estimation via \code{\link[=bias.fisher_mle]{bias.fisher_mle()}}.
 }
