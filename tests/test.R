@@ -1608,3 +1608,390 @@ test_that("evidence dispatches via S3", {
   expected <- ll(df, c(lambda = 2)) - ll(df, c(lambda = 1))
   expect_equal(e, expected)
 })
+
+
+# =============================================================================
+# COVERAGE RECOVERY TESTS
+# =============================================================================
+# These tests target multivariate code paths that require a 2+ parameter model.
+#
+# Mock normal model: loglik.mock_norm, score.mock_norm, hess_loglik.mock_norm
+# are registered in the global environment and cleaned up after each test
+# block that needs them.
+
+# Helper: set up and tear down mock_norm model
+make_mock_norm <- function() {
+  model <- structure(list(ob_col = "x"), class = c("mock_norm", "likelihood_model"))
+
+  loglik.mock_norm <<- function(model, ...) {
+    function(df, par, ...) {
+      mu <- par[1]; sigma <- par[2]
+      if (sigma <= 0) return(-.Machine$double.xmax / 2)
+      sum(dnorm(df[[model$ob_col]], mu, sigma, log = TRUE))
+    }
+  }
+
+  model
+}
+
+cleanup_mock_norm <- function() {
+  to_rm <- intersect(c("loglik.mock_norm"), ls(envir = .GlobalEnv))
+  if (length(to_rm)) rm(list = to_rm, envir = .GlobalEnv)
+}
+
+# ---------------------------------------------------------------------------
+# sampler.fisher_mle: multivariate branch (mvtnorm::rmvnorm) — line 543
+# ---------------------------------------------------------------------------
+
+test_that("sampler.fisher_mle uses mvtnorm for 2-param model", {
+  skip_if_not_installed("mvtnorm")
+
+  result <- fisher_mle(
+    par = c(mu = 5.0, sigma = 2.0),
+    vcov = matrix(c(0.04, 0.0, 0.0, 0.02), 2, 2),
+    loglik_val = -150,
+    nobs = 100
+  )
+
+  samp_fn <- sampler(result)
+  set.seed(9001)
+  samples <- samp_fn(500)
+
+  expect_equal(dim(samples), c(500, 2))
+  expect_equal(mean(samples[, 1]), 5.0, tolerance = 0.1)
+  expect_equal(mean(samples[, 2]), 2.0, tolerance = 0.1)
+})
+
+# ---------------------------------------------------------------------------
+# likelihood_interval: multivariate (profile) branch — lines 149-213
+# ---------------------------------------------------------------------------
+
+test_that("likelihood_interval computes profile interval for 2-param model", {
+  skip_if_not_installed("mvtnorm")
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9002)
+  df <- data.frame(x = rnorm(100, mean = 3, sd = 1.5))
+
+  # Fit via fit.likelihood_model (optim-based)
+  solver <- fit(model)
+  result <- solver(df, par = c(mu = 0, sigma = 1))
+
+  # Compute profile likelihood interval for mu (param = 1)
+  li <- likelihood_interval(result, data = df, model = model, k = 8, param = 1)
+
+  expect_true(inherits(li, "likelihood_interval"))
+  expect_equal(nrow(li), 1)
+  expect_equal(ncol(li), 2)
+
+  # Interval should contain the MLE for mu
+  mu_hat <- coef(result)[1]
+  expect_true(li[1, 1] < mu_hat && mu_hat < li[1, 2])
+})
+
+test_that("likelihood_interval computes profile intervals for both params", {
+  skip_if_not_installed("mvtnorm")
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9003)
+  df <- data.frame(x = rnorm(80, mean = 2, sd = 1))
+
+  solver <- fit(model)
+  result <- solver(df, par = c(mu = 0, sigma = 1))
+
+  # Profile interval for all params (NULL => both)
+  li <- likelihood_interval(result, data = df, model = model, k = 8)
+
+  expect_equal(nrow(li), 2)
+  mu_hat <- coef(result)[1]
+  sigma_hat <- coef(result)[2]
+  expect_true(li[1, 1] < mu_hat && mu_hat < li[1, 2])
+  expect_true(li[2, 1] < sigma_hat && sigma_hat < li[2, 2])
+})
+
+test_that("likelihood_interval handles character param name for 2-param model", {
+  skip_if_not_installed("mvtnorm")
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9004)
+  df <- data.frame(x = rnorm(60, mean = 1, sd = 2))
+
+  solver <- fit(model)
+  result <- solver(df, par = c(mu = 0, sigma = 1))
+
+  # Use character param name
+  li <- likelihood_interval(result, data = df, model = model, k = 8,
+                            param = "mu")
+  expect_equal(nrow(li), 1)
+  mu_hat <- coef(result)["mu"]
+  expect_true(li[1, 1] < mu_hat && mu_hat < li[1, 2])
+})
+
+# ---------------------------------------------------------------------------
+# profile_loglik: 1D profile over a 2-param model — lines 310-329
+# ---------------------------------------------------------------------------
+
+test_that("profile_loglik 1D profile over nuisance parameter works", {
+  skip_if_not_installed("mvtnorm")
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9005)
+  df <- data.frame(x = rnorm(80, mean = 3, sd = 1.5))
+
+  solver <- fit(model)
+  result <- solver(df, par = c(mu = 0, sigma = 1))
+
+  # Profile over mu (param=1), optimising out sigma
+  prof <- profile_loglik(result, data = df, model = model, param = 1, n_grid = 15)
+
+  expect_true(inherits(prof, "profile_loglik"))
+  expect_equal(nrow(prof), 15)
+  expect_true("loglik" %in% names(prof))
+  expect_true("support" %in% names(prof))
+  expect_true("relative_likelihood" %in% names(prof))
+
+  # Profile should peak near MLE
+  mu_hat <- unname(coef(result)[1])
+  max_idx <- which.max(prof$loglik)
+  expect_equal(unname(prof[[1]][max_idx]), mu_hat, tolerance = 0.5)
+})
+
+# ---------------------------------------------------------------------------
+# profile_loglik: 2D profile — lines 332-358
+# ---------------------------------------------------------------------------
+
+test_that("profile_loglik 2D profile produces correct shape data frame", {
+  skip_if_not_installed("mvtnorm")
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9006)
+  df <- data.frame(x = rnorm(60, mean = 2, sd = 1))
+
+  solver <- fit(model)
+  result <- solver(df, par = c(mu = 0, sigma = 1))
+
+  prof <- profile_loglik(result, data = df, model = model,
+                         param = 1:2, n_grid = 8)
+
+  expect_true(inherits(prof, "profile_loglik"))
+  expect_equal(nrow(prof), 8 * 8)   # expand.grid of 8x8 grid
+  expect_true("loglik" %in% names(prof))
+  expect_true("support" %in% names(prof))
+  expect_true("relative_likelihood" %in% names(prof))
+})
+
+# ---------------------------------------------------------------------------
+# print.profile_loglik: 2D case — covered when param has length 2
+# ---------------------------------------------------------------------------
+
+test_that("print.profile_loglik prints correctly for 2D profile", {
+  skip_if_not_installed("mvtnorm")
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9007)
+  df <- data.frame(x = rnorm(40, mean = 1, sd = 1))
+
+  solver <- fit(model)
+  result <- solver(df, par = c(mu = 0, sigma = 1))
+
+  prof <- profile_loglik(result, data = df, model = model,
+                         param = 1:2, n_grid = 5)
+
+  out <- capture.output(print(prof))
+  expect_true(any(grepl("Profile Log-Likelihood", out)))
+  expect_true(any(grepl("Grid points:", out)))
+  # Should mention both parameter names
+  expect_true(any(grepl("mu", out)))
+})
+
+# ---------------------------------------------------------------------------
+# bias.fisher_mle: nobs NULL error — line 294
+# ---------------------------------------------------------------------------
+
+test_that("bias.fisher_mle errors when nobs is NULL and model is provided", {
+  model <- exponential_lifetime("t")
+
+  result <- fisher_mle(
+    par = c(lambda = 2.0),
+    vcov = matrix(0.04, 1, 1),
+    loglik_val = -50
+    # nobs intentionally omitted (NULL)
+  )
+
+  expect_error(
+    bias(result, theta = c(lambda = 2), model = model),
+    "nobs not available"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# bias.fisher_mle: warning when most MC replicates fail — lines 314-317
+# ---------------------------------------------------------------------------
+
+test_that("bias.fisher_mle warns when most MC replicates fail", {
+  # Create a model whose fit() always errors
+  bad_model <- structure(
+    list(ob_col = "t"),
+    class = c("mock_bad_fit", "likelihood_model")
+  )
+
+  loglik.mock_bad_fit <<- function(model, ...) {
+    function(df, par, ...) {
+      lambda <- par[1]
+      if (lambda <= 0) return(-.Machine$double.xmax / 2)
+      nrow(df) * log(lambda) - lambda * sum(df[[model$ob_col]])
+    }
+  }
+
+  rdata.mock_bad_fit <<- function(model, ...) {
+    function(theta, n, ...) {
+      data.frame(t = rexp(n, rate = theta[1]))
+    }
+  }
+
+  # Override fit to always error
+  fit.mock_bad_fit <<- function(object, ...) {
+    function(df, par = NULL, ...) {
+      stop("Intentional fit failure for testing")
+    }
+  }
+
+  on.exit({
+    rm(list = intersect(
+      c("loglik.mock_bad_fit", "rdata.mock_bad_fit", "fit.mock_bad_fit"),
+      ls(envir = .GlobalEnv)
+    ), envir = .GlobalEnv)
+  })
+
+  set.seed(9008)
+  result <- fisher_mle(
+    par = c(lambda = 2.0),
+    vcov = matrix(0.04, 1, 1),
+    loglik_val = -50,
+    nobs = 50
+  )
+
+  # All replicates will fail, so we get a warning + NA return
+  expect_warning(
+    b <- bias(result, theta = c(lambda = 2), model = bad_model, n_sim = 20),
+    "MC replicates succeeded"
+  )
+  expect_true(all(is.na(b)))
+})
+
+# ---------------------------------------------------------------------------
+# print.fisher_boot: bias line is covered when boot object has 2+ params
+# ---------------------------------------------------------------------------
+
+test_that("print.fisher_boot covers format(bias(x)) for multivariate bootstrap", {
+  skip_if_not_installed("boot")
+
+  # Build a 2-param mock model that fit.likelihood_model can use
+  model <- make_mock_norm()
+  on.exit(cleanup_mock_norm())
+
+  set.seed(9009)
+  df <- data.frame(x = rnorm(50, mean = 2, sd = 1))
+
+  boot_sampler <- sampler(model, df, par = c(mu = 0, sigma = 1))
+  boot_obj <- boot_sampler(30)
+
+  out <- capture.output(print(boot_obj))
+  expect_true(any(grepl("Bootstrap MLE", out)))
+  expect_true(any(grepl("Bootstrap bias:", out)))
+  # Should show 2 bias values
+  expect_equal(length(bias(boot_obj)), 2)
+})
+
+# ---------------------------------------------------------------------------
+# core-generics.R line 247: "All Monte Carlo samples failed" error in fim
+# ---------------------------------------------------------------------------
+
+test_that("fim.likelihood_model errors when all MC samples fail", {
+  always_fail_model <- structure(
+    list(),
+    class = c("mock_always_fail_fim", "likelihood_model")
+  )
+
+  loglik.mock_always_fail_fim <<- function(model, ...) {
+    function(df, par, ...) 0
+  }
+
+  hess_loglik.mock_always_fail_fim <<- function(model, ...) {
+    function(df, par, ...) stop("Always fails")
+  }
+
+  rdata.mock_always_fail_fim <<- function(model, ...) {
+    function(theta, n, ...) data.frame(x = 1)
+  }
+
+  on.exit({
+    rm(list = intersect(
+      c("loglik.mock_always_fail_fim",
+        "hess_loglik.mock_always_fail_fim",
+        "rdata.mock_always_fail_fim"),
+      ls(envir = .GlobalEnv)
+    ), envir = .GlobalEnv)
+  })
+
+  fim_fn <- fim(always_fail_model)
+  expect_error(
+    fim_fn(theta = c(1), n_obs = 10, n_samples = 5),
+    "All Monte Carlo samples failed"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# exponential_lifetime loglik: negative lambda guard — line 76
+# ---------------------------------------------------------------------------
+
+test_that("loglik.exponential_lifetime returns sentinel for non-positive lambda", {
+  model <- exponential_lifetime("t")
+  ll_fn <- loglik(model)
+  df <- data.frame(t = c(1, 2, 3))
+
+  # Negative lambda
+  val_neg <- ll_fn(df, c(-1))
+  expect_equal(val_neg, -.Machine$double.xmax / 2)
+
+  # Zero lambda
+  val_zero <- ll_fn(df, c(0))
+  expect_equal(val_zero, -.Machine$double.xmax / 2)
+})
+
+# ---------------------------------------------------------------------------
+# fit.likelihood_model: auto-switch 1-param to BFGS — line 61
+# (the SANN test uses a custom model; this test exercises the 1-param
+#  Nelder-Mead -> BFGS switch via fit.likelihood_model directly)
+# ---------------------------------------------------------------------------
+
+test_that("fit.likelihood_model auto-switches 1-param Nelder-Mead to BFGS", {
+  # Use make_mock_norm but override to 1-param normal (fixed sigma)
+  mock_1p <- structure(list(), class = c("mock_1param_bfgs", "likelihood_model"))
+
+  loglik.mock_1param_bfgs <<- function(model, ...) {
+    function(df, par, ...) {
+      mu <- par[1]
+      sum(dnorm(df$x, mu, sd = 1, log = TRUE))
+    }
+  }
+
+  on.exit(rm(list = intersect("loglik.mock_1param_bfgs", ls(.GlobalEnv)),
+             envir = .GlobalEnv))
+
+  set.seed(9010)
+  df <- data.frame(x = rnorm(50, mean = 3, sd = 1))
+
+  # Deliberately pass method = "Nelder-Mead" with 1 param; should switch to BFGS
+  solver <- fit(mock_1p)
+  result <- solver(df, par = c(mu = 0), method = "Nelder-Mead")
+
+  expect_true(inherits(result, "fisher_mle"))
+  expect_equal(unname(coef(result)[1]), 3, tolerance = 0.3)
+})
