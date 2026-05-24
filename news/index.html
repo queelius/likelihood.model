@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
       </span>
     </div>
 
@@ -39,12 +39,6 @@
     </li>
     <li>
       <a href="../articles/getting-started.html">Getting Started with likelihood.model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul></li>
 <li>
@@ -70,12 +64,89 @@
     </div>
 
     <div class="section level2">
+<h2 class="page-header" data-toc-text="1.0.1" id="likelihoodmodel-101">likelihood.model 1.0.1<a class="anchor" aria-label="anchor" href="#likelihoodmodel-101"></a></h2>
+<div class="section level3">
+<h3 id="bug-fix-1-0-1">Bug fix<a class="anchor" aria-label="anchor" href="#bug-fix-1-0-1"></a></h3>
+<ul><li>
+<p><code>fim.likelihood_model</code> no longer forwards the inner <code>...</code> to the <code>hess_loglik</code> evaluator. DGP-only kwargs (right-censoring time <code>tau</code>, masking probability <code>p</code>, observation functor <code>observe</code>, etc.) flow to <code>rdata</code> only, where they belong. The likelihood layer is computed on the data alone.</p>
+<p>Two motivations for the fix:</p>
+<ol style="list-style-type: decimal"><li><p><strong>Theory</strong>: under standard masking condition C3, the masking probability is independent of the system parameters by definition, so the likelihood does not depend on it. The previous behavior leaked a parameter the likelihood is not supposed to see.</p></li>
+<li><p><strong>R partial-matching</strong>: a kwarg named <code>p</code> would silently partial- match the formal <code>par</code> in any <code>hess_loglik</code> method, corrupting the parameter vector at the call site. This made the <code><a href="../reference/fim.html">fim()</a></code> default fail deterministically for any model whose <code>hess_loglik</code> had <code>par</code> as a formal and any DGP kwarg starting with <code>p</code>.</p></li>
+</ol><p>Behavioral note: the docstring already documented this contract (“Additional arguments passed to rdata”); the implementation now matches the documentation.</p>
+</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="1.0.0" id="likelihoodmodel-100">likelihood.model 1.0.0<small>2026-03-19</small><a class="anchor" aria-label="anchor" href="#likelihoodmodel-100"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-1-0-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-0"></a></h3>
+<ul><li>Removed <code>likelihood_contr_model</code> (R6 contribution-based model builder). This functionality has been extracted to the new <code>likelihood.contr</code> package.</li>
+<li>Removed <code>likelihood_name()</code> (named distribution wrapper). Use <code>likelihood.contr::contr_name()</code> instead.</li>
+<li>Removed <code>weibull_uncensored</code> / <code>likelihood_exact_weibull</code> (Weibull example model). Use <code>likelihood.contr</code> for Weibull likelihood contributions.</li>
+<li>Removed <code>observed_info()</code> generic (was deprecated in v0.10.0). Use <code>-hess_loglik(model)(df, par)</code> or <code><a href="https://queelius.github.io/algebraic.mle/reference/observed_fim.html" class="external-link">observed_fim()</a></code> on MLE results.</li>
+<li>Dropped <code>R6</code> from Imports (no longer needed).</li>
+<li>
+<code>mvtnorm</code> moved to Suggests (only needed for multivariate <code><a href="https://queelius.github.io/algebraic.dist/reference/sampler.html" class="external-link">sampler()</a></code>).</li>
+<li>Dropped <code>dplyr</code> and <code>tibble</code> from Suggests.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="notes-1-0-0">Notes<a class="anchor" aria-label="anchor" href="#notes-1-0-0"></a></h3>
+<ul><li>The core framework (<code>loglik</code>, <code>score</code>, <code>hess_loglik</code>, <code>fim</code>, <code>fit</code>, Fisherian inference, <code>lrt</code>, <code>fisher_mle</code>, <code>fisher_boot</code>) is unchanged.</li>
+<li>
+<code>exponential_lifetime</code> remains as the reference implementation.</li>
+<li>For contribution-based models with heterogeneous observation types, use the <code>likelihood.contr</code> package.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.10.0" id="likelihoodmodel-0100">likelihood.model 0.10.0<a class="anchor" aria-label="anchor" href="#likelihoodmodel-0100"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-10-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-10-0"></a></h3>
+<ul><li>
+<code>observed_info()</code> is deprecated; use <code>-hess_loglik(model)(df, par)</code> or <code><a href="https://queelius.github.io/algebraic.mle/reference/observed_fim.html" class="external-link">observed_fim()</a></code> on MLE results</li>
+<li>
+<code>likelihood_exact_weibull()</code> is deprecated in favor of <code>weibull_uncensored()</code>
+</li>
+<li>Unrecognized censoring values in <code>loglik.likelihood_name_model()</code> now error instead of warning (silently returning 0 produced incorrect MLEs during optimization)</li>
+<li>Removed redundant R6 instance methods <code>$loglik()</code>, <code>$score()</code>, <code>$hess_loglik()</code> from <code>likelihood_contr_model</code>; use the S3 generics <code>loglik(model)</code>, <code>score(model)</code>, <code>hess_loglik(model)</code> instead</li>
+<li>
+<code>mvtnorm</code> moved from Imports to Suggests (only needed for multivariate <code><a href="https://queelius.github.io/algebraic.dist/reference/sampler.html" class="external-link">sampler()</a></code>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-10-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-10-0"></a></h3>
+<ul><li>Fixed <code><a href="../reference/fim.likelihood_model.html">fim.likelihood_model()</a></code> Monte Carlo estimator: replaced biased outer-product-of-scores with negative expected Hessian approach, which is unbiased at any parameter value</li>
+<li>Fixed <code><a href="../reference/fim.likelihood_model.html">fim.likelihood_model()</a></code> not forwarding <code>...</code> to <code>hess_loglik</code>, and added NaN/Inf guard to prevent silent corruption of FIM estimates</li>
+<li>Fixed <code>...</code> not forwarded in <code>likelihood_contr_model</code> numerical fallback for <code>score</code> and <code>hess_loglik</code>
+</li>
+<li>Fixed <code><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame()</a></code> in <code>likelihood_contr_model$new()</code> capturing R6 internals instead of the caller’s environment</li>
+<li>Fixed <code><a href="../reference/sampler.likelihood_model.html">sampler.likelihood_model()</a></code> <code>...</code> scoping bug in bootstrap statistic function</li>
+<li>Added optimizer-friendly boundary guards to <code>weibull_uncensored</code>: <code>loglik</code> returns penalty, <code>score</code>/<code>hess_loglik</code> return zeros for invalid parameters (k &lt;= 0 or l &lt;= 0)</li>
+<li>Added input validation in <code>loglik.likelihood_name_model()</code>: errors with a clear message when <code>ob_col</code> is missing from the data frame</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-10-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-10-0"></a></h3>
+<ul><li>New <code>rdata.weibull_uncensored()</code> method for generating Weibull data from the model’s DGP</li>
+<li>
+<code><a href="../reference/bias.fisher_mle.html">bias.fisher_mle()</a></code> now supports optional Monte Carlo bias estimation when <code>theta</code> and <code>model</code> are provided; returns zeros (asymptotic result) otherwise</li>
+<li>
+<code><a href="../reference/mse.fisher_mle.html">mse.fisher_mle()</a></code> now forwards <code>model</code> and <code>n_sim</code> to <code><a href="https://queelius.github.io/algebraic.mle/reference/bias.html" class="external-link">bias()</a></code> for MC-based MSE</li>
+<li>
+<code>likelihood_contr_model$new()</code> gains <code>envir</code> parameter controlling where <code>loglik.&lt;type&gt;</code>, <code>score.&lt;type&gt;</code>, and <code>hess_loglik.&lt;type&gt;</code> are looked up</li>
+<li>
+<code><a href="../reference/fim.likelihood_model.html">fim.likelihood_model()</a></code> now adds parameter names to the output matrix when <code>theta</code> is named, and includes <code>tryCatch</code> with informative warnings on partial failures</li>
+<li>
+<code><a href="../reference/evidence.html">evidence()</a></code> is now an S3 generic, extensible by model classes</li>
+<li>
+<code><a href="../reference/lrt.html">lrt()</a></code> returns a proper <code>lrt_result</code> class with a <code>print</code> method</li>
+<li>New <code>loglik.likelihood_model</code> and <code>rdata.likelihood_model</code> default methods provide clear error messages when a model class doesn’t implement the required concept methods</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="page-header" data-toc-text="0.9.1" id="likelihoodmodel-091">likelihood.model 0.9.1<small>2026-02-11</small><a class="anchor" aria-label="anchor" href="#likelihoodmodel-091"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-9-1">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-9-1"></a></h3>
-<ul><li>Added interval censoring support to <code><a href="../reference/likelihood_name.html">likelihood_name()</a></code> via <code>ob_col_upper</code> parameter</li>
-<li>Input validation in <code><a href="../reference/likelihood_name.html">likelihood_name()</a></code> constructor: checks that distribution functions exist</li>
-<li>Parameter count validation in <code><a href="../reference/prepare_args_list.html">prepare_args_list()</a></code> with clear error messages</li>
+<ul><li>Added interval censoring support to <code>likelihood_name()</code> via <code>ob_col_upper</code> parameter</li>
+<li>Input validation in <code>likelihood_name()</code> constructor: checks that distribution functions exist</li>
+<li>Parameter count validation in <code>prepare_args_list()</code> with clear error messages</li>
 <li>Warning on unrecognized censoring values (e.g., typos like “righ”)</li>
 <li>Auto-switch from Nelder-Mead to BFGS for 1-dimensional optimization</li>
 <li>New Fisherian inference functions: <code><a href="../reference/support.html">support()</a></code>, <code><a href="../reference/relative_likelihood.html">relative_likelihood()</a></code>, <code><a href="../reference/likelihood_interval.html">likelihood_interval()</a></code>, <code><a href="../reference/profile_loglik.html">profile_loglik()</a></code>, <code><a href="../reference/evidence.html">evidence()</a></code>
@@ -90,7 +161,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="algebraicmle-integration-0-9-1">algebraic.mle Integration<a class="anchor" aria-label="anchor" href="#algebraicmle-integration-0-9-1"></a></h3>
-<ul><li>New re-exported generics from <code>algebraic.mle</code>: <code><a href="../reference/algebraic.mle-reexports.html">params()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">nparams()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">observed_fim()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">obs()</a></code>, <code><a href="../reference/algebraic.mle-reexports.html">mse()</a></code>
+<ul><li>New re-exported generics from <code>algebraic.mle</code>: <code><a href="https://queelius.github.io/algebraic.dist/reference/params.html" class="external-link">params()</a></code>, <code><a href="https://queelius.github.io/algebraic.dist/reference/nparams.html" class="external-link">nparams()</a></code>, <code><a href="https://queelius.github.io/algebraic.mle/reference/observed_fim.html" class="external-link">observed_fim()</a></code>, <code><a href="https://queelius.github.io/algebraic.dist/reference/obs.html" class="external-link">obs()</a></code>, <code><a href="https://queelius.github.io/algebraic.mle/reference/mse.html" class="external-link">mse()</a></code>
 </li>
 <li>Methods for <code>fisher_mle</code> objects provide a unified interface across the likelihood ecosystem</li>
 </ul></div>
@@ -105,7 +176,7 @@
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.9.0" id="likelihoodmodel-090">likelihood.model 0.9.0<a class="anchor" aria-label="anchor" href="#likelihoodmodel-090"></a></h2>
-<ul><li>Initial public release with <code><a href="../reference/likelihood_name.html">likelihood_name()</a></code>, <code>likelihood_contr_model</code>, and <code>weibull_uncensored</code>
+<ul><li>Initial public release with <code>likelihood_name()</code>, <code>likelihood_contr_model</code>, and <code>weibull_uncensored</code>
 </li>
 </ul></div>
   </div>

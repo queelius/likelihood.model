@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
       </span>
     </div>
 
@@ -39,12 +39,6 @@
     </li>
     <li>
       <a href="articles/getting-started.html">Getting Started with likelihood.model</a>
-    </li>
-    <li>
-      <a href="articles/likelihood-contributions.html">Likelihood contributions model</a>
-    </li>
-    <li>
-      <a href="articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul></li>
 <li>
@@ -73,7 +67,8 @@
 <p>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</p>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a></h2>
-<p><code>likelihood.model</code> is an R package for specifying and using likelihood models for statistical inference. It defines a generic framework where likelihood models implement key methods (<code>loglik</code>, <code>score</code>, <code>hess_loglik</code>) and provides two main implementations: <code>likelihood_contr_model</code> (for likelihood contributions with different observation types) and <code>likelihood_name_model</code> (for standard R distributions).</p>
+<p><code>likelihood.model</code> is an R package providing the core framework for likelihood-based statistical inference in the Fisherian tradition. It defines the <code>likelihood_model</code> concept (generic interface) with methods <code>loglik</code>, <code>score</code>, <code>hess_loglik</code>, <code>fim</code>, and provides infrastructure for MLE fitting, Fisherian inference, likelihood ratio tests, and bootstrap sampling.</p>
+<p>The contribution-based model builder (<code>likelihood_contr_model</code>) and the named distribution wrapper (<code>likelihood_name</code>) have been extracted to the separate <code>likelihood.contr</code> package.</p>
 <p>The package is designed to interoperate with the <code>algebraic.mle</code> package for maximum likelihood estimation and the <code>algebraic.dist</code> package for distributions.</p>
 </div>
 <div class="section level2">
@@ -82,7 +77,7 @@
 <h3 id="building-and-testing">Building and Testing<a class="anchor" aria-label="anchor" href="#building-and-testing"></a></h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install dependencies (core + suggested)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"roxygen2"</span>, <span class="st">"testthat"</span>, <span class="st">"knitr"</span>, <span class="st">"rmarkdown"</span>, <span class="st">"dplyr"</span>, <span class="st">"tibble"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"roxygen2"</span>, <span class="st">"testthat"</span>, <span class="st">"knitr"</span>, <span class="st">"rmarkdown"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Install companion packages (needed for full functionality)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"queelius/algebraic.mle"</span><span class="op">)</span></span>
@@ -94,7 +89,7 @@
 <span><span class="co"># Run tests</span></span>
 <span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_file.html" class="external-link">test_file</a></span><span class="op">(</span><span class="st">"tests/test.R"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Run test coverage analysis (important - tests are incomplete)</span></span>
+<span><span class="co"># Run test coverage analysis</span></span>
 <span><span class="fu">covr</span><span class="fu">::</span><span class="fu">package_coverage</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Build documentation from roxygen2 comments</span></span>
@@ -131,13 +126,7 @@
 <p>Generic functions that operate on likelihood models: - <code><a href="reference/fit.likelihood_model.html">fit.likelihood_model()</a></code>: MLE solver using <code>optim</code>, returns <code>fisher_mle</code> objects - <code><a href="reference/sampler.likelihood_model.html">sampler.likelihood_model()</a></code>: Bootstrap sampling distribution via <code>boot</code> package - <code><a href="reference/lrt.html">lrt()</a></code>: Likelihood ratio test between nested models - <code><a href="reference/fim.html">fim()</a></code>: Fisher information matrix - <code><a href="reference/assumptions.html">assumptions()</a></code>: Retrieve model assumptions</p>
 </div>
 <div class="section level3">
-<h3 id="main-implementations">Main Implementations<a class="anchor" aria-label="anchor" href="#main-implementations"></a></h3>
-<p><strong><code>likelihood_contr_model</code></strong> (R6 class in <code>R/model-contr.R</code>): - <strong>Uses R6 classes</strong> (not S3) for object-oriented programming with mutable state - Handles heterogeneous observation types (exact, left-censored, right-censored, interval-censored) - Uses <code>obs_type</code> function to classify rows in data frame - Splits data by type and sums likelihood contributions (assumes i.i.d.) - Dynamically dispatches to type-specific functions: - Looks for <code>loglik.&lt;type&gt;</code>, <code>score.&lt;type&gt;</code>, <code>hess_loglik.&lt;type&gt;</code> functions - Falls back to numerical differentiation if analytical methods not found - Stores dispatchers in lists: <code>$logliks</code>, <code>$scores</code>, <code>$hess_logliks</code> - <strong>Important</strong>: R6 methods are called with <code>$</code> (e.g., <code>model$loglik(df, par)</code>) not S3 generics - S3 wrapper methods exist: <code><a href="reference/loglik.likelihood_contr_model.html">loglik.likelihood_contr_model()</a></code> wraps <code>model$loglik()</code></p>
-<p><strong><code>likelihood_name_model</code></strong> (in <code>R/model-name.R</code>): - Wraps standard R distributions (e.g., “norm”, “weibull”, “exp”) - Uses R naming convention: <code>d&lt;name&gt;</code> (pdf), <code>p&lt;name&gt;</code> (cdf) - Handles censoring via <code>censor_col</code>: “left”, “right”, “interval”, or “exact”/NA - <code>prepare_args()</code> utility matches parameters to distribution function arguments</p>
-</div>
-<div class="section level3">
-<h3 id="example-implementations">Example Implementations<a class="anchor" aria-label="anchor" href="#example-implementations"></a></h3>
-<p><strong><code>weibull_uncensored</code></strong> (in <code>R/example-weibull.R</code>): - Specialized model for exact Weibull observations with analytical derivatives - Demonstrates providing explicit <code>loglik</code>, <code>score</code>, and <code>hess_loglik</code> methods - Analytical derivatives 10-100x faster than numerical differentiation - Can be used standalone or as a contribution in <code>likelihood_contr_model</code> - Backward-compatible alias: <code>likelihood_exact_weibull</code></p>
+<h3 id="example-implementation">Example Implementation<a class="anchor" aria-label="anchor" href="#example-implementation"></a></h3>
 <p><strong><code>exponential_lifetime</code></strong> (in <code>R/example-exponential.R</code>): - Exponential distribution with optional right-censoring support - Demonstrates closed-form MLE (<code><a href="reference/fit.html">fit()</a></code> override bypasses <code>optim</code> entirely) - Provides analytical score, hessian, and FIM - Includes <code><a href="reference/rdata.html">rdata()</a></code> method for Monte Carlo validation - Sufficient statistics: d (exact count), T (total time), MLE: lambda_hat = d/T</p>
 </div>
 <div class="section level3">
@@ -155,9 +144,8 @@
 <div class="section level3">
 <h3 id="file-structure">File Structure<a class="anchor" aria-label="anchor" href="#file-structure"></a></h3>
 <p><strong>Core layer</strong> (concept + infrastructure): - <code>R/core-generics.R</code>: Concept definition, generics (<code>loglik</code>, <code>score</code>, <code>hess_loglik</code>, <code>fim</code>, etc.), default methods, <code>print.likelihood_model</code> - <code>R/core-fit.R</code>: <code>fit</code> re-export, <code>fit.likelihood_model</code> (optim-based solver), <code>sampler.likelihood_model</code> (bootstrap) - <code>R/core-fisher_mle.R</code>: <code>fisher_mle</code> and <code>fisher_boot</code> result objects with S3 methods (<code>coef</code>, <code>vcov</code>, <code>confint</code>, <code>se</code>, <code>aic</code>, <code>bic</code>, <code>summary</code>) - <code>R/core-fisherian.R</code>: Fisherian inference (<code>support</code>, <code>relative_likelihood</code>, <code>likelihood_interval</code>, <code>profile_loglik</code>, <code>evidence</code>) - <code>R/core-lrt.R</code>: Likelihood ratio test (<code><a href="reference/lrt.html">lrt()</a></code>)</p>
-<p><strong>Model builders</strong>: - <code>R/model-contr.R</code>: R6 class <code>likelihood_contr_model</code> for contribution-based models - <code>R/model-name.R</code>: <code><a href="reference/likelihood_name.html">likelihood_name()</a></code> wrapper for standard R distributions</p>
-<p><strong>Example implementations</strong>: - <code>R/example-weibull.R</code>: <code>weibull_uncensored</code> with analytical derivatives - <code>R/example-exponential.R</code>: <code>exponential_lifetime</code> with closed-form MLE and right-censoring</p>
-<p><strong>Tests and vignettes</strong>: - <code>tests/test.R</code>: 229 unit tests covering all model types and inference methods - <code>vignettes/getting-started.Rmd</code>: Quick introduction with examples - <code>vignettes/likelihood-contributions.Rmd</code>: Advanced examples with series systems - <code>vignettes/likelihood-name-model.Rmd</code>: Examples using named distributions</p>
+<p><strong>Example implementation</strong>: - <code>R/example-exponential.R</code>: <code>exponential_lifetime</code> with closed-form MLE and right-censoring</p>
+<p><strong>Tests and vignettes</strong>: - <code>tests/test.R</code>: ~236 unit tests covering core framework and exponential_lifetime - <code>vignettes/getting-started.Rmd</code>: Quick introduction with examples - <code>vignettes/exponential-lifetime.Rmd</code>: Detailed exponential model coverage - <code>vignettes/algebraic-mle-integration.Rmd</code>: Three-package ecosystem demonstration</p>
 </div>
 </div>
 <div class="section level2">
@@ -165,109 +153,74 @@
 <div class="section level3">
 <h3 id="testing-and-coverage">Testing and Coverage<a class="anchor" aria-label="anchor" href="#testing-and-coverage"></a></h3>
 <ul><li>
-<code>tests/test.R</code> contains 229 tests covering all model types and inference methods</li>
+<code>tests/test.R</code> contains ~236 tests covering all core infrastructure and the exponential_lifetime model</li>
 <li>When adding new features, write complete tests and run <code>covr::package_coverage()</code> to ensure coverage</li>
 <li>Focus on testing edge cases: censored data, empty data frames, parameter validation</li>
 <li>See vignettes for realistic examples to base tests on</li>
 </ul></div>
 <div class="section level3">
-<h3 id="adding-new-distributions">Adding New Distributions<a class="anchor" aria-label="anchor" href="#adding-new-distributions"></a></h3>
-<p>When adding new distribution support, choose one of these approaches: 1. <strong>For standard R distributions</strong>: Use <code>likelihood_name("dist_name", ob_col, censor_col)</code> - Works with any distribution that has <code>d&lt;name&gt;</code> and <code>p&lt;name&gt;</code> functions - Automatically handles censoring types 2. <strong>For custom likelihood contributions</strong>: Create <code>loglik.&lt;type&gt;</code>, <code>score.&lt;type&gt;</code>, <code>hess_loglik.&lt;type&gt;</code> functions - Used by <code>likelihood_contr_model</code> via dynamic dispatch - Provide analytical derivatives when possible (much faster than numerical) 3. <strong>For specialized models</strong>: Create a new class (like <code>weibull_uncensored</code> or <code>exponential_lifetime</code>) - Define S3 methods: <code>loglik.&lt;class&gt;</code>, <code>score.&lt;class&gt;</code>, <code>hess_loglik.&lt;class&gt;</code> - Add <code>"likelihood_model"</code> to class vector to inherit default behavior - Optionally override <code>fit.&lt;class&gt;</code> for closed-form MLEs (see <code>exponential_lifetime</code>)</p>
+<h3 id="adding-new-specialized-models">Adding New Specialized Models<a class="anchor" aria-label="anchor" href="#adding-new-specialized-models"></a></h3>
+<p>Create a new class (like <code>exponential_lifetime</code>): - Define S3 methods: <code>loglik.&lt;class&gt;</code>, <code>score.&lt;class&gt;</code>, <code>hess_loglik.&lt;class&gt;</code> - Add <code>"likelihood_model"</code> to class vector to inherit default behavior - Optionally override <code>fit.&lt;class&gt;</code> for closed-form MLEs (see <code>exponential_lifetime</code>) - Optionally implement <code>fim.&lt;class&gt;</code> for analytical FIM - Optionally implement <code>rdata.&lt;class&gt;</code> for Monte Carlo validation</p>
+<p>For contribution-based models and standard distribution wrappers, use the <code>likelihood.contr</code> package.</p>
 </div>
 <div class="section level3">
 <h3 id="performance-considerations">Performance Considerations<a class="anchor" aria-label="anchor" href="#performance-considerations"></a></h3>
 <ul><li>
 <strong>Numerical differentiation is expensive</strong>: Default <code>score</code> and <code>hess_loglik</code> use <code>numDeriv</code> with Richardson extrapolation (<code>r=6</code>)</li>
-<li>Provide analytical derivatives whenever possible (see <code>example-weibull.R</code> for example)</li>
-<li>For Weibull: analytical derivatives ~10-100x faster than numerical</li>
-<li>Parameters can be named or unnamed; <code>prepare_args()</code> handles both cases</li>
+<li>Provide analytical derivatives whenever possible (see <code>example-exponential.R</code>)</li>
 <li>Always validate inputs: check for NULL, positive values where required, sufficient sample size</li>
 </ul></div>
 <div class="section level3">
 <h3 id="package-dependencies">Package Dependencies<a class="anchor" aria-label="anchor" href="#package-dependencies"></a></h3>
 <ul><li>
-<strong>Required</strong>: <code>mvtnorm</code>, <code>generics</code>, <code>MASS</code>, <code>stats</code>, <code>numDeriv</code>, <code>boot</code>, <code>dplyr</code>
+<strong>Required</strong>: <code>algebraic.mle</code> (&gt;= 2.0.0), <code>generics</code>, <code>stats</code>, <code>numDeriv</code>, <code>boot</code>
 </li>
 <li>
-<strong>Companion packages</strong>: <code>algebraic.mle</code> (MLE objects), <code>algebraic.dist</code> (distributions)</li>
+<strong>Suggested</strong>: <code>mvtnorm</code>, <code>algebraic.dist</code>, <code>testthat</code> (&gt;= 3.0.0), <code>knitr</code>, <code>rmarkdown</code>
+</li>
 <li>
-<strong>Roxygen2</strong>: Version 7.3.1 for documentation generation</li>
+<strong>Roxygen2</strong>: Version 7.3.3 for documentation generation</li>
 </ul></div>
 </div>
 <div class="section level2">
 <h2 id="common-workflows">Common Workflows<a class="anchor" aria-label="anchor" href="#common-workflows"></a></h2>
 <div class="section level3">
-<h3 id="using-a-standard-distribution-simple-case">Using a Standard Distribution (Simple Case)<a class="anchor" aria-label="anchor" href="#using-a-standard-distribution-simple-case"></a></h3>
+<h3 id="using-the-exponential-lifetime-model">Using the Exponential Lifetime Model<a class="anchor" aria-label="anchor" href="#using-the-exponential-lifetime-model"></a></h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create model for normal distribution</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"norm"</span>, ob_col <span class="op">=</span> <span class="st">"x"</span>, censor_col <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Create model</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Fit the model</span></span>
-<span><span class="va">solver</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">solver</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>  <span class="co"># initial guess: mean=0, sd=1</span></span>
+<span><span class="co"># Fit (closed-form, no initial guess needed)</span></span>
+<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span></span>
+<span><span class="fu">se</span><span class="op">(</span><span class="va">mle</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Get parameter estimates</span></span>
-<span><span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># With right-censoring</span></span>
+<span><span class="va">model_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span>, censor_col <span class="op">=</span> <span class="st">"status"</span><span class="op">)</span></span>
+<span><span class="va">mle_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_c</span><span class="op">)</span><span class="op">(</span><span class="va">df_censored</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="handling-censored-data">Handling Censored Data<a class="anchor" aria-label="anchor" href="#handling-censored-data"></a></h3>
+<h3 id="fisherian-inference">Fisherian Inference<a class="anchor" aria-label="anchor" href="#fisherian-inference"></a></h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Data with censoring column ("exact", "left", "right", "interval")</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">3.4</span>, <span class="fl">2.1</span><span class="op">)</span>,</span>
-<span>  censor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"exact"</span>, <span class="st">"right"</span>, <span class="st">"left"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"weibull"</span>, ob_col <span class="op">=</span> <span class="st">"x"</span>, censor_col <span class="op">=</span> <span class="st">"censor"</span><span class="op">)</span></span>
-<span><span class="va">solver</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">solver</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">2</span>, scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="using-likelihood-contributions-advanced-case">Using Likelihood Contributions (Advanced Case)<a class="anchor" aria-label="anchor" href="#using-likelihood-contributions-advanced-case"></a></h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Define observation type function</span></span>
-<span><span class="va">obs_type</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Returns "exact", "censored", etc. for each row</span></span>
-<span>  <span class="va">df</span><span class="op">$</span><span class="va">type</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Define type-specific log-likelihood functions</span></span>
-<span><span class="va">loglik.exact</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Implementation for exact observations</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">loglik.censored</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">par</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Implementation for censored observations</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Create contribution model</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/likelihood_contr_model.html">likelihood_contr_model</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>  obs_type <span class="op">=</span> <span class="va">obs_type</span>,</span>
-<span>  assumptions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"iid"</span>, <span class="st">"exponential components"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Fit as usual</span></span>
-<span><span class="va">solver</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">solver</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="va">initial_params</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Support, relative likelihood, likelihood intervals</span></span>
+<span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/support.html">support</a></span><span class="op">(</span><span class="va">mle</span>, <span class="va">theta</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
+<span><span class="va">rl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/relative_likelihood.html">relative_likelihood</a></span><span class="op">(</span><span class="va">mle</span>, <span class="va">theta</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
+<span><span class="va">li</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/likelihood_interval.html">likelihood_interval</a></span><span class="op">(</span><span class="va">mle</span>, <span class="va">df</span>, <span class="va">model</span>, k <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
+<span><span class="va">prof</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/profile_loglik.html">profile_loglik</a></span><span class="op">(</span><span class="va">mle</span>, <span class="va">df</span>, <span class="va">model</span>, param <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">ev</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/evidence.html">evidence</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">df</span>, <span class="va">theta1</span>, <span class="va">theta2</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="likelihood-ratio-test">Likelihood Ratio Test<a class="anchor" aria-label="anchor" href="#likelihood-ratio-test"></a></h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Nested models (null is subset of alternative)</span></span>
-<span><span class="va">null_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">null_model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, <span class="va">par_null</span><span class="op">)</span></span>
-<span><span class="va">alt_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit.html">fit</a></span><span class="op">(</span><span class="va">alt_model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, <span class="va">par_alt</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Perform LRT</span></span>
-<span><span class="va">lrt_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lrt.html">lrt</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lrt_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lrt.html">lrt</a></span><span class="op">(</span></span>
 <span>  null <span class="op">=</span> <span class="va">null_model</span>,</span>
 <span>  alt <span class="op">=</span> <span class="va">alt_model</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">df</span>,</span>
-<span>  null_par <span class="op">=</span> <span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span>,</span>
-<span>  alt_par <span class="op">=</span> <span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span>,</span>
-<span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="reference/algebraic.mle-reexports.html">params</a></span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span><span class="op">)</span></span>
+<span>  null_par <span class="op">=</span> <span class="fu">params</span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span>,</span>
+<span>  alt_par <span class="op">=</span> <span class="fu">params</span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span>,</span>
+<span>  dof <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu">params</span><span class="op">(</span><span class="va">alt_result</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu">params</span><span class="op">(</span><span class="va">null_result</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check p-value</span></span>
 <span><span class="va">lrt_result</span><span class="op">$</span><span class="va">p.value</span></span></code></pre></div>
 </div>
 </div>

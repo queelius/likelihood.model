@@ -31,7 +31,7 @@ total observation time (sum of all times, whether censored or not)."><!-- mathja
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
       </span>
     </div>
 
@@ -53,12 +53,6 @@ total observation time (sum of all times, whether censored or not)."><!-- mathja
     </li>
     <li>
       <a href="../articles/getting-started.html">Getting Started with likelihood.model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul></li>
 <li>
@@ -130,8 +124,8 @@ observations are treated as exact.</p></dd>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">100</span>, rate <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>  <span class="co"># should be close to 2</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  lambda </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2.36361 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2.289155 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Right-censored data</span></span></span>
 <span class="r-in"><span><span class="va">model_c</span> <span class="op">&lt;-</span> <span class="fu">exponential_lifetime</span><span class="op">(</span><span class="st">"t"</span>, censor_col <span class="op">=</span> <span class="st">"status"</span><span class="op">)</span></span></span>
@@ -142,7 +136,7 @@ observations are treated as exact.</p></dd>
 <span class="r-in"><span><span class="va">mle_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit.html">fit</a></span><span class="op">(</span><span class="va">model_c</span><span class="op">)</span><span class="op">(</span><span class="va">df_c</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_c</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   lambda </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1.635568 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1.692118 </span>
 </code></pre></div>
     </div>
   </div>

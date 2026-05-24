@@ -1,10 +1,8 @@
-pandoc: 3.1.11
+pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   algebraic-mle-integration: algebraic-mle-integration.html
   exponential-lifetime: exponential-lifetime.html
   getting-started: getting-started.html
-  likelihood-contributions: likelihood-contributions.html
-  likelihood-name-model: likelihood-name-model.html
-last_built: 2026-02-25T04:54Z
+last_built: 2026-05-24T08:19Z

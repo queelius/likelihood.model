@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
       </span>
     </div>
 
@@ -56,12 +56,6 @@
     </li>
     <li>
       <a href="../articles/getting-started.html">Getting Started with likelihood.model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul>
 </li>
@@ -117,7 +111,7 @@ information matrix in closed form.</li>
 <li>
 <strong>Right-censoring</strong>: Natural handling via the
 sufficient statistic
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mo>,</mo><mi>T</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(d, T)</annotation></semantics></math>.</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mo>,</mo><mi>T</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(d, T)</annotation></semantics></math>.</li>
 <li>
 <strong><code><a href="../reference/rdata.html">rdata()</a></code> method</strong>: For Monte Carlo
 validation and bootstrap studies.</li>
@@ -125,7 +119,7 @@ validation and bootstrap studies.</li>
 <p>The log-likelihood for
 Exponential(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>)
 data with right-censoring is:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>ℓ</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>λ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>d</mi><mo>log</mo><mi>λ</mi><mo>−</mo><mi>λ</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">\ell(\lambda) = d \log \lambda - \lambda T</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ℓ</mi><mo stretchy="false" form="prefix">(</mo><mi>λ</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>d</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>λ</mi><mo>−</mo><mi>λ</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">\ell(\lambda) = d \log \lambda - \lambda T</annotation></semantics></math></p>
 <p>where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>d</mi><annotation encoding="application/x-tex">d</annotation></semantics></math>
 is the number of exact (uncensored) observations and
@@ -158,11 +152,11 @@ model computes the MLE directly. No initial guess is needed:</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"MLE:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"(true:"</span>, <span class="va">true_lambda</span>, <span class="st">")\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MLE: 2.159 (true: 2.5 )</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"SE:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">se</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"SE:"</span>, <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">se</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; SE: 0.1527</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"95% CI:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 95% CI: 1.86 2.458</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Score at MLE:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">score_val</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"(exactly zero by construction)\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Score at MLE:"</span>, <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/score_val.html" class="external-link">score_val</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"(exactly zero by construction)\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Score at MLE: 0 (exactly zero by construction)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -227,7 +221,7 @@ when it actually failed.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nMLE:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span>, <span class="st">"(true:"</span>, <span class="va">true_lambda</span>, <span class="st">")\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; MLE: 1.737 (true: 2 )</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"SE:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">se</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"SE:"</span>, <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">se</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; SE: 0.1313</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"95% CI:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 95% CI: 1.48 1.994</span></span></code></pre></div>
@@ -310,7 +304,7 @@ verify against numerical differentiation:</p>
 <p>The expected Fisher information for
 Exponential(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>)
 is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>λ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>n</mi><mi>/</mi><msup><mi>λ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">I(\lambda) = n / \lambda^2</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo stretchy="false" form="prefix">(</mo><mi>λ</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>n</mi><mi>/</mi><msup><mi>λ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">I(\lambda) = n / \lambda^2</annotation></semantics></math>.
 The model provides this analytically:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fim_fn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fim.html">fim</a></span><span class="op">(</span><span class="va">model_small</span><span class="op">)</span></span>
@@ -362,7 +356,7 @@ that are “well supported” by the data.</p>
 <p>A 1/k likelihood interval contains all
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>
 where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>λ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>≥</mo><mn>1</mn><mi>/</mi><mi>k</mi></mrow><annotation encoding="application/x-tex">R(\lambda) \geq 1/k</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mo stretchy="false" form="prefix">(</mo><mi>λ</mi><mo stretchy="false" form="postfix">)</mo><mo>≥</mo><mn>1</mn><mi>/</mi><mi>k</mi></mrow><annotation encoding="application/x-tex">R(\lambda) \geq 1/k</annotation></semantics></math>.
 The 1/8 interval is roughly analogous to a 95% confidence interval:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">li</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/likelihood_interval.html">likelihood_interval</a></span><span class="op">(</span><span class="va">mle_fish</span>, <span class="va">df_fish</span>, <span class="va">model_fish</span>, k <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
@@ -438,35 +432,6 @@ standard deviation:</p>
 <span><span class="co">#&gt;   (SE = lambda/sqrt(n) from Fisher information)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="cross-validation-with-likelihood_nameexp">Cross-Validation with <code>likelihood_name("exp")</code><a class="anchor" aria-label="anchor" href="#cross-validation-with-likelihood_nameexp"></a>
-</h2>
-<p>The analytical model should produce the same log-likelihood as the
-generic distribution-wrapping approach:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">df_cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">100</span>, rate <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">model_analytical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
-<span><span class="va">model_generic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"exp"</span>, ob_col <span class="op">=</span> <span class="st">"t"</span>,</span>
-<span>                                  censor_col <span class="op">=</span> <span class="st">"censor"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Need a censor column for likelihood_name</span></span>
-<span><span class="va">df_cv_generic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">df_cv</span><span class="op">$</span><span class="va">t</span>, censor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"exact"</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">lambda_test</span> <span class="op">&lt;-</span> <span class="fl">2.3</span></span>
-<span><span class="va">ll_analytical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model_analytical</span><span class="op">)</span><span class="op">(</span><span class="va">df_cv</span>, <span class="va">lambda_test</span><span class="op">)</span></span>
-<span><span class="va">ll_generic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model_generic</span><span class="op">)</span><span class="op">(</span><span class="va">df_cv_generic</span>, <span class="va">lambda_test</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Log-likelihood at lambda ="</span>, <span class="va">lambda_test</span>, <span class="st">":\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Log-likelihood at lambda = 2.3 :</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Analytical model:"</span>, <span class="va">ll_analytical</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Analytical model: -46</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Generic model:   "</span>, <span class="va">ll_generic</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Generic model:    -46</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Match:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">ll_analytical</span>, <span class="va">ll_generic</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Match: TRUE</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
 <p>The <code>exponential_lifetime</code> model demonstrates several
@@ -496,7 +461,7 @@ directly</td>
 <tr class="odd">
 <td>Right-censoring</td>
 <td>Sufficient statistics
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mo>,</mo><mi>T</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(d, T)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>d</mi><mo>,</mo><mi>T</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(d, T)</annotation></semantics></math>
 handle censoring naturally</td>
 </tr>
 <tr class="even">
@@ -512,18 +477,18 @@ handle censoring naturally</td>
 </tbody>
 </table>
 <p>These patterns apply to any distribution where you want tighter
-integration than <code><a href="../reference/likelihood_name.html">likelihood_name()</a></code> provides. See
-<code>weibull_uncensored</code> for another example with analytical
-derivatives (but without a closed-form MLE).</p>
+integration than a generic wrapper provides. For contribution-based
+models with heterogeneous observation types, see the
+<code>likelihood.contr</code> package.</p>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span><span class="co">#&gt; R version 4.6.0 (2026-04-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.4 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -542,20 +507,20 @@ derivatives (but without a closed-form MLE).</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] likelihood.model_0.9.1</span></span>
+<span><span class="co">#&gt; [1] likelihood.model_1.0.1 algebraic.mle_2.0.2   </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] cli_3.6.5            knitr_1.51           rlang_1.1.7         </span></span>
-<span><span class="co">#&gt;  [4] xfun_0.56            generics_0.1.4       textshaping_1.0.4   </span></span>
-<span><span class="co">#&gt;  [7] jsonlite_2.0.0       htmltools_0.5.9      ragg_1.5.0          </span></span>
-<span><span class="co">#&gt; [10] sass_0.4.10          rmarkdown_2.30       evaluate_1.0.5      </span></span>
+<span><span class="co">#&gt;  [1] cli_3.6.6            knitr_1.51           rlang_1.2.0         </span></span>
+<span><span class="co">#&gt;  [4] xfun_0.57            generics_0.1.4       textshaping_1.0.5   </span></span>
+<span><span class="co">#&gt;  [7] jsonlite_2.0.0       htmltools_0.5.9      ragg_1.5.2          </span></span>
+<span><span class="co">#&gt; [10] sass_0.4.10          rmarkdown_2.31       evaluate_1.0.5      </span></span>
 <span><span class="co">#&gt; [13] jquerylib_0.1.4      MASS_7.3-65          fastmap_1.2.0       </span></span>
-<span><span class="co">#&gt; [16] numDeriv_2016.8-1.1  yaml_2.3.12          mvtnorm_1.3-3       </span></span>
-<span><span class="co">#&gt; [19] lifecycle_1.0.5      algebraic.mle_0.9.0  compiler_4.5.2      </span></span>
-<span><span class="co">#&gt; [22] codetools_0.2-20     fs_1.6.6             algebraic.dist_0.1.0</span></span>
-<span><span class="co">#&gt; [25] systemfonts_1.3.1    digest_0.6.39        R6_2.6.1            </span></span>
-<span><span class="co">#&gt; [28] bslib_0.10.0         tools_4.5.2          boot_1.3-32         </span></span>
-<span><span class="co">#&gt; [31] pkgdown_2.2.0        cachem_1.1.0         desc_1.4.3</span></span></code></pre></div>
+<span><span class="co">#&gt; [16] yaml_2.3.12          mvtnorm_1.3-7        lifecycle_1.0.5     </span></span>
+<span><span class="co">#&gt; [19] numDeriv_2016.8-1.1  compiler_4.6.0       codetools_0.2-20    </span></span>
+<span><span class="co">#&gt; [22] fs_2.1.0             algebraic.dist_1.0.0 systemfonts_1.3.2   </span></span>
+<span><span class="co">#&gt; [25] digest_0.6.39        R6_2.6.1             bslib_0.11.0        </span></span>
+<span><span class="co">#&gt; [28] tools_4.6.0          boot_1.3-32          pkgdown_2.2.0       </span></span>
+<span><span class="co">#&gt; [31] cachem_1.1.0         desc_1.4.3</span></span></code></pre></div>
 </div>
   </div>
 

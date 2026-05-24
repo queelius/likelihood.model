@@ -8,7 +8,7 @@ score() and hess_loglik() for analytical derivatives; defaults use
 numerical differentiation via numDeriv.
 Core Infrastructure:
 fisher_mle / fisher_boot: Result objects from MLE fitting, with
-methods for coef(), vcov(), confint(), se(), aic(), bic(),
+methods for coef(), vcov(), confint(), algebraic.mle::se(), stats::AIC(), stats::BIC(),
 summary().
 fit(): Default MLE solver using optim(). Models can override this
 with closed-form solutions (see exponential_lifetime for an example).
@@ -18,24 +18,12 @@ likelihood-based inference without probability statements.
 lrt(): Likelihood ratio test for nested models.
 
 
-Model Builders:
-likelihood_contr_model: R6 class for building models from
-heterogeneous observation types (exact, censored, etc.) with
-dynamic dispatch to type-specific functions.
-likelihood_name(): Wraps any standard R distribution (norm, weibull,
-exp, ...) with automatic censoring support.
-
-
-Example Implementations:
-Reference implementations showing how to satisfy the likelihood_model
-concept with hand-derived analytical solutions:
-weibull_uncensored: Weibull with exact observations only.
-Demonstrates analytical score and hessian (10-100x faster than numerical).
+Example Implementation:
 exponential_lifetime: Exponential with right-censoring support.
 Demonstrates closed-form MLE (no optim needed), analytical FIM,
 and rdata() for Monte Carlo validation.
-
-'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
+For contribution-based models with heterogeneous observation types,
+see the companion package likelihood.contr.'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
@@ -53,7 +41,7 @@ and rdata() for Monte Carlo validation.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
       </span>
     </div>
 
@@ -75,12 +63,6 @@ and rdata() for Monte Carlo validation.
     </li>
     <li>
       <a href="../articles/getting-started.html">Getting Started with likelihood.model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul></li>
 <li>
@@ -115,7 +97,7 @@ can implement. At minimum, implement <code><a href="loglik.html">loglik()</a></c
 <code><a href="score.html">score()</a></code> and <code><a href="hess_loglik.html">hess_loglik()</a></code> for analytical derivatives; defaults use
 numerical differentiation via <code>numDeriv</code>.</p>
 <p><strong>Core Infrastructure</strong>:</p><ul><li><p><a href="fisher_mle.html">fisher_mle</a> / <a href="fisher_boot.html">fisher_boot</a>: Result objects from MLE fitting, with
-methods for <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="algebraic.mle-reexports.html">se()</a></code>, <code><a href="algebraic.mle-reexports.html">aic()</a></code>, <code><a href="bic.html">bic()</a></code>,
+methods for <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">algebraic.mle::se()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">stats::AIC()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">stats::BIC()</a></code>,
 <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</p></li>
 <li><p><code><a href="fit.html">fit()</a></code>: Default MLE solver using <code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim()</a></code>. Models can override this
 with closed-form solutions (see <a href="exponential_lifetime.html">exponential_lifetime</a> for an example).</p></li>
@@ -123,19 +105,13 @@ with closed-form solutions (see <a href="exponential_lifetime.html">exponential_
 <code><a href="likelihood_interval.html">likelihood_interval()</a></code>, <code><a href="profile_loglik.html">profile_loglik()</a></code>, <code><a href="evidence.html">evidence()</a></code> – pure
 likelihood-based inference without probability statements.</p></li>
 <li><p><code><a href="lrt.html">lrt()</a></code>: Likelihood ratio test for nested models.</p></li>
-</ul><p><strong>Model Builders</strong>:</p><ul><li><p><a href="likelihood_contr_model.html">likelihood_contr_model</a>: R6 class for building models from
-heterogeneous observation types (exact, censored, etc.) with
-dynamic dispatch to type-specific functions.</p></li>
-<li><p><code><a href="likelihood_name.html">likelihood_name()</a></code>: Wraps any standard R distribution (norm, weibull,
-exp, ...) with automatic censoring support.</p></li>
-</ul><p><strong>Example Implementations</strong>:
-Reference implementations showing how to satisfy the <code>likelihood_model</code>
-concept with hand-derived analytical solutions:</p><ul><li><p><a href="weibull_uncensored.html">weibull_uncensored</a>: Weibull with exact observations only.
-Demonstrates analytical score and hessian (10-100x faster than numerical).</p></li>
-<li><p><a href="exponential_lifetime.html">exponential_lifetime</a>: Exponential with right-censoring support.
+</ul><p><strong>Example Implementation</strong>:
+<a href="exponential_lifetime.html">exponential_lifetime</a>: Exponential with right-censoring support.
 Demonstrates closed-form MLE (no optim needed), analytical FIM,
-and <code><a href="rdata.html">rdata()</a></code> for Monte Carlo validation.</p></li>
-</ul></div>
+and <code><a href="rdata.html">rdata()</a></code> for Monte Carlo validation.</p>
+<p>For contribution-based models with heterogeneous observation types,
+see the companion package <span class="pkg">likelihood.contr</span>.</p>
+    </div>
 
 
     <div id="see-also">

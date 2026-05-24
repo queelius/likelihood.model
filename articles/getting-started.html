@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">likelihood.model</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
       </span>
     </div>
 
@@ -56,12 +56,6 @@
     </li>
     <li>
       <a href="../articles/getting-started.html">Getting Started with likelihood.model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-contributions.html">Likelihood contributions model</a>
-    </li>
-    <li>
-      <a href="../articles/likelihood-name-model.html">Likelihood Named Distributions Model</a>
     </li>
   </ul>
 </li>
@@ -104,12 +98,16 @@
 </h2>
 <p>The <code>likelihood.model</code> package provides a flexible
 framework for specifying and using likelihood models for statistical
-inference in R. It supports: - Standard R distributions (normal,
-Weibull, exponential, etc.) - Censored data (left, right, and interval
-censoring) - Custom likelihood contributions for complex models -
-Maximum likelihood estimation with confidence intervals - Bootstrap
-sampling distributions</p>
-<p>This vignette provides a quick introduction to the main features.</p>
+inference in R. It supports: - Generic likelihood model interface
+(<code>loglik</code>, <code>score</code>, <code>hess_loglik</code>,
+<code>fim</code>) - Maximum likelihood estimation with confidence
+intervals - Bootstrap sampling distributions - Pure likelihood-based
+(Fisherian) inference - Likelihood ratio tests</p>
+<p>This vignette provides a quick introduction to the main features
+using the built-in <code>exponential_lifetime</code> model.</p>
+<p>For contribution-based models with heterogeneous observation types
+(exact, censored, etc.), see the companion package
+<code>likelihood.contr</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -126,45 +124,42 @@ sampling distributions</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/queelius/likelihood.model" class="external-link">likelihood.model</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-1-basic-mle-with-weibull-distribution">Example 1: Basic MLE with Weibull Distribution<a class="anchor" aria-label="anchor" href="#example-1-basic-mle-with-weibull-distribution"></a>
+<h2 id="example-1-closed-form-mle-with-exponential-lifetime-model">Example 1: Closed-Form MLE with Exponential Lifetime Model<a class="anchor" aria-label="anchor" href="#example-1-closed-form-mle-with-exponential-lifetime-model"></a>
 </h2>
-<p>Let’s start with a simple example: fitting a Weibull distribution to
-survival data using the <code>weibull_uncensored</code> model, which
-provides analytical derivatives for faster and more accurate
-estimation.</p>
+<p>The <code>exponential_lifetime</code> model demonstrates a key design
+feature: specialized models can override <code><a href="../reference/fit.html">fit()</a></code> to bypass
+<code>optim</code> entirely when the MLE has a closed-form solution.</p>
+<p>For Exponential(lambda) data, the MLE is simply lambda_hat = d / T,
+where d is the number of uncensored observations and T is the total
+observation time.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Generate synthetic survival data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">150</span></span>
-<span><span class="va">true_shape</span> <span class="op">&lt;-</span> <span class="fl">2.5</span></span>
-<span><span class="va">true_scale</span> <span class="op">&lt;-</span> <span class="fl">3.0</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">rweibull</a></span><span class="op">(</span><span class="va">n</span>, shape <span class="op">=</span> <span class="va">true_shape</span>, scale <span class="op">=</span> <span class="va">true_scale</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Generate exponential survival data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span></span>
+<span><span class="va">df_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">200</span>, rate <span class="op">=</span> <span class="fl">3.0</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Create the likelihood model</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weibull_uncensored.html">weibull_uncensored</a></span><span class="op">(</span><span class="st">"x"</span><span class="op">)</span></span>
+<span><span class="co"># Create model and fit -- no initial guess needed!</span></span>
+<span><span class="va">model_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># View model assumptions</span></span>
-<span><span class="fu"><a href="../reference/assumptions.html">assumptions</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "independent"             "identically distributed"</span></span>
-<span><span class="co">#&gt; [3] "exact observations"</span></span>
+<span><span class="fu"><a href="../reference/assumptions.html">assumptions</a></span><span class="op">(</span><span class="va">model_exp</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "independent"              "identically distributed" </span></span>
+<span><span class="co">#&gt; [3] "exponential distribution"</span></span>
 <span></span>
-<span><span class="co"># Fit the MLE</span></span>
-<span><span class="va">solver</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
-<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu">solver</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>  <span class="co"># initial guess: shape=1, scale=1</span></span>
+<span><span class="co"># Fit the model</span></span>
+<span><span class="va">mle_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_exp</span><span class="op">)</span><span class="op">(</span><span class="va">df_exp</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># View results</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Maximum Likelihood Estimate (Fisherian)</span></span>
 <span><span class="co">#&gt; ----------------------------------------</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
-<span><span class="co">#&gt;      Estimate Std. Error  2.5% 97.5%</span></span>
-<span><span class="co">#&gt; [1,]    2.152      0.131 1.896 2.409</span></span>
-<span><span class="co">#&gt; [2,]    2.916      0.117 2.686 3.145</span></span>
+<span><span class="co">#&gt;        Estimate Std. Error   2.5% 97.5%</span></span>
+<span><span class="co">#&gt; lambda   3.1372     0.2218 2.7024 3.572</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log-likelihood: -238.7 </span></span>
-<span><span class="co">#&gt; AIC: 481.4 </span></span>
-<span><span class="co">#&gt; Number of observations: 150</span></span></code></pre></div>
+<span><span class="co">#&gt; Log-likelihood: 28.66 </span></span>
+<span><span class="co">#&gt; AIC: -55.33 </span></span>
+<span><span class="co">#&gt; Number of observations: 200</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="extracting-results">Extracting Results<a class="anchor" aria-label="anchor" href="#extracting-results"></a>
 </h3>
@@ -172,151 +167,78 @@ estimation.</p>
 <code class="sourceCode R"><span><span class="co"># Parameter estimates</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Estimated parameters:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 2.152 2.916</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; lambda </span></span>
+<span><span class="co">#&gt;  3.137</span></span>
 <span></span>
 <span><span class="co"># Confidence intervals (Wald-based)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n95% Confidence Intervals:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 95% Confidence Intervals:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       2.5% 97.5%</span></span>
-<span><span class="co">#&gt; [1,] 1.896 2.409</span></span>
-<span><span class="co">#&gt; [2,] 2.686 3.145</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         2.5% 97.5%</span></span>
+<span><span class="co">#&gt; lambda 2.702 3.572</span></span>
 <span></span>
 <span><span class="co"># Standard errors</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nStandard Errors:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Standard Errors:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/algebraic.mle-reexports.html">se</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.131 0.117</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">se</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; lambda </span></span>
+<span><span class="co">#&gt; 0.2218</span></span>
 <span></span>
 <span><span class="co"># Log-likelihood value</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nLog-likelihood:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">loglik_val</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nLog-likelihood:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log-likelihood: -238.7</span></span>
+<span><span class="co">#&gt; Log-likelihood: 28.66</span></span>
 <span></span>
 <span><span class="co"># AIC for model selection</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"AIC:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">aic</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; AIC: 481.4</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"AIC:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; AIC: -55.33</span></span>
+<span></span>
+<span><span class="co"># The score at the MLE is exactly zero (by construction)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Score at MLE:"</span>, <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/score_val.html" class="external-link">score_val</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Score at MLE: 0</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="example-2-handling-censored-data">Example 2: Handling Censored Data<a class="anchor" aria-label="anchor" href="#example-2-handling-censored-data"></a>
+<h2 id="example-2-right-censored-exponential-data">Example 2: Right-Censored Exponential Data<a class="anchor" aria-label="anchor" href="#example-2-right-censored-exponential-data"></a>
 </h2>
-<p>A key feature of <code>likelihood.model</code> is proper handling of
-censored data. Let’s simulate data with right-censoring and show how
-ignoring censoring leads to biased estimates.</p>
+<p>The model handles right-censoring naturally through the sufficient
+statistics.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Generate normal data with right-censoring</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
-<span><span class="va">true_mean</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
-<span><span class="va">true_sd</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
-<span><span class="va">censor_time</span> <span class="op">&lt;-</span> <span class="fl">11</span></span>
-<span></span>
-<span><span class="co"># Generate latent (true) values</span></span>
-<span><span class="va">x_latent</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">true_mean</span>, <span class="va">true_sd</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Apply censoring</span></span>
-<span><span class="va">censored</span> <span class="op">&lt;-</span> <span class="va">x_latent</span> <span class="op">&gt;</span> <span class="va">censor_time</span></span>
+<code class="sourceCode R"><span><span class="co"># Generate data with right-censoring at time 0.5</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span></span>
+<span><span class="va">true_lambda</span> <span class="op">&lt;-</span> <span class="fl">3.0</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">200</span>, rate <span class="op">=</span> <span class="va">true_lambda</span><span class="op">)</span></span>
+<span><span class="va">censored</span> <span class="op">&lt;-</span> <span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.5</span></span>
 <span><span class="va">df_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">censored</span>, <span class="va">censor_time</span>, <span class="va">x_latent</span><span class="op">)</span>,</span>
-<span>  censor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">censored</span>, <span class="st">"right"</span>, <span class="st">"exact"</span><span class="op">)</span></span>
+<span>  t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">censored</span>, <span class="st">"right"</span>, <span class="st">"exact"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Censoring rate:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">censored</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Censoring rate: 27.5 %</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="fitting-with-proper-censoring">Fitting with Proper Censoring<a class="anchor" aria-label="anchor" href="#fitting-with-proper-censoring"></a>
-</h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create model that handles censoring</span></span>
-<span><span class="va">model_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"norm"</span>, ob_col <span class="op">=</span> <span class="st">"x"</span>, censor_col <span class="op">=</span> <span class="st">"censor"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Censoring rate: 20.5 %</span></span>
 <span></span>
-<span><span class="co"># Fit the model</span></span>
-<span><span class="va">solver_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_cens</span><span class="op">)</span></span>
-<span><span class="va">mle_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu">solver_cens</span><span class="op">(</span><span class="va">df_cens</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">model_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span>, censor_col <span class="op">=</span> <span class="st">"status"</span><span class="op">)</span></span>
+<span><span class="va">mle_cens</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_cens</span><span class="op">)</span><span class="op">(</span><span class="va">df_cens</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"MLE (accounting for censoring):\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; MLE (accounting for censoring):</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Mean:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"(true:"</span>, <span class="va">true_mean</span>, <span class="st">")\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Mean: 9.912 (true: 10 )</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  SD:  "</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, <span class="st">"(true:"</span>, <span class="va">true_sd</span>, <span class="st">")\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   SD:   1.754 (true: 2 )</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="comparison-naive-vs-proper-estimation">Comparison: Naive vs Proper Estimation<a class="anchor" aria-label="anchor" href="#comparison-naive-vs-proper-estimation"></a>
-</h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Naive estimates (ignoring censoring)</span></span>
-<span><span class="va">naive_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">df_cens</span><span class="op">$</span><span class="va">x</span><span class="op">)</span></span>
-<span><span class="va">naive_sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">df_cens</span><span class="op">$</span><span class="va">x</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nComparison of estimates:\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Comparison of estimates:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"                     Mean      SD\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                      Mean      SD</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"True values:      %7.3f   %5.3f\n"</span>, <span class="va">true_mean</span>, <span class="va">true_sd</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; True values:       10.000   2.000</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"MLE (correct):    %7.3f   %5.3f\n"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; MLE (correct):      9.912   1.754</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Naive (biased):   %7.3f   %5.3f\n"</span>, <span class="va">naive_mean</span>, <span class="va">naive_sd</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Naive (biased):     9.617   1.353</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nNote: Naive estimates are biased downward due to censoring!\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Note: Naive estimates are biased downward due to censoring!</span></span></code></pre></div>
-</div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"MLE (censored):"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span>, <span class="st">"(true:"</span>, <span class="va">true_lambda</span>, <span class="st">")\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; MLE (censored): 3.336 (true: 3 )</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"95% CI:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle_cens</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 95% CI: 2.817 3.854</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-3-bootstrap-sampling-distribution">Example 3: Bootstrap Sampling Distribution<a class="anchor" aria-label="anchor" href="#example-3-bootstrap-sampling-distribution"></a>
-</h2>
-<p>For more robust inference, especially with small samples, we can use
-bootstrap methods to estimate the sampling distribution of the MLE.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Using the Weibull example from before</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weibull_uncensored.html">weibull_uncensored</a></span><span class="op">(</span><span class="st">"x"</span><span class="op">)</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">rweibull</a></span><span class="op">(</span><span class="fl">150</span>, shape <span class="op">=</span> <span class="fl">2.5</span>, scale <span class="op">=</span> <span class="fl">3.0</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create bootstrap sampler</span></span>
-<span><span class="va">boot_sampler</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/algebraic.mle-reexports.html">sampler</a></span><span class="op">(</span><span class="va">model</span>, df <span class="op">=</span> <span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Generate bootstrap samples (100 replicates for speed)</span></span>
-<span><span class="va">boot_result</span> <span class="op">&lt;-</span> <span class="fu">boot_sampler</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Compare asymptotic vs bootstrap standard errors</span></span>
-<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">asymp_se</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/algebraic.mle-reexports.html">se</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span></span>
-<span><span class="va">boot_se</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/algebraic.mle-reexports.html">se</a></span><span class="op">(</span><span class="va">boot_result</span><span class="op">)</span>  <span class="co"># Uses vcov from bootstrap replicates</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Standard Error Comparison:\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Standard Error Comparison:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"           Asymptotic  Bootstrap\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            Asymptotic  Bootstrap</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Shape:     %10.4f  %9.4f\n"</span>, <span class="va">asymp_se</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">boot_se</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Shape:         0.1623     0.2150</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Scale:     %10.4f  %9.4f\n"</span>, <span class="va">asymp_se</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, <span class="va">boot_se</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale:         0.1026     0.0989</span></span>
-<span></span>
-<span><span class="co"># Bootstrap bias estimate</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nBootstrap Bias Estimate:\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Bootstrap Bias Estimate:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/algebraic.mle-reexports.html">bias</a></span><span class="op">(</span><span class="va">boot_result</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.031600 0.007698</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="example-4-verifying-the-score-at-mle">Example 4: Verifying the Score at MLE<a class="anchor" aria-label="anchor" href="#example-4-verifying-the-score-at-mle"></a>
+<h2 id="example-3-verifying-the-score-at-mle">Example 3: Verifying the Score at MLE<a class="anchor" aria-label="anchor" href="#example-3-verifying-the-score-at-mle"></a>
 </h2>
 <p>At the MLE, the score function (gradient of log-likelihood) should be
 approximately zero. This provides a useful diagnostic.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weibull_uncensored.html">weibull_uncensored</a></span><span class="op">(</span><span class="st">"x"</span><span class="op">)</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">rweibull</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">2</span>, <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">100</span>, rate <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fit MLE</span></span>
-<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Evaluate score at MLE</span></span>
 <span><span class="va">score_func</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score.html">score</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
@@ -325,31 +247,31 @@ approximately zero. This provides a useful diagnostic.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Score at MLE (should be near zero):\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Score at MLE (should be near zero):</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">score_at_mle</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    shape    scale </span></span>
-<span><span class="co">#&gt; -0.00338  0.01183</span></span>
+<span><span class="co">#&gt; lambda.lambda </span></span>
+<span><span class="co">#&gt;             0</span></span>
 <span></span>
 <span><span class="co"># The score is also stored in the MLE object</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nScore stored in MLE object:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Score stored in MLE object:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/algebraic.mle-reexports.html">score_val</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    shape    scale </span></span>
-<span><span class="co">#&gt; -0.00338  0.01183</span></span></code></pre></div>
-<p>The score values are very close to zero, confirming that the
-optimizer successfully found the MLE (a stationary point of the
-log-likelihood).</p>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/score_val.html" class="external-link">score_val</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; lambda </span></span>
+<span><span class="co">#&gt;      0</span></span></code></pre></div>
+<p>The score is exactly zero at the MLE for
+<code>exponential_lifetime</code> because the closed-form solution
+satisfies the score equation by construction.</p>
 </div>
 <div class="section level2">
-<h2 id="example-5-fisherian-likelihood-inference">Example 5: Fisherian Likelihood Inference<a class="anchor" aria-label="anchor" href="#example-5-fisherian-likelihood-inference"></a>
+<h2 id="example-4-fisherian-likelihood-inference">Example 4: Fisherian Likelihood Inference<a class="anchor" aria-label="anchor" href="#example-4-fisherian-likelihood-inference"></a>
 </h2>
 <p>The package supports pure likelihood-based inference in the Fisherian
 tradition. Instead of confidence intervals, we can compute likelihood
 intervals that make no probability statements about parameters.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit a model</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weibull_uncensored.html">weibull_uncensored</a></span><span class="op">(</span><span class="st">"x"</span><span class="op">)</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">rweibull</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">2.0</span>, <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">200</span>, rate <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Support function: log relative likelihood</span></span>
 <span><span class="co"># S(theta) = logL(theta) - logL(theta_hat)</span></span>
@@ -359,31 +281,26 @@ intervals that make no probability statements about parameters.</p>
 <span><span class="co">#&gt; Support at MLE: 0</span></span>
 <span></span>
 <span><span class="co"># Support at alternative parameter values (negative = less supported)</span></span>
-<span><span class="va">s_alt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/support.html">support</a></span><span class="op">(</span><span class="va">mle</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">1.0</span><span class="op">)</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Support at (1.5, 1.0):"</span>, <span class="va">s_alt</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Support at (1.5, 1.0): -18.64</span></span>
+<span><span class="va">s_alt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/support.html">support</a></span><span class="op">(</span><span class="va">mle</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Support at lambda=1.0:"</span>, <span class="va">s_alt</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Support at lambda=1.0: -36.6</span></span>
 <span></span>
 <span><span class="co"># Relative likelihood = exp(support)</span></span>
-<span><span class="va">rl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/relative_likelihood.html">relative_likelihood</a></span><span class="op">(</span><span class="va">mle</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">1.0</span><span class="op">)</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Relative likelihood at (1.5, 1.0):"</span>, <span class="va">rl</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Relative likelihood at (1.5, 1.0): 8.011e-09</span></span></code></pre></div>
-<p>Negative support and a very small relative likelihood indicate that
-the alternative parameter values
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mn>1.5</mn><mo>,</mo><mn>1.0</mn><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(1.5, 1.0)</annotation></semantics></math>
-are poorly supported by the data compared to the MLE.</p>
+<span><span class="va">rl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/relative_likelihood.html">relative_likelihood</a></span><span class="op">(</span><span class="va">mle</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span>, <span class="va">df</span>, <span class="va">model</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Relative likelihood at lambda=1.0:"</span>, <span class="va">rl</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Relative likelihood at lambda=1.0: 1.269e-16</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="likelihood-intervals">Likelihood Intervals<a class="anchor" aria-label="anchor" href="#likelihood-intervals"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compute 1/8 likelihood interval (roughly equivalent to 95% CI)</span></span>
 <span><span class="co"># This is the set of theta where R(theta) &gt;= 1/8</span></span>
 <span><span class="va">li</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/likelihood_interval.html">likelihood_interval</a></span><span class="op">(</span><span class="va">mle</span>, <span class="va">df</span>, <span class="va">model</span>, k <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">li</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 1/8 Likelihood Interval (R &gt;= 0.125)</span></span>
 <span><span class="co">#&gt; -----------------------------------</span></span>
-<span><span class="co">#&gt;      lower upper</span></span>
-<span><span class="co">#&gt; [1,] 1.646 2.281</span></span>
-<span><span class="co">#&gt; [2,] 1.299 1.623</span></span>
+<span><span class="co">#&gt;        lower upper</span></span>
+<span><span class="co">#&gt; lambda  1.69 2.256</span></span>
 <span><span class="co">#&gt; attr(,"k")</span></span>
 <span><span class="co">#&gt; [1] 8</span></span>
 <span><span class="co">#&gt; attr(,"relative_likelihood_cutoff")</span></span>
@@ -394,89 +311,67 @@ are poorly supported by the data compared to the MLE.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Wald 95% CI:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       2.5% 97.5%</span></span>
-<span><span class="co">#&gt; [1,] 1.644 2.255</span></span>
-<span><span class="co">#&gt; [2,] 1.301 1.608</span></span></code></pre></div>
+<span><span class="co">#&gt;         2.5% 97.5%</span></span>
+<span><span class="co">#&gt; lambda 1.688 2.231</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="example-6-closed-form-mle-with-exponential-lifetime-model">Example 6: Closed-Form MLE with Exponential Lifetime Model<a class="anchor" aria-label="anchor" href="#example-6-closed-form-mle-with-exponential-lifetime-model"></a>
+<h2 id="example-5-evidence-function">Example 5: Evidence Function<a class="anchor" aria-label="anchor" href="#example-5-evidence-function"></a>
 </h2>
-<p>The <code>exponential_lifetime</code> model demonstrates a key design
-feature: specialized models can override <code><a href="../reference/fit.html">fit()</a></code> to bypass
-<code>optim</code> entirely when the MLE has a closed-form solution.</p>
-<p>For Exponential(lambda) data, the MLE is simply lambda_hat = d / T,
-where d is the number of uncensored observations and T is the total
-observation time.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Generate exponential survival data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span></span>
-<span><span class="va">df_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">200</span>, rate <span class="op">=</span> <span class="fl">3.0</span><span class="op">)</span><span class="op">)</span></span>
+<p>The evidence function computes the log-likelihood ratio between two
+parameter values, providing a pure likelihood-based measure of
+support.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">100</span>, rate <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Create model and fit -- no initial guess needed!</span></span>
-<span><span class="va">model_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
-<span><span class="va">mle_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_exp</span><span class="op">)</span><span class="op">(</span><span class="va">df_exp</span><span class="op">)</span></span>
+<span><span class="co"># Evidence for lambda=2 vs lambda=1</span></span>
+<span><span class="va">ev</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/evidence.html">evidence</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Evidence for lambda=2 vs lambda=1:"</span>, <span class="va">ev</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Evidence for lambda=2 vs lambda=1: 13.1</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Closed-form MLE (no optim):\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Closed-form MLE (no optim):</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  lambda_hat:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span>, <span class="st">"(true: 3.0)\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   lambda_hat: 3.137 (true: 3.0)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  SE:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">se</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   SE: 0.2218</span></span>
-<span></span>
-<span><span class="co"># The score at the MLE is exactly zero (by construction)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"  Score at MLE:"</span>, <span class="fu"><a href="../reference/algebraic.mle-reexports.html">score_val</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Score at MLE: 0</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="right-censored-exponential-data">Right-Censored Exponential Data<a class="anchor" aria-label="anchor" href="#right-censored-exponential-data"></a>
-</h3>
-<p>The model handles right-censoring naturally through the sufficient
-statistics.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Generate data with right-censoring at time 0.5</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span></span>
-<span><span class="va">true_lambda</span> <span class="op">&lt;-</span> <span class="fl">3.0</span></span>
-<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">200</span>, rate <span class="op">=</span> <span class="va">true_lambda</span><span class="op">)</span></span>
-<span><span class="va">censored</span> <span class="op">&lt;-</span> <span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.5</span></span>
-<span><span class="va">df_cens_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
-<span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">censored</span>, <span class="st">"right"</span>, <span class="st">"exact"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Censoring rate:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">censored</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Censoring rate: 20.5 %</span></span>
-<span></span>
-<span><span class="va">model_cens_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span>, censor_col <span class="op">=</span> <span class="st">"status"</span><span class="op">)</span></span>
-<span><span class="va">mle_cens_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model_cens_exp</span><span class="op">)</span><span class="op">(</span><span class="va">df_cens_exp</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"MLE (censored):"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_cens_exp</span><span class="op">)</span>, <span class="st">"(true:"</span>, <span class="va">true_lambda</span>, <span class="st">")\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; MLE (censored): 3.336 (true: 3 )</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"95% CI:"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mle_cens_exp</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 95% CI: 2.817 3.854</span></span></code></pre></div>
+<span><span class="co"># Positive evidence supports the first hypothesis</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">ev</span> <span class="op">&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Strong evidence favoring lambda=2\n"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; Strong evidence favoring lambda=2</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="cross-validation-matches-likelihood_nameexp----">Cross-Validation: Matches
-<code>likelihood_name("exp", ...)</code><a class="anchor" aria-label="anchor" href="#cross-validation-matches-likelihood_nameexp----"></a>
-</h3>
-<p>The analytical model produces the same log-likelihood as the generic
-approach:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Compare log-likelihood values at the MLE</span></span>
-<span><span class="va">lambda_hat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mle_exp</span><span class="op">)</span></span>
-<span><span class="va">ll_analytical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model_exp</span><span class="op">)</span><span class="op">(</span><span class="va">df_exp</span>, <span class="va">lambda_hat</span><span class="op">)</span></span>
+<div class="section level2">
+<h2 id="example-6-bootstrap-sampling-distribution">Example 6: Bootstrap Sampling Distribution<a class="anchor" aria-label="anchor" href="#example-6-bootstrap-sampling-distribution"></a>
+</h2>
+<p>For more robust inference, especially with small samples, we can use
+bootstrap methods to estimate the sampling distribution of the MLE.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exponential_lifetime.html">exponential_lifetime</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">100</span>, rate <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># likelihood_name("exp") uses dexp(x, rate), so pass unnamed parameter</span></span>
-<span><span class="va">df_exp_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="va">df_exp</span><span class="op">$</span><span class="va">t</span>, censor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"exact"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df_exp</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">model_generic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/likelihood_name.html">likelihood_name</a></span><span class="op">(</span><span class="st">"exp"</span>, ob_col <span class="op">=</span> <span class="st">"t"</span>, censor_col <span class="op">=</span> <span class="st">"censor"</span><span class="op">)</span></span>
-<span><span class="va">ll_generic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loglik.html">loglik</a></span><span class="op">(</span><span class="va">model_generic</span><span class="op">)</span><span class="op">(</span><span class="va">df_exp_name</span>, <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">lambda_hat</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># Create bootstrap sampler</span></span>
+<span><span class="va">boot_sampler</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.dist/reference/sampler.html" class="external-link">sampler</a></span><span class="op">(</span><span class="va">model</span>, df <span class="op">=</span> <span class="va">df</span>, par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Analytical loglik:"</span>, <span class="va">ll_analytical</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Analytical loglik: 28.66</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Generic loglik:   "</span>, <span class="va">ll_generic</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Generic loglik:    28.66</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Match:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">ll_analytical</span><span class="op">)</span>, <span class="va">ll_generic</span>, tolerance <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Match: TRUE</span></span></code></pre></div>
-</div>
+<span><span class="co"># Generate bootstrap samples (100 replicates for speed)</span></span>
+<span><span class="va">boot_result</span> <span class="op">&lt;-</span> <span class="fu">boot_sampler</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compare asymptotic vs bootstrap standard errors</span></span>
+<span><span class="va">mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit.html">fit</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="va">asymp_se</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">se</a></span><span class="op">(</span><span class="va">mle</span><span class="op">)</span></span>
+<span><span class="va">boot_se</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">se</a></span><span class="op">(</span><span class="va">boot_result</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Standard Error Comparison:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Standard Error Comparison:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"           Asymptotic  Bootstrap\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            Asymptotic  Bootstrap</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Lambda:    %10.4f  %9.4f\n"</span>, <span class="va">asymp_se</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">boot_se</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Lambda:        0.1779     0.2485</span></span>
+<span></span>
+<span><span class="co"># Bootstrap bias estimate</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nBootstrap Bias Estimate:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Bootstrap Bias Estimate:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://queelius.github.io/algebraic.mle/reference/bias.html" class="external-link">bias</a></span><span class="op">(</span><span class="va">boot_result</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  lambda </span></span>
+<span><span class="co">#&gt; 0.05554</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="summary-of-key-functions">Summary of Key Functions<a class="anchor" aria-label="anchor" href="#summary-of-key-functions"></a>
@@ -493,25 +388,13 @@ approach:</p>
 <th>Function</th>
 <th>Description</th>
 </tr></thead>
-<tbody>
-<tr class="odd">
-<td><code><a href="../reference/likelihood_name.html">likelihood_name()</a></code></td>
-<td>Create model for standard R distributions</td>
-</tr>
-<tr class="even">
-<td><code><a href="../reference/weibull_uncensored.html">weibull_uncensored()</a></code></td>
-<td>Weibull model with analytical derivatives (exact obs.)</td>
-</tr>
-<tr class="odd">
+<tbody><tr class="odd">
 <td><code><a href="../reference/exponential_lifetime.html">exponential_lifetime()</a></code></td>
 <td>Exponential model with closed-form MLE and optional censoring</td>
-</tr>
-<tr class="even">
-<td><code>likelihood_contr_model$new()</code></td>
-<td>Custom likelihood contributions</td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
+<p>For contribution-based models and standard distribution wrappers, see
+the <code>likelihood.contr</code> package.</p>
 </div>
 <div class="section level3">
 <h3 id="likelihood-calculus">Likelihood Calculus<a class="anchor" aria-label="anchor" href="#likelihood-calculus"></a>
@@ -538,10 +421,6 @@ approach:</p>
 <td><code><a href="../reference/fim.html">fim()</a></code></td>
 <td>Fisher information matrix</td>
 </tr>
-<tr class="odd">
-<td><code><a href="../reference/observed_info.html">observed_info()</a></code></td>
-<td>Observed information matrix</td>
-</tr>
 </tbody>
 </table>
 </div>
@@ -559,7 +438,7 @@ approach:</p>
 <td>Create MLE solver (returns <code>fisher_mle</code>)</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/algebraic.mle-reexports.html">sampler()</a></code></td>
+<td><code><a href="https://queelius.github.io/algebraic.dist/reference/sampler.html" class="external-link">sampler()</a></code></td>
 <td>Create bootstrap sampler (returns <code>fisher_boot</code>)</td>
 </tr>
 <tr class="odd">
@@ -575,7 +454,7 @@ approach:</p>
 <td>Confidence intervals</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/algebraic.mle-reexports.html">se()</a></code></td>
+<td><code><a href="https://queelius.github.io/algebraic.mle/reference/se.html" class="external-link">se()</a></code></td>
 <td>Standard errors</td>
 </tr>
 </tbody>
@@ -585,6 +464,10 @@ approach:</p>
 <h3 id="fisherian-inference">Fisherian Inference<a class="anchor" aria-label="anchor" href="#fisherian-inference"></a>
 </h3>
 <table class="table">
+<colgroup>
+<col width="43%">
+<col width="56%">
+</colgroup>
 <thead><tr class="header">
 <th>Function</th>
 <th>Description</th>
@@ -592,15 +475,16 @@ approach:</p>
 <tbody>
 <tr class="odd">
 <td><code><a href="../reference/support.html">support()</a></code></td>
-<td>Log relative likelihood: S(θ) = logL(θ) - logL(θ̂)</td>
+<td>Log relative likelihood: S(theta) = logL(theta) -
+logL(theta_hat)</td>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/relative_likelihood.html">relative_likelihood()</a></code></td>
-<td>Likelihood ratio: R(θ) = L(θ)/L(θ̂)</td>
+<td>Likelihood ratio: R(theta) = L(theta)/L(theta_hat)</td>
 </tr>
 <tr class="odd">
 <td><code><a href="../reference/likelihood_interval.html">likelihood_interval()</a></code></td>
-<td>Interval where R(θ) ≥ 1/k</td>
+<td>Interval where R(theta) &gt;= 1/k</td>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/profile_loglik.html">profile_loglik()</a></code></td>
@@ -608,7 +492,7 @@ approach:</p>
 </tr>
 <tr class="odd">
 <td><code><a href="../reference/evidence.html">evidence()</a></code></td>
-<td>Evidence for θ₁ vs θ₂</td>
+<td>Evidence for theta_1 vs theta_2</td>
 </tr>
 </tbody>
 </table>
@@ -627,11 +511,11 @@ approach:</p>
 <td>Likelihood ratio test</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/algebraic.mle-reexports.html">aic()</a></code></td>
+<td><code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code></td>
 <td>Akaike Information Criterion</td>
 </tr>
 <tr class="odd">
-<td><code><a href="../reference/bic.html">bic()</a></code></td>
+<td><code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">BIC()</a></code></td>
 <td>Bayesian Information Criterion</td>
 </tr>
 <tr class="even">
@@ -645,26 +529,25 @@ approach:</p>
 <div class="section level2">
 <h2 id="next-steps">Next Steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
-<p>For more advanced usage, see the other vignettes:</p>
+<p>For more details, see the other vignettes:</p>
 <ul>
 <li>
-<strong>Likelihood Named Distributions Model</strong>: Detailed
-coverage of <code>likelihood_name</code> with various censoring
-types</li>
+<strong>Exponential Lifetime Model</strong>: Detailed coverage of
+<code>exponential_lifetime</code> with analytical derivatives and
+right-censoring</li>
 <li>
-<strong>Likelihood Contributions Model</strong>: Building custom
-models for complex scenarios like series systems with component
-failures</li>
+<strong>Integration with algebraic.mle</strong>: Three-package
+ecosystem demonstration</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span><span class="co">#&gt; R version 4.6.0 (2026-04-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.4 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -683,19 +566,19 @@ failures</li>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] likelihood.model_0.9.1</span></span>
+<span><span class="co">#&gt; [1] likelihood.model_1.0.1 algebraic.mle_2.0.2   </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] cli_3.6.5            knitr_1.51           rlang_1.1.7         </span></span>
-<span><span class="co">#&gt;  [4] xfun_0.56            generics_0.1.4       textshaping_1.0.4   </span></span>
-<span><span class="co">#&gt;  [7] jsonlite_2.0.0       htmltools_0.5.9      ragg_1.5.0          </span></span>
-<span><span class="co">#&gt; [10] sass_0.4.10          rmarkdown_2.30       evaluate_1.0.5      </span></span>
-<span><span class="co">#&gt; [13] jquerylib_0.1.4      MASS_7.3-65          fastmap_1.2.0       </span></span>
-<span><span class="co">#&gt; [16] numDeriv_2016.8-1.1  yaml_2.3.12          mvtnorm_1.3-3       </span></span>
-<span><span class="co">#&gt; [19] lifecycle_1.0.5      algebraic.mle_0.9.0  compiler_4.5.2      </span></span>
-<span><span class="co">#&gt; [22] codetools_0.2-20     fs_1.6.6             algebraic.dist_0.1.0</span></span>
-<span><span class="co">#&gt; [25] systemfonts_1.3.1    digest_0.6.39        R6_2.6.1            </span></span>
-<span><span class="co">#&gt; [28] bslib_0.10.0         tools_4.5.2          boot_1.3-32         </span></span>
+<span><span class="co">#&gt;  [1] cli_3.6.6            knitr_1.51           rlang_1.2.0         </span></span>
+<span><span class="co">#&gt;  [4] xfun_0.57            generics_0.1.4       textshaping_1.0.5   </span></span>
+<span><span class="co">#&gt;  [7] jsonlite_2.0.0       htmltools_0.5.9      stats4_4.6.0        </span></span>
+<span><span class="co">#&gt; [10] ragg_1.5.2           sass_0.4.10          rmarkdown_2.31      </span></span>
+<span><span class="co">#&gt; [13] evaluate_1.0.5       jquerylib_0.1.4      MASS_7.3-65         </span></span>
+<span><span class="co">#&gt; [16] fastmap_1.2.0        yaml_2.3.12          mvtnorm_1.3-7       </span></span>
+<span><span class="co">#&gt; [19] lifecycle_1.0.5      numDeriv_2016.8-1.1  compiler_4.6.0      </span></span>
+<span><span class="co">#&gt; [22] codetools_0.2-20     fs_2.1.0             algebraic.dist_1.0.0</span></span>
+<span><span class="co">#&gt; [25] systemfonts_1.3.2    digest_0.6.39        R6_2.6.1            </span></span>
+<span><span class="co">#&gt; [28] bslib_0.11.0         tools_4.6.0          boot_1.3-32         </span></span>
 <span><span class="co">#&gt; [31] pkgdown_2.2.0        cachem_1.1.0         desc_1.4.3</span></span></code></pre></div>
 </div>
   </div>
