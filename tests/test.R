@@ -1451,7 +1451,26 @@ test_that("bias.fisher_mle estimates bias via MC when model provided", {
 # FIM ... FORWARDING + NaN GUARD TESTS
 # =============================================================================
 
-test_that("fim.likelihood_model forwards ... to hess_fn", {
+test_that("fim.likelihood_model forwards ... to rdata only, not to hess_fn", {
+  # CONTRACT (v1.0.1+): the inner `...` of the closure returned by
+  # fim(model) flows to rdata only. It does NOT flow to hess_loglik.
+  #
+  # Rationale:
+  #   1. The likelihood is a function of the data alone. Kwargs that
+  #      describe the data-generating process (censoring time tau,
+  #      masking probability p, observation functor, etc.) are inputs
+  #      to rdata. They must not appear in the likelihood, by the
+  #      Fisherian separation between sampling and inference, and
+  #      specifically by masking condition C3 in this package's models.
+  #   2. R partial-argument-matching makes the forwarding-to-hess
+  #      behavior actively dangerous: any kwarg whose name shares a
+  #      prefix with a hess_loglik formal (e.g., a DGP `p` colliding
+  #      with the parameter formal `par`) is silently misrouted and
+  #      corrupts the call.
+  #
+  # This test pins the contract: a likelihood-modifying kwarg
+  # `multiplier` passed via the FIM closure's `...` must NOT reach
+  # the mock's loglik, so the FIM is unchanged when it is set.
   mock_model <- structure(list(), class = c("mock_dots_fim", "likelihood_model"))
 
   loglik.mock_dots_fim <<- function(model, ...) {
@@ -1468,14 +1487,62 @@ test_that("fim.likelihood_model forwards ... to hess_fn", {
 
   set.seed(8002)
   fim_fn <- fim(mock_model)
-  # With multiplier=1 (default), FIM for exp(rate=2), n=10 is 10/4 = 2.5
   fim_default <- fim_fn(theta = c(2), n_obs = 10, n_samples = 500)
-  # With multiplier=2, FIM should be ~2x
-  fim_doubled <- fim_fn(theta = c(2), n_obs = 10, n_samples = 500, multiplier = 2)
+  set.seed(8002)
+  fim_with_kwarg <- fim_fn(theta = c(2), n_obs = 10,
+                           n_samples = 500, multiplier = 2)
 
-  expect_equal(fim_doubled[1, 1] / fim_default[1, 1], 2, tolerance = 0.5)
+  # multiplier did NOT reach the likelihood evaluator: same FIM.
+  expect_equal(fim_with_kwarg[1, 1], fim_default[1, 1], tolerance = 1e-8)
 
   rm(loglik.mock_dots_fim, rdata.mock_dots_fim, envir = .GlobalEnv)
+})
+
+test_that("fim.likelihood_model forwards ... to rdata (DGP kwargs)", {
+  # Complement to the above: a kwarg that the rdata closure consumes
+  # (here, a rate offset that shifts the sampling distribution) DOES
+  # reach rdata, which changes the generated data, which changes the
+  # data-dependent Hessian, which changes the FIM.
+  #
+  # Note: the mock's hess_loglik returns matrix(-sum(df$x), 1, 1),
+  # an x-dependent Hessian. This is what lets us see the DGP shift
+  # propagate through to the FIM. (For a canonical exponential family
+  # the FIM at fixed theta does not depend on the DGP via the data,
+  # so we use a synthetic non-canonical Hessian for the test.)
+  mock_model <- structure(list(), class = c("mock_dgp_kwarg", "likelihood_model"))
+
+  loglik.mock_dgp_kwarg <<- function(model, ...) {
+    function(df, par, ...) {
+      # Not actually used by hess_loglik below; included for completeness.
+      nrow(df) * log(par[1]) - par[1] * sum(df$x)
+    }
+  }
+
+  hess_loglik.mock_dgp_kwarg <<- function(model, ...) {
+    # Data-dependent Hessian: -sum(x). Negative because the FIM is
+    # the negated expectation; we want a positive FIM.
+    function(df, par, ...) matrix(-sum(df$x), 1, 1)
+  }
+
+  rdata.mock_dgp_kwarg <<- function(model, ...) {
+    function(theta, n, rate_offset = 0, ...) {
+      data.frame(x = rexp(n, rate = theta[1] + rate_offset))
+    }
+  }
+
+  set.seed(8011)
+  fim_fn <- fim(mock_model)
+  fim_default <- fim_fn(theta = c(2), n_obs = 10, n_samples = 500)
+  set.seed(8011)
+  fim_shifted <- fim_fn(theta = c(2), n_obs = 10,
+                        n_samples = 500, rate_offset = 3)
+
+  # rate_offset = 0: x ~ Exp(2),    E[sum(x)|n=1] = 0.5,   FIM ~ 10 * 0.5 = 5
+  # rate_offset = 3: x ~ Exp(5),    E[sum(x)|n=1] = 0.2,   FIM ~ 10 * 0.2 = 2
+  expect_true(fim_default[1, 1] > fim_shifted[1, 1] + 1)
+
+  rm(loglik.mock_dgp_kwarg, hess_loglik.mock_dgp_kwarg, rdata.mock_dgp_kwarg,
+     envir = .GlobalEnv)
 })
 
 test_that("fim.likelihood_model handles NaN from hess_loglik gracefully", {

@@ -1,3 +1,30 @@
+# likelihood.model 1.0.1
+
+## Bug fix
+
+* `fim.likelihood_model` no longer forwards the inner `...` to the
+  `hess_loglik` evaluator. DGP-only kwargs (right-censoring time `tau`,
+  masking probability `p`, observation functor `observe`, etc.) flow to
+  `rdata` only, where they belong. The likelihood layer is computed on
+  the data alone.
+
+  Two motivations for the fix:
+
+  1. **Theory**: under standard masking condition C3, the masking
+     probability is independent of the system parameters by definition,
+     so the likelihood does not depend on it. The previous behavior
+     leaked a parameter the likelihood is not supposed to see.
+
+  2. **R partial-matching**: a kwarg named `p` would silently partial-
+     match the formal `par` in any `hess_loglik` method, corrupting the
+     parameter vector at the call site. This made the `fim()` default
+     fail deterministically for any model whose `hess_loglik` had `par`
+     as a formal and any DGP kwarg starting with `p`.
+
+  Behavioral note: the docstring already documented this contract
+  ("Additional arguments passed to rdata"); the implementation now
+  matches the documentation.
+
 # likelihood.model 1.0.0
 
 ## Breaking Changes

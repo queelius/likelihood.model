@@ -217,9 +217,22 @@ fim <- function(model, ...) {
 #' This default requires the model to implement `rdata` and `hess_loglik`
 #' (or `loglik`, since `hess_loglik` falls back to numerical differentiation).
 #'
+#' Extra arguments via `...` to the returned FIM function are forwarded
+#' to `rdata` only (i.e., they parameterize the data-generating process:
+#' censoring time, masking probability, observation functor, etc.) and
+#' are NOT passed to the likelihood evaluator `hess_loglik`. This honors
+#' the separation between the DGP layer and the likelihood layer: the
+#' likelihood is computed on data, not on the DGP knobs that produced it.
+#' Forwarding DGP kwargs into the likelihood layer was both an axiom
+#' violation (under masking condition C3 the likelihood does not depend
+#' on the masking probability) and a partial-matching footgun (a kwarg
+#' named `p` would collide with the formal `par`).
+#'
 #' @param model A likelihood model
-#' @param ... Additional arguments passed to rdata
-#' @return Function that takes (theta, n_obs, n_samples, ...) and returns FIM matrix
+#' @param ... Additional arguments (currently unused; reserved for future
+#'   extension at closure-construction time)
+#' @return Function that takes (theta, n_obs, n_samples, ...) and returns
+#'   FIM matrix. The inner `...` is forwarded to `rdata` only.
 #' @export
 fim.likelihood_model <- function(model, ...) {
   hess_fn <- hess_loglik(model, ...)
@@ -233,7 +246,7 @@ fim.likelihood_model <- function(model, ...) {
     for (b in seq_len(n_samples)) {
       sample <- tryCatch({
         data_b <- rdata_fn(theta, n = 1, ...)
-        H <- -hess_fn(data_b, theta, ...)
+        H <- -hess_fn(data_b, theta)
         if (any(!is.finite(H))) list(ok = FALSE) else list(ok = TRUE, val = H)
       }, error = function(e) list(ok = FALSE))
 

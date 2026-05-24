@@ -9,10 +9,12 @@
 \arguments{
 \item{model}{A likelihood model}
 
-\item{...}{Additional arguments passed to rdata}
+\item{...}{Additional arguments (currently unused; reserved for future
+extension at closure-construction time)}
 }
 \value{
-Function that takes (theta, n_obs, n_samples, ...) and returns FIM matrix
+Function that takes (theta, n_obs, n_samples, ...) and returns
+FIM matrix. The inner \code{...} is forwarded to \code{rdata} only.
 }
 \description{
 Computes the Fisher information matrix by Monte Carlo simulation using
@@ -24,4 +26,15 @@ generates a single-observation dataset via \code{rdata}, computes
 \details{
 This default requires the model to implement \code{rdata} and \code{hess_loglik}
 (or \code{loglik}, since \code{hess_loglik} falls back to numerical differentiation).
+
+Extra arguments via \code{...} to the returned FIM function are forwarded
+to \code{rdata} only (i.e., they parameterize the data-generating process:
+censoring time, masking probability, observation functor, etc.) and
+are NOT passed to the likelihood evaluator \code{hess_loglik}. This honors
+the separation between the DGP layer and the likelihood layer: the
+likelihood is computed on data, not on the DGP knobs that produced it.
+Forwarding DGP kwargs into the likelihood layer was both an axiom
+violation (under masking condition C3 the likelihood does not depend
+on the masking probability) and a partial-matching footgun (a kwarg
+named \code{p} would collide with the formal \code{par}).
 }
