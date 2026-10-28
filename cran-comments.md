@@ -17,3 +17,14 @@ Examples, regression tests, the existing full test script, vignette rebuilding
 and PDF manual passed. The final repeat check disabled remote incoming checks;
 the preceding full remote incoming check completed successfully. R-devel
 win-builder validation is requested separately.
+
+## Final constrained-domain correction
+
+Both profiling APIs now share a centered objective, verify finite converged
+nuisance fits, and use derivative-free fallback when finite differences cross
+a genuine model domain. The expanded regression script passes 22 assertions;
+current coverage is 98.88%. The final archive passed local --as-cran with
+0 errors, 0 warnings and the same 2 environment notes.
+
+Current R-devel (2026-10-26 r90766), --no-manual --as-cran: Status: OK.
+https://github.com/queelius/likelihood.model/actions/runs/40645641026/job/122673698013
