@@ -7,6 +7,16 @@
 #' @name fisherian
 NULL
 
+# Numerical scales do not constrain parameter domains. Prefer local standard
+# errors; when unavailable, use the magnitude of a nonzero estimate or one.
+.profile_parameter_scale <- function(estimate, standard_error) {
+  scale <- abs(estimate)
+  scale[!is.finite(scale) | scale == 0] <- 1
+  usable <- is.finite(standard_error) & standard_error > 0
+  scale[usable] <- standard_error[usable]
+  scale
+}
+
 
 #' Support Function (Log Relative Likelihood)
 #'
@@ -124,6 +134,7 @@ likelihood_interval.fisher_mle <- function(x, data, model, k = 8,
     idx <- param[i]
     se_i <- se_vals[idx]
     mle_i <- theta_hat[idx]
+    root_tol <- 1e-6 * .profile_parameter_scale(mle_i, se_i)
 
     if (p == 1) {
       # Univariate case: direct root finding
@@ -135,14 +146,14 @@ likelihood_interval.fisher_mle <- function(x, data, model, k = 8,
       lower_search <- mle_i - search_mult * se_i
       result[i, 1] <- tryCatch({
         uniroot(support_fn, c(lower_search, mle_i),
-                extendInt = "yes", tol = 1e-6)$root
+                extendInt = "yes", tol = root_tol)$root
       }, error = function(e) NA_real_)
 
       # Find upper bound
       upper_search <- mle_i + search_mult * se_i
       result[i, 2] <- tryCatch({
         uniroot(support_fn, c(mle_i, upper_search),
-                extendInt = "yes", tol = 1e-6)$root
+                extendInt = "yes", tol = root_tol)$root
       }, error = function(e) NA_real_)
 
     } else {
@@ -161,15 +172,9 @@ likelihood_interval.fisher_mle <- function(x, data, model, k = 8,
           return(ll(data, theta_full, ...) - ll_max)
         }
 
-        # Reparameterize: use log-transform for positive MLE values
-        # so the optimizer works in unconstrained space
-        pos_mask <- init_other > 0
-        init_unconstrained <- init_other
-        init_unconstrained[pos_mask] <- log(init_other[pos_mask])
-
-        opt_fn <- function(unconstrained) {
-          other_params <- unconstrained
-          other_params[pos_mask] <- exp(unconstrained[pos_mask])
+        # A fitted value does not define a parameter's domain. Optimize in
+        # the original coordinates; the model likelihood defines validity.
+        opt_fn <- function(other_params) {
           theta_full <- numeric(p)
           theta_full[idx] <- theta_i
           theta_full[other_idx] <- other_params
@@ -184,8 +189,9 @@ likelihood_interval.fisher_mle <- function(x, data, model, k = 8,
 
         opt <- tryCatch(
           suppressWarnings(
-            optim(init_unconstrained, opt_fn, method = "BFGS",
-                  control = list(maxit = 100))
+            optim(init_other, opt_fn, method = "BFGS",
+                  control = list(maxit = 100,
+                    parscale = .profile_parameter_scale(init_other, se_vals[other_idx])))
           ),
           error = function(e) list(value = Inf)
         )
@@ -202,14 +208,14 @@ likelihood_interval.fisher_mle <- function(x, data, model, k = 8,
       lower_search <- mle_i - search_mult * se_i
       result[i, 1] <- tryCatch({
         uniroot(profile_root, c(lower_search, mle_i),
-                tol = 1e-5)$root
+                tol = root_tol)$root
       }, error = function(e) NA_real_)
 
       # Find upper bound
       upper_search <- mle_i + search_mult * se_i
       result[i, 2] <- tryCatch({
         uniroot(profile_root, c(mle_i, upper_search),
-                tol = 1e-5)$root
+                tol = root_tol)$root
       }, error = function(e) NA_real_)
     }
   }
@@ -303,7 +309,8 @@ profile_loglik.fisher_mle <- function(x, data, model, param,
       -ll(data, theta_full, ...)
     }
     opt <- optim(init_nuisance, opt_fn, method = "BFGS",
-                 control = list(maxit = 100))
+                 control = list(maxit = 100,
+                   parscale = .profile_parameter_scale(init_nuisance, se_vals[nuisance_idx])))
     -opt$value
   }
 

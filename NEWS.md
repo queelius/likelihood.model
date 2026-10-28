@@ -1,3 +1,8 @@
+# likelihood.model 1.0.2
+
+* Scale profile optimization and interval root tolerances by parameter uncertainty to preserve accuracy for very small parameter scales.
+* Profile likelihood intervals no longer infer nuisance-parameter positivity from the sign of a fitted estimate. This fixes incorrect intervals for unrestricted means and slopes. Parameter domains are defined by the model likelihood.
+
 # likelihood.model 1.0.1
 
 ## Bug fix
