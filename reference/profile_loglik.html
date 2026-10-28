@@ -133,7 +133,12 @@ For each value of the parameters of interest, the remaining
     <p>The profile likelihood is useful for:</p><ul><li><p>Visualizing the likelihood surface</p></li>
 <li><p>Computing likelihood intervals</p></li>
 <li><p>Eliminating nuisance parameters</p></li>
-</ul></div>
+</ul><p>Nuisance parameters use the same local BFGS/Nelder-Mead profiling strategy
+as <code><a href="likelihood_interval.html">likelihood_interval()</a></code>. Failed optimization returns <code>NA</code> with a warning;
+in particular, coupled domains may require a feasible starting value that
+differs from the original fit. These local optimizers do not establish a
+global maximum for multimodal likelihoods.</p>
+    </div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -119,6 +119,12 @@ parameter values that are well-supported by the data.</p>
 <li><p>k = 32: 1/32 likelihood interval (~99.9% CI equivalent)</p></li>
 </ul><p>For multivariate parameters, specify <code>param</code> to get a profile likelihood
 interval for that parameter (profiling over the others).</p>
+<p>Profiling uses local BFGS optimization with a Nelder-Mead fallback when
+derivatives cross a parameter-domain boundary or optimization fails. Both
+start from the fitted nuisance parameters; neither infers constraints from
+parameter signs. Failed profiles return <code>NA</code> with a warning. Coupled domains
+can make the starting values infeasible at some profile values; an <code>NA</code>
+then indicates unavailable optimization, not an empty likelihood interval.</p>
     </div>
 
   </div>
