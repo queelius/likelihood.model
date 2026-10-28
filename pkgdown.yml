@@ -1,8 +1,8 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   algebraic-mle-integration: algebraic-mle-integration.html
   exponential-lifetime: exponential-lifetime.html
   getting-started: getting-started.html
-last_built: 2026-05-24T08:20Z
+last_built: 2026-10-28T05:46Z
