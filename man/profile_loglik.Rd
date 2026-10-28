@@ -50,4 +50,10 @@ The profile likelihood is useful for:
 \item Computing likelihood intervals
 \item Eliminating nuisance parameters
 }
+
+Nuisance parameters use the same local BFGS/Nelder-Mead profiling strategy
+as \code{\link[=likelihood_interval]{likelihood_interval()}}. Failed optimization returns \code{NA} with a warning;
+in particular, coupled domains may require a feasible starting value that
+differs from the original fit. These local optimizers do not establish a
+global maximum for multimodal likelihoods.
 }

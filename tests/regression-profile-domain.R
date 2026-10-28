@@ -45,3 +45,74 @@ test_that("profile inference respects small parameter scales without sign constr
     expect_equal(profile_without_se$support, rep(-log(8), 2), tolerance = 1e-5)
   }
 })
+
+loglik.boundary_domain <- function(model, ...) {
+  function(df, par, ...) {
+    if (par["b"] <= 0) return(-Inf)
+    -0.5 * (par["a"]^2 + (par["b"] - 1e-4)^2)
+  }
+}
+registerS3method("loglik", "boundary_domain", loglik.boundary_domain,
+                 envir = asNamespace("likelihood.model"))
+
+test_that("profile inference falls back when finite differences cross a domain", {
+  boundary_model <- structure(list(), class = c("boundary_domain", "likelihood_model"))
+  fitted <- fisher_mle(c(a = 0, b = 1e-4), vcov = diag(2), loglik_val = 0)
+  expected <- c(-1, 1) * sqrt(2 * log(8))
+  interval <- likelihood_interval(fitted, data.frame(x = 0), boundary_model,
+                                  param = "a")
+  expect_equal(as.numeric(interval), expected, tolerance = 1e-5)
+  profile <- profile_loglik(fitted, data.frame(x = 0), boundary_model,
+                            param = "a", grid = expected)
+  expect_equal(profile$support, rep(-log(8), 2), tolerance = 1e-5)
+})
+
+loglik.coupled_domain <- function(model, ...) {
+  function(df, par, ...) {
+    if (par["a"] + par["b"] <= 0) return(-Inf)
+    -0.5 * (par["a"]^2 + (par["b"] - 1)^2)
+  }
+}
+registerS3method("loglik", "coupled_domain", loglik.coupled_domain,
+                 envir = asNamespace("likelihood.model"))
+
+test_that("profiles report unavailable optimization rather than a finite penalty", {
+  coupled_model <- structure(list(), class = c("coupled_domain", "likelihood_model"))
+  fitted <- fisher_mle(c(a = 0, b = 1), vcov = diag(2), loglik_val = 0)
+  # At a=-2 the original nuisance value b=1 is infeasible. Without an
+  # explicit domain or feasible start, local optimization cannot certify a fit.
+  expect_warning(
+    profile <- profile_loglik(fitted, data.frame(x = 0), coupled_model,
+                              param = "a", grid = -2),
+    "Profile optimization failed")
+  expect_true(is.na(profile$loglik))
+  expect_true(is.na(profile$support))
+})
+
+loglik.correlated_boundary <- function(model, ...) {
+  function(df, par, ...) {
+    if (par["b"] <= 0) return(-Inf)
+    model$offset - 0.5 * (par["a"]^2 + (par["b"] - 1e-4 - par["a"])^2)
+  }
+}
+registerS3method("loglik", "correlated_boundary", loglik.correlated_boundary,
+                 envir = asNamespace("likelihood.model"))
+
+test_that("domain fallback optimizes moving nuisance values independently of offsets", {
+  # For a>0, the nuisance optimum moves to b=a+1e-4. For a< -1e-4,
+  # the profile supremum is approached as b tends to zero from above.
+  expected <- c((-1e-4 - sqrt(4 * log(8) - 1e-8)) / 2,
+                 sqrt(2 * log(8)))
+  for (offset in c(0, -1e8, 1e8)) {
+    boundary_model <- structure(list(offset = offset),
+      class = c("correlated_boundary", "likelihood_model"))
+    fitted <- fisher_mle(c(a = 0, b = 1e-4),
+      vcov = matrix(c(1, 1, 1, 2), 2), loglik_val = offset)
+    interval <- likelihood_interval(fitted, data.frame(x = 0), boundary_model,
+                                    param = "a")
+    expect_equal(as.numeric(interval), expected, tolerance = 1e-5)
+    profile <- profile_loglik(fitted, data.frame(x = 0), boundary_model,
+                              param = "a", grid = expected)
+    expect_equal(profile$support, rep(-log(8), 2), tolerance = 1e-5)
+  }
+})

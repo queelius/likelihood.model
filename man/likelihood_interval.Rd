@@ -43,4 +43,11 @@ Common choices for k:
 
 For multivariate parameters, specify \code{param} to get a profile likelihood
 interval for that parameter (profiling over the others).
+
+Profiling uses local BFGS optimization with a Nelder-Mead fallback when
+derivatives cross a parameter-domain boundary or optimization fails. Both
+start from the fitted nuisance parameters; neither infers constraints from
+parameter signs. Failed profiles return \code{NA} with a warning. Coupled domains
+can make the starting values infeasible at some profile values; an \code{NA}
+then indicates unavailable optimization, not an empty likelihood interval.
 }

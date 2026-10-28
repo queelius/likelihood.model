@@ -1,5 +1,10 @@
 # likelihood.model 1.0.2
 
+* Both profile APIs share a checked nuisance optimizer with a derivative-free
+  fallback when BFGS probes outside a model's parameter domain. Only converged
+  fits with finite re-evaluated likelihoods are accepted. Failed optimization
+  returns `NA` with a warning instead of a finite penalty masquerading as a
+  profile likelihood. Optimization remains local and requires a feasible start.
 * Scale profile optimization and interval root tolerances by parameter uncertainty to preserve accuracy for very small parameter scales.
 * Profile likelihood intervals no longer infer nuisance-parameter positivity from the sign of a fitted estimate. This fixes incorrect intervals for unrestricted means and slopes. Parameter domains are defined by the model likelihood.
 
